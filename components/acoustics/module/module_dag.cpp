@@ -2,7 +2,7 @@
 
 namespace module {
 
-constexpr core::Status MDAGBuilderRegistry::registerDAGBuilder(std::string_view name, DAGBuilder builder) noexcept
+core::Status MDAGBuilderRegistry::registerDAGBuilder(std::string_view name, DAGBuilder builder) noexcept
 {
     if (name.empty()) [[unlikely]]
     {

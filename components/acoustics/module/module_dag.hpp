@@ -47,13 +47,13 @@ public:
         return _dags;
     }
 
-    static constexpr core::Status registerDAGBuilder(std::string_view name, DAGBuilder builder) noexcept;
+    static core::Status registerDAGBuilder(std::string_view name, DAGBuilder builder) noexcept;
 
 private:
     static DAGBuilderMap _dags;
 };
 
-class MDAG final
+class MDAG
 {
 public:
     explicit MDAG(std::string_view name) noexcept : _name(name), _nodes(), _adj(), _in_degree(), _execution_order()
@@ -168,6 +168,16 @@ public:
     const std::forward_list<std::shared_ptr<module::MNode>> &nodes() const noexcept
     {
         return _nodes;
+    }
+
+    virtual std::shared_ptr<core::Tensor> getInputTensor(size_t index = 0) const noexcept
+    {
+        return nullptr;
+    }
+
+    virtual std::shared_ptr<core::Tensor> getOutputTensor(size_t index = 0) const noexcept
+    {
+        return nullptr;
     }
 
     inline core::Status operator()() noexcept

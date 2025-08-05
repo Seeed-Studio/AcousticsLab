@@ -1,3 +1,6 @@
 gradio
 numpy
 pandas
+tensorflow
+tensorflowjs
+scipy

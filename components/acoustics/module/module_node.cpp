@@ -2,8 +2,8 @@
 
 namespace module {
 
-constexpr core::Status MNodeBuilderRegistry::registerNodeBuilder(std::string_view name, NodeBuilder builder,
-    bool replace = false) noexcept
+core::Status MNodeBuilderRegistry::registerNodeBuilder(std::string_view name, NodeBuilder builder,
+    bool replace) noexcept
 {
     if (name.empty() || !builder) [[unlikely]]
     {

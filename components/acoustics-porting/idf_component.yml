@@ -11,3 +11,5 @@ dependencies:
     version: ">=2.11.1"
     path: porting/driver/littlefs
   espressif/esp-tflite-micro: '*'
+  espressif/dl_fft: '*'
+  

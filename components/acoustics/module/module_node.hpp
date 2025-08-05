@@ -46,8 +46,7 @@ public:
         return _nodes;
     }
 
-    static constexpr core::Status registerNodeBuilder(std::string_view name, NodeBuilder builder,
-        bool replace = false) noexcept;
+    static core::Status registerNodeBuilder(std::string_view name, NodeBuilder builder, bool replace = false) noexcept;
 
 private:
     static NodeBuilderMap _nodes;
