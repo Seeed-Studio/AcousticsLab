@@ -15,6 +15,7 @@ examples/**/sdkconfig
 examples/**/sdkconfig.old
 examples/**/dependencies.lock
 examples/**/**.lock
+examples/**/managed_components
 
 # Binary files
 **.bin

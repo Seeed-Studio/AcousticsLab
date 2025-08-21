@@ -11,6 +11,7 @@ file(GLOB_RECURSE PROJ_SRCS
 )
 
 set(ACOUSTICS_PORTING_LIB_TFLM_ENABLE ON CACHE BOOL "Enable TFLM support in acoustics-porting")
+set(ACOUSTICS_PORTING_LIB_DLFFT_ENABLE ON CACHE BOOL "Enable dl-fft support in acoustics-porting")
 
 idf_component_register(
     SRCS ${PROJ_SRCS}
