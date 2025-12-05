@@ -505,6 +505,7 @@ struct TaskSC final
                 }
                 data["perfMs"] += _perf_ms;
             }
+            _current_id = _current_id_next;
 
             return status;
         }
