@@ -58,6 +58,9 @@ namespace shared {
     inline constexpr const float overlap_ratio_max = 0.75f;
     inline std::atomic<float> overlap_ratio = 0.5f;
     inline std::atomic<bool> rms_normalize = false;
+    inline constexpr const float threshold_min = 0.f;
+    inline constexpr const float threshold_max = 1.f;
+    inline std::atomic<float> threshold = 0.0f;
 } // namespace shared
 
 struct TaskSC final
@@ -496,6 +499,8 @@ struct TaskSC final
                     const auto classes = _output->data<core::class_t>();
                     for (int i = 0; i < size; ++i)
                     {
+                        if (classes[i].confidence < shared::threshold.load())
+                            continue;
                         auto cls = cls_data.writer<core::ArrayWriter>();
                         const int id = classes[i].id;
                         const float confidence = classes[i].confidence;
