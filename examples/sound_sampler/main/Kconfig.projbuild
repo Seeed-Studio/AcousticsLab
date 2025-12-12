@@ -1,0 +1,44 @@
+menu "AcousticsLab Configuration"
+
+    choice BOARD_SELECTION
+        prompt "Board Selection"
+        default BOARD_XIAO_S3
+        help
+            Select the target development board for this project.
+            This will configure the appropriate hardware settings including
+            GPIO pins, sensor types, and sampling rates.
+
+        config BOARD_XIAO_S3
+            bool "Seeed Studio XIAO ESP32S3"
+            help
+                Select this option for Seeed Studio XIAO ESP32S3 board.
+                - Uses PDM microphone
+                - Default sampling rate: 44.1kHz
+                - GPIO pins: CLK=42, DIN=41
+
+        config BOARD_RESPEAKER_LITE
+            bool "Seeed Studio ReSpeaker Lite"
+            help
+                Select this option for Seeed Studio ReSpeaker Lite board.
+                - Uses I2S XMOS microphone in slave mode
+                - Default sampling rate: 16kHz
+                - GPIO pins: BCLK=8, WS=7, DIN=44, DOUT=43
+
+        config BOARD_RESPEAKER_XVF3800
+            bool "Seeed Studio ReSpeaker XVF3800"
+            help
+                Select this option for Seeed Studio ReSpeaker XVF3800 board.
+                - Uses I2S XMOS microphone in master mode
+                - Default sampling rate: 16kHz
+                - GPIO pins: BCLK=8, WS=7, DIN=43, DOUT=44
+
+    endchoice
+
+    config BOARD_NAME
+        string
+        default "XIAO_S3" if BOARD_XIAO_S3
+        default "RESPEAKER_LITE" if BOARD_RESPEAKER_LITE
+        default "RESPEAKER_XVF3800" if BOARD_RESPEAKER_XVF3800
+
+endmenu
+

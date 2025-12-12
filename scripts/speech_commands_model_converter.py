@@ -9,6 +9,7 @@ import mimetypes
 import random
 import tarfile
 import urllib.request
+import json
 
 import librosa
 import numpy as np
@@ -24,9 +25,9 @@ logging.basicConfig(
 )
 
 CWD = Path.cwd()
-DEFAULT_TFJS_MODEL = CWD / "tm-my-audio-model"
+DEFAULT_TFJS_MODEL = CWD / "sensecraft-audio-model-2025-11-13"
 DEFAULT_WAV_INPUT_DIR = CWD / "calibration_audio"
-DEFAULT_OUT_MODEL = CWD / "tm-my-audio-model.tflite"
+DEFAULT_OUT_MODEL = CWD / "sensecraft-audio-model-2025-11-13.tflite"
 REQUIRED_SAMPLES = 100
 
 
@@ -67,18 +68,72 @@ def _resolve_tfjs_input_path(tfjs_path: Path) -> Path:
         f"Expected a TFJS layers model directory (with model.json) or a model.json file, got: {tfjs_path}"
     )
 
-
 def _run_tfjs_to_saved_model(tfjs_model_path_or_dir: Path, saved_model_out_dir: Path):
-    model_json = _resolve_tfjs_input_path(tfjs_model_path_or_dir)
-    saved_model_out_dir.parent.mkdir(parents=True, exist_ok=True)
-    dispatch_tensorflowjs_to_keras_saved_model_conversion(
-        str(model_json),
-        str(saved_model_out_dir),
-    )
+    original_model_json_path = _resolve_tfjs_input_path(tfjs_model_path_or_dir)
+    
+    with open(original_model_json_path, "r", encoding="utf-8") as f:
+        model_data = json.load(f)
+
+    model_json_to_convert = None
+    temp_file_name = None
+
+    try:
+        if "modelTopology" in model_data and "weightsManifest" in model_data:
+            logging.info("Detected combined TFJS model format.")
+            model_json_to_convert = original_model_json_path
+        else:
+            logging.info("Detected separated TFJS model format. Combining files.")
+            
+            model_topology = model_data
+            
+            weights_manifest_path = original_model_json_path.parent / "weights_manifest.json"
+            if not weights_manifest_path.exists():
+                weights_manifest_path = original_model_json_path.parent / "manifest.json"
+                if not weights_manifest_path.exists():
+                     raise FileNotFoundError(
+                        f"Could not find 'weights_manifest.json' or 'manifest.json' in {original_model_json_path.parent}"
+                    )
+
+            with open(weights_manifest_path, "r", encoding="utf-8") as f:
+                weight_specs = json.load(f)
+            
+            original_weights_bin_path = (original_model_json_path.parent / "weights.bin").resolve()
+            if not original_weights_bin_path.is_file():
+                raise FileNotFoundError(f"The weights file 'weights.bin' was not found in {original_model_json_path.parent}")
+            
+            formatted_weights_manifest = [
+                {
+                    "paths": [str(original_weights_bin_path)],
+                    "weights": weight_specs
+                }
+            ]
+            
+            combined_model_data = {
+                "modelTopology": model_topology,
+                "weightsManifest": formatted_weights_manifest
+            }
+            
+            with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".json", encoding="utf-8") as temp_file:
+                json.dump(combined_model_data, temp_file)
+                temp_file_name = temp_file.name
+            
+            model_json_to_convert = temp_file_name
+            logging.info(f"Created temporary combined model file: {model_json_to_convert}")
+            logging.info(f"Pointing to weights file at: {original_weights_bin_path}")
+
+        saved_model_out_dir.parent.mkdir(parents=True, exist_ok=True)
+        dispatch_tensorflowjs_to_keras_saved_model_conversion(
+            str(model_json_to_convert),
+            str(saved_model_out_dir),
+        )
+    finally:
+        if temp_file_name and os.path.exists(temp_file_name):
+            os.remove(temp_file_name)
+            logging.info(f"Cleaned up temporary model file: {temp_file_name}")
+
     if not saved_model_out_dir.exists():
         print(f"ERROR: SavedModel not found at {saved_model_out_dir}", file=sys.stderr)
         raise FileNotFoundError(saved_model_out_dir)
-
 
 def _make_representative_dataset_generator(
     input_shape: tuple[int, ...], wav_dir: Optional[Path]

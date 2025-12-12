@@ -10,8 +10,6 @@ file(GLOB_RECURSE PROJ_SRCS
     ${CMAKE_CURRENT_LIST_DIR}/*.hpp
 )
 
-set(ACOUSTICS_LIB_OPUS_ENABLE ON GLOBAL BOOL "Enable OPUS support in acoustics-porting")
-
 idf_component_register(
     SRCS ${PROJ_SRCS}
     INCLUDE_DIRS ${PROJ_INCLUDE_DIRS}

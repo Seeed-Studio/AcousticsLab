@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
+set(ACOUSTICS_LIB_OPUS_ENABLE 1)
+
 set(COMPONENTS
     driver
     cxx

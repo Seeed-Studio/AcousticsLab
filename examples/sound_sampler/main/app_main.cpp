@@ -1,5 +1,5 @@
 #define EXAMPLE_USE_ADPCM 1
-#define EXAMPLE_USE_OPUS 0
+#define EXAMPLE_USE_OPUS  0
 
 #if EXAMPLE_USE_ADPCM
 
@@ -212,7 +212,7 @@ extern "C" void app_main()
         return;
     }
 
-    auto opus_encoder = core::EncoderLIBOPUS::create();
+    auto opus_encoder = core::EncoderLIBOPUS::create(nullptr, 4096, sr);
     if (!opus_encoder || opus_encoder->error() != 0)
     {
         std::cout << "Failed to create OPUS encoder" << std::endl;
