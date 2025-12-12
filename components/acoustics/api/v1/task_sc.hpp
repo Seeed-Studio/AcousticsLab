@@ -492,22 +492,27 @@ struct TaskSC final
                 data["ts"] += std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::steady_clock::now() - _start_time)
                                   .count();
+                bool all_below_threshold = false;
                 if (status && _output) [[likely]]
                 {
                     auto cls_data = data["data"].writer<core::ArrayWriter>();
                     const int size = _output->shape().size() ? _output->shape()[0] : 0;
                     const auto classes = _output->data<core::class_t>();
-                    for (int i = 0; i < size; ++i)
+                    all_below_threshold = std::all_of(classes, classes + size,
+                        [](const core::class_t &c) { return c.confidence < shared::threshold.load(); });
+                    if (!all_below_threshold)
                     {
-                        if (classes[i].confidence < shared::threshold.load())
-                            continue;
-                        auto cls = cls_data.writer<core::ArrayWriter>();
-                        const int id = classes[i].id;
-                        const float confidence = classes[i].confidence;
-                        cls += id;
-                        cls << confidence;
+                        for (int i = 0; i < size; ++i)
+                        {
+                            auto cls = cls_data.writer<core::ArrayWriter>();
+                            const int id = classes[i].id;
+                            const float confidence = classes[i].confidence;
+                            cls += id;
+                            cls << confidence;
+                        }
                     }
                 }
+                data["allBelowThreshold"] += all_below_threshold;
                 data["perfMs"] += _perf_ms;
             }
             _current_id = _current_id_next;

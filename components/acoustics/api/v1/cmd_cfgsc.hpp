@@ -41,11 +41,9 @@ public:
             size_t size = sizeof(overlap_ratio);
             auto status = device->load(hal::Device::StorageType::Internal, overlap_ratio_path, &overlap_ratio, size);
             if (!status || size != sizeof(overlap_ratio)) [[unlikely]]
-            {
                 LOG(ERROR, "Failed to load overlap_ratio or size mismatch");
-                return;
-            }
-            shared::overlap_ratio = std::clamp(overlap_ratio, shared::overlap_ratio_min, shared::overlap_ratio_max);
+            else
+                shared::overlap_ratio = std::clamp(overlap_ratio, shared::overlap_ratio_min, shared::overlap_ratio_max);
         }
 
         {
@@ -53,11 +51,9 @@ public:
             size_t size = sizeof(rms_normalize);
             auto status = device->load(hal::Device::StorageType::Internal, rms_normalize_path, &rms_normalize, size);
             if (!status || size != sizeof(rms_normalize)) [[unlikely]]
-            {
                 LOG(ERROR, "Failed to load rms_normalize or size mismatch");
-                return;
-            }
-            shared::rms_normalize = rms_normalize;
+            else
+                shared::rms_normalize = rms_normalize;
         }
 
         {
@@ -65,11 +61,9 @@ public:
             size_t size = sizeof(threshold);
             auto status = device->load(hal::Device::StorageType::Internal, threshold_path, &threshold, size);
             if (!status || size != sizeof(threshold)) [[unlikely]]
-            {
                 LOG(ERROR, "Failed to load threshold or size mismatch");
-                return;
-            }
-            shared::threshold = std::clamp(threshold, shared::threshold_min, shared::threshold_max);
+            else
+                shared::threshold = std::clamp(threshold, shared::threshold_min, shared::threshold_max);
         }
     }
 
