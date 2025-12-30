@@ -88,15 +88,15 @@ public:
                     {
                         goto Reply;
                     }
+                }
+                else if (*action == "invoke")
+                {
+                    invoke_enabled = true;
                     status = makeDAGReady();
                     if (!status) [[unlikely]]
                     {
                         goto Reply;
                     }
-                }
-                else if (*action == "invoke")
-                {
-                    invoke_enabled = true;
                 }
                 else if (*action == "stop_invoke")
                 {
