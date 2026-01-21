@@ -1,4 +1,5 @@
 #include "board/board_config.h"
+#include "board/board_detector.h"
 #include "core/logger.hpp"
 #include "core/status.hpp"
 #include "hal/device.hpp"
@@ -66,8 +67,6 @@ static constexpr const size_t DEVICE_NAME_LENGTH_MAX = 64;
 static constexpr const char DEFAULT_DEVICE_NAME_PATH[] = ".device_name";
 static constexpr const char DEFAULT_BOOT_COUNT_PATH[] = ".boot_count";
 
-static constexpr const int GPIO_PINS[] = BOARD_GPIO_PINS;
-
 class DeviceESP32S3 final: public hal::Device
 {
 public:
@@ -78,12 +77,6 @@ public:
           _storage_lfs()
     {
         _storage_lfs_flashbd.flash_addr = nullptr;
-
-        for (auto pin: GPIO_PINS)
-        {
-            gpio_set_direction(static_cast<gpio_num_t>(pin), GPIO_MODE_OUTPUT);
-            gpio_set_pull_mode(static_cast<gpio_num_t>(pin), GPIO_FLOATING);
-        }
     }
 
     core::Status init() noexcept override
@@ -94,6 +87,17 @@ public:
             LOG(WARNING, "Device already initialized, skipping re-initialization");
             return STATUS_OK();
         }
+
+        auto board_type = porting::detectBoard();
+        _board_config = porting::getBoardConfig(board_type);
+        _info.name = _board_config.name;
+        for (size_t i = 0; i < _board_config.gpio_pins_count; ++i)
+        {
+            int pin = _board_config.gpio_pins[i];
+            gpio_set_direction(static_cast<gpio_num_t>(pin), GPIO_MODE_OUTPUT);
+            gpio_set_pull_mode(static_cast<gpio_num_t>(pin), GPIO_FLOATING);
+        }
+
 
         {
             auto status = initLittleFS();
@@ -190,9 +194,9 @@ public:
             case hal::Device::GPIOOpType::Config:
                 return -ENOTSUP;
             case hal::Device::GPIOOpType::Write:
-                for (auto gpio_pin: GPIO_PINS)
+                for (size_t i = 0; i < _board_config.gpio_pins_count; ++i)
                 {
-                    if (pin == gpio_pin)
+                    if (pin == _board_config.gpio_pins[i])
                     {
                         return gpio_set_level(static_cast<gpio_num_t>(pin), value ? 1 : 0) == ESP_OK ? 0 : -EIO;
                     }
@@ -630,6 +634,7 @@ private:
     lfs_flashbd_t _storage_lfs_flashbd;
     lfs_config _storage_lfs_config;
     lfs_t _storage_lfs;
+    porting::BoardConfig _board_config;
 };
 
 } // namespace porting

@@ -60,7 +60,9 @@ public:
             return STATUS(ENXIO, "Sensor is already initialized or in an invalid state");
         }
 
-        const size_t sr = _info.configs["sr"].getValue<int>();
+        _board_type = detectBoard();
+        _board_config = getBoardConfig(_board_type);
+        const size_t sr = _board_config.sample_rate;
         _channels = _info.configs["channels"].getValue<int>();
         _buffered_duration = _info.configs["buffered_duration"].getValue<int>();
         _data_buffer_capacity_frames = _buffered_duration * sr;
@@ -86,14 +88,7 @@ public:
                 "Creating I2S channel with sample rate %d, buffered frames %d, sync frame count %ld, slots count %ld",
                 sr, _data_buffer_capacity_frames, frames_count, slots_count);
 
-#if BOARD_USE_PDM_MODE
-            _rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, I2S_ROLE_MASTER);
-            LOG(INFO, "Configuring I2S: PDM mode, Master role");
-#else
-            _rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, BOARD_I2S_ROLE);
-            LOG(INFO, "Configuring I2S: STD mode, Role=%d", BOARD_I2S_ROLE);
-#endif
-
+            _rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, _board_config.i2s_role);
             _rx_chan_cfg.dma_desc_num = slots_count;
             _rx_chan_cfg.dma_frame_num = frames_count;
 
@@ -112,14 +107,14 @@ public:
             }
         }
 
-#if BOARD_USE_PDM_MODE
+        if (_board_config.use_pdm)
         {
             _pdm_rx_cfg.clk_cfg = I2S_PDM_RX_CLK_DEFAULT_CONFIG(sr);
             _pdm_rx_cfg.slot_cfg = I2S_PDM_RX_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT,
                 (_info.configs["channels"].getValue<int>() == 1 ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO));
             _pdm_rx_cfg.gpio_cfg = {
-                .clk = static_cast<gpio_num_t>(_info.configs["clk_pin"].getValue<int>()),
-                .din = static_cast<gpio_num_t>(_info.configs["din_pin"].getValue<int>()),
+                .clk = _board_config.pdm_clk,
+                .din = _board_config.pdm_din,
                 .invert_flags = { .clk_inv = false },
             };
 
@@ -130,16 +125,10 @@ public:
                 return STATUS(EIO, "Failed to initialize I2S channel in PDM RX mode");
             }
         }
-#else
+        else
         {
-            const gpio_num_t bclk = static_cast<gpio_num_t>(_info.configs["bclk_pin"].getValue<int>());
-            const gpio_num_t ws = static_cast<gpio_num_t>(_info.configs["ws_pin"].getValue<int>());
-            const gpio_num_t din = BOARD_I2S_DIN_PIN;
-            const gpio_num_t dout = BOARD_I2S_DOUT_PIN;
-            const uint32_t sample_rate = static_cast<uint32_t>(_info.configs["sr"].getValue<int>());
-
             _std_cfg = {
-                .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(sample_rate),
+                .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(sr),
                 .slot_cfg = {
                     .data_bit_width = I2S_DATA_BIT_WIDTH_16BIT,
                     .slot_bit_width = I2S_SLOT_BIT_WIDTH_32BIT,
@@ -154,10 +143,10 @@ public:
                 },
                 .gpio_cfg = {
                     .mclk = I2S_GPIO_UNUSED,
-                    .bclk = bclk,
-                    .ws   = ws,
-                    .dout = dout,
-                    .din  = din,
+                    .bclk = _board_config.i2s_bclk,
+                    .ws   = _board_config.i2s_ws,
+                    .dout = _board_config.i2s_dout,
+                    .din  = _board_config.i2s_din,
                     .invert_flags = { .mclk_inv = false, .bclk_inv = false, .ws_inv = false },
                 },
             };
@@ -169,7 +158,6 @@ public:
                 return STATUS(EIO, "Failed to initialize I2S channel in STD mode");
             }
         }
-#endif
 
         _frame_index = 0;
         _data_bytes_available = 0;
@@ -414,6 +402,9 @@ private:
 
     mutable std::mutex _lock;
     static portMUX_TYPE _read_spinlock;
+
+    BoardType _board_type = BoardType::UNKNOWN;
+    BoardConfig _board_config = {};
 
     std::shared_ptr<std::byte[]> _data_buffer = nullptr;
     size_t _data_buffer_capacity_frames = 0;
