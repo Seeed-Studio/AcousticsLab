@@ -66,6 +66,7 @@ public:
         }
 
         bool sample_enabled = false;
+        bool sample_no_encode = false;
         bool invoke_enabled = false;
 
         auto status = STATUS_OK();
@@ -80,9 +81,10 @@ public:
         {
             if (auto action = std::get_if<std::string>(&it->second); action != nullptr)
             {
-                if (*action == "sample")
+                if (*action == "sample" || *action == "sample_no_encode")
                 {
                     sample_enabled = true;
+                    sample_no_encode = (action->size() > sizeof("sample"));
                     status = makeSensorReady();
                     if (!status) [[unlikely]]
                     {
@@ -187,8 +189,8 @@ public:
         if (sample_enabled)
         {
             _internal_sample_task_id += 1;
-            return std::shared_ptr<api::Task>(
-                new v1::TaskSC::Sample(context, transport, id, _sensor, cmd_tag, _internal_sample_task_id));
+            return std::shared_ptr<api::Task>(new v1::TaskSC::Sample(context, transport, id, _sensor, cmd_tag,
+                sample_no_encode, _internal_sample_task_id));
         }
         if (invoke_enabled)
         {
@@ -265,7 +267,7 @@ public:
         }
 
         status = executor.submit(std::shared_ptr<api::Task>(
-            new v1::TaskSC::Sample(context, *console, id, _sensor, "RC", _internal_sample_task_id)));
+            new v1::TaskSC::Sample(context, *console, id, _sensor, "RC", false, _internal_sample_task_id)));
         if (!status) [[unlikely]]
         {
             return status;

@@ -70,9 +70,9 @@ struct TaskSC final
     {
     public:
         Sample(api::Context &context, hal::Transport &transport, size_t id, hal::Sensor *sensor, std::string tag,
-            const volatile size_t &external_task_id) noexcept
+            bool no_encode, const volatile size_t &external_task_id) noexcept
             : api::Task(context, transport, id, v1::defaults::task_priority), _sensor(sensor), _tag(std::move(tag)),
-              _external_task_id(external_task_id), _internal_task_id(_external_task_id),
+              _no_encode(no_encode), _external_task_id(external_task_id), _internal_task_id(_external_task_id),
               _start_time(std::chrono::steady_clock::now()), _current_id(0), _current_id_next(0), _sr(0), _fs(0)
         {
             {
@@ -109,6 +109,7 @@ struct TaskSC final
                 }
             }
 
+            if (!_no_encode)
             {
                 auto adpcm_size = core::EncoderADPCMIMA::estimate(_fs);
                 auto opus_size = core::EncoderLIBOPUS::estimate(_fs, _sr);
@@ -207,6 +208,12 @@ struct TaskSC final
                 }
 
                 _current_id_next = _current_id + 1;
+
+                if (_no_encode)
+                {
+                    return executor.submit(getptr(), getNextDataDelay(_sensor->dataAvailable()));
+                }
+
                 if (shared::is_invoking)
                 {
                     status = encodeADPCM(data_frame.data->data<int16_t>(), size);
@@ -333,6 +340,7 @@ struct TaskSC final
 
         hal::Sensor *_sensor;
         const std::string _tag;
+        const bool _no_encode;
         const volatile size_t &_external_task_id;
         const size_t _internal_task_id;
         const std::chrono::steady_clock::time_point _start_time;
