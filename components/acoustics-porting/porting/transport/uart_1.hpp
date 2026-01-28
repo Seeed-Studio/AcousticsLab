@@ -1,6 +1,6 @@
 #pragma once
-#ifndef UART_2_HPP
-#define UART_2_HPP
+#ifndef UART_1_HPP
+#define UART_1_HPP
 
 #include "core/ring_buffer.hpp"
 #include "hal/transport.hpp"
