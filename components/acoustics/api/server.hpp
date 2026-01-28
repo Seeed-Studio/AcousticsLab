@@ -165,7 +165,7 @@ protected:
             _buffer[read - 1] = '\0';
             LOG(DEBUG, "Failed to parse command '%s': %s", reinterpret_cast<const char *>(_buffer),
                 _read_status.message().c_str());
-            _context.report(_read_status);
+            _context.report(_read_status, &transport);
             return;
         }
         LOG(DEBUG, "Parsed command: '%s'", command_ptr->name().data());

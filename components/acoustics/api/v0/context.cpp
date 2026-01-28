@@ -58,9 +58,12 @@ static bool registerCommands()
 
 namespace api {
 
-core::Status Context::report(core::Status status) noexcept
+core::Status Context::report(core::Status status, hal::Transport *transport) noexcept
 {
-    auto transport = _console_ptr;
+    if (!transport)
+    {
+        transport = _console_ptr;
+    }
     if (!transport) [[unlikely]]
     {
         LOG(ERROR, "Console transport is not initialized");

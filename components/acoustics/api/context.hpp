@@ -52,7 +52,7 @@ public:
         return _user_context;
     }
 
-    virtual core::Status report(core::Status status) noexcept;
+    virtual core::Status report(core::Status status, hal::Transport *transport = nullptr) noexcept;
 
     static Context *create() noexcept;
 
@@ -102,16 +102,26 @@ private:
 
         bridge::__REGISTER_TRANSPORTS__();
         {
-            auto transport = hal::TransportRegistry::getTransport(console);
-            if (!transport) [[unlikely]]
+            const auto &transports = hal::TransportRegistry::getTransportMap();
+            for (const auto &[id, transport]: transports)
+            {
+                if (transport && !transport->initialized()) [[likely]]
+                {
+                    status = transport->init();
+                    if (!status) [[unlikely]]
+                    {
+                        LOG(ERROR, "Failed to initialize transport ID=%d: %s", id, status.message().c_str());
+                    }
+                }
+                if (!console_ptr && id == console)
+                {
+                    console_ptr = transport;
+                }
+            }
+            if (!console_ptr || !console_ptr->initialized()) [[unlikely]]
             {
                 return STATUS(ENODEV, "Transport with ID " + std::to_string(console) + " is not registered");
             }
-            if (!transport->initialized()) [[likely]]
-            {
-                transport->init();
-            }
-            console_ptr = transport;
         }
 
         bridge::__REGISTER_PREDEFINED_MODULE_NODE_BUILDER__();

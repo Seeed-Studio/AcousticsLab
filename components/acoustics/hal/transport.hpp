@@ -38,6 +38,11 @@ public:
         return nullptr;
     }
 
+    const TransportMap& getTransports() const noexcept
+    {
+        return _transports;
+    }
+
     static const TransportMap &getTransportMap() noexcept
     {
         return _transports;
