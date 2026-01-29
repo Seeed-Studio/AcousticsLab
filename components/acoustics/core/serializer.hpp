@@ -24,6 +24,350 @@
 
 namespace core {
 
+namespace charconv {
+
+    namespace digits2 {
+
+        inline constexpr decltype(auto) make_digits() noexcept
+        {
+            alignas(2) std::array<char, 200> data {};
+            for (size_t i = 0; i < 100; ++i)
+            {
+                data[i * 2] = static_cast<char>('0' + i / 10);
+                data[i * 2 + 1] = static_cast<char>('0' + i % 10);
+            }
+            return data;
+        }
+
+        alignas(2) inline constexpr auto table = make_digits();
+
+        inline constexpr const char *at(size_t index)
+        {
+            return &table[index];
+        }
+
+    } // namespace digits2
+
+    template<typename T, typename U = std::remove_cv_t<std::remove_reference_t<T>>,
+        std::enable_if_t<std::is_unsigned_v<U> && sizeof(U) == sizeof(uint8_t), bool> = true>
+    inline constexpr char *itoa(T &&val, char *buf) noexcept
+    {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+        if (val < 100U)
+        {
+            unsigned leading_zero = val < 10U;
+            std::memcpy(buf, digits2::at((val << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+            return buf + 2 - leading_zero;
+#pragma GCC diagnostic pop
+        }
+        else
+        {
+            uint16_t l0_0 = (41U * val) >> 12;
+            uint16_t l1_2 = val - (100U * l0_0);
+            *buf = static_cast<char>('0' | l0_0);
+            std::memcpy(buf + 1, digits2::at(l1_2 << 1), 2);
+            return buf + 3;
+        }
+#pragma GCC diagnostic pop
+    }
+
+    template<typename T, typename U = std::remove_cv_t<std::remove_reference_t<T>>,
+        std::enable_if_t<std::is_signed_v<U> && sizeof(U) == sizeof(int8_t), bool> = true>
+    inline constexpr char *itoa(T &&val, char *buf) noexcept
+    {
+        unsigned sign = val < 0;
+        uint8_t uval = static_cast<uint8_t>(val);
+        *buf = '-';
+        return itoa(sign ? static_cast<uint8_t>(~uval + 1) : uval, buf + sign);
+    }
+
+    template<typename T, typename U = std::remove_cv_t<std::remove_reference_t<T>>,
+        std::enable_if_t<std::is_unsigned_v<U> && sizeof(U) == sizeof(uint16_t), bool> = true>
+    inline constexpr char *itoa(T &&val, char *buf) noexcept
+    {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+        if (val < 100U)
+        {
+            unsigned leading_zero = val < 10U;
+            std::memcpy(buf, digits2::at((val << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+            return buf + 2 - leading_zero;
+#pragma GCC diagnostic pop
+        }
+        else if (val < 10'000U)
+        {
+            uint32_t l0_1 = (static_cast<uint32_t>(5243U) * val) >> 19;
+            uint32_t l2_3 = val - (static_cast<uint32_t>(100U) * l0_1);
+            unsigned leading_zero = l0_1 < 10U;
+            std::memcpy(buf, digits2::at((l0_1 << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+            buf -= leading_zero;
+#pragma GCC diagnostic pop
+            std::memcpy(buf + 2, digits2::at(l2_3 << 1), 2);
+            return buf + 4;
+        }
+        else
+        {
+            uint32_t l0_1 = static_cast<uint32_t>((static_cast<uint64_t>(107375UL) * val) >> 30);
+            uint32_t l2_5 = val - (static_cast<uint32_t>(10'000U) * l0_1);
+            uint32_t l2_3 = (static_cast<uint32_t>(5243U) * l2_5) >> 19;
+            uint32_t l4_5 = l2_5 - (static_cast<uint32_t>(100U) * l2_3);
+            unsigned leading_zero = l0_1 < 10U;
+            std::memcpy(buf, digits2::at((l0_1 << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+            buf -= leading_zero;
+#pragma GCC diagnostic pop
+            std::memcpy(buf + 2, digits2::at(l2_3 << 1), 2);
+            std::memcpy(buf + 4, digits2::at(l4_5 << 1), 2);
+            return buf + 6;
+        }
+#pragma GCC diagnostic pop
+    }
+
+    template<typename T, typename U = std::remove_cv_t<std::remove_reference_t<T>>,
+        std::enable_if_t<std::is_signed_v<U> && sizeof(U) == sizeof(int16_t), bool> = true>
+    inline constexpr char *itoa(T &&val, char *buf) noexcept
+    {
+        unsigned sign = val < 0;
+        uint16_t uval = static_cast<uint16_t>(val);
+        *buf = '-';
+        return itoa(sign ? static_cast<uint16_t>(~uval + 1) : uval, buf + sign);
+    }
+
+    inline char *itoa_lt_1e2(uint32_t val, char *buf) noexcept
+    {
+        unsigned leading_zero = val < 10U;
+        std::memcpy(buf, digits2::at((val << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+        return buf + 2 - leading_zero;
+#pragma GCC diagnostic pop
+    }
+
+    inline char *itoa_ge_1e2_lt_1e4(uint32_t val, char *buf) noexcept
+    {
+        uint32_t l0_1 = (static_cast<uint32_t>(5243U) * val) >> 19;
+        uint32_t l2_3 = val - (static_cast<uint32_t>(100U) * l0_1);
+        unsigned leading_zero = l0_1 < 10U;
+        std::memcpy(buf, digits2::at((l0_1 << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+        buf -= leading_zero;
+#pragma GCC diagnostic pop
+        std::memcpy(buf + 2, digits2::at(l2_3 << 1), 2);
+        return buf + 4;
+    }
+
+    inline char *itoa_ge_1e2_lt_1e4_lz(uint32_t val, char *buf) noexcept
+    {
+        uint32_t l0_1 = (static_cast<uint32_t>(5243U) * val) >> 19;
+        uint32_t l2_3 = val - (static_cast<uint32_t>(100U) * l0_1);
+        std::memcpy(buf, digits2::at(l0_1 << 1), 2);
+        std::memcpy(buf + 2, digits2::at(l2_3 << 1), 2);
+        return buf + 4;
+    }
+
+    inline char *itoa_ge_1e4_lt_1e6(uint32_t val, char *buf) noexcept
+    {
+        uint32_t l0_1 = static_cast<uint32_t>((static_cast<uint64_t>(429497UL) * val) >> 32);
+        uint32_t l2_5 = val - (static_cast<uint32_t>(10'000U) * l0_1);
+        uint32_t l2_3 = (static_cast<uint32_t>(5243U) * l2_5) >> 19;
+        uint32_t l4_5 = l2_5 - (static_cast<uint32_t>(100U) * l2_3);
+        unsigned leading_zero = l0_1 < 10U;
+        std::memcpy(buf, digits2::at((l0_1 << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+        buf -= leading_zero;
+#pragma GCC diagnostic pop
+        std::memcpy(buf + 2, digits2::at(l2_3 << 1), 2);
+        std::memcpy(buf + 4, digits2::at(l4_5 << 1), 2);
+        return buf + 6;
+    }
+
+    inline char *itoa_ge_1e6_lt_1e8(uint32_t val, char *buf) noexcept
+    {
+        uint32_t l0_3 = static_cast<uint32_t>((static_cast<uint64_t>(109951163UL) * val) >> 40);
+        uint32_t l4_7 = val - (static_cast<uint32_t>(10'000U) * l0_3);
+        uint32_t l0_1 = (static_cast<uint32_t>(5243U) * l0_3) >> 19;
+        uint32_t l2_3 = l0_3 - (static_cast<uint32_t>(100U) * l0_1);
+        uint32_t l4_5 = (static_cast<uint32_t>(5243U) * l4_7) >> 19;
+        uint32_t l6_7 = l4_7 - (static_cast<uint32_t>(100U) * l4_5);
+        unsigned leading_zero = l0_1 < 10U;
+        std::memcpy(buf, digits2::at((l0_1 << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+        buf -= leading_zero;
+#pragma GCC diagnostic pop
+        std::memcpy(buf + 2, digits2::at(l2_3 << 1), 2);
+        std::memcpy(buf + 4, digits2::at(l4_5 << 1), 2);
+        std::memcpy(buf + 6, digits2::at(l6_7 << 1), 2);
+        return buf + 8;
+    }
+
+    inline char *itoa_ge_1e6_lt_1e8_lz(uint32_t val, char *buf) noexcept
+    {
+        uint32_t l0_3 = static_cast<uint32_t>((static_cast<uint64_t>(109951163UL) * val) >> 40);
+        uint32_t l4_7 = val - (static_cast<uint32_t>(10'000U) * l0_3);
+        uint32_t l0_1 = (static_cast<uint32_t>(5243U) * l0_3) >> 19;
+        uint32_t l2_3 = l0_3 - (static_cast<uint32_t>(100U) * l0_1);
+        uint32_t l4_5 = (static_cast<uint32_t>(5243U) * l4_7) >> 19;
+        uint32_t l6_7 = l4_7 - (static_cast<uint32_t>(100U) * l4_5);
+        std::memcpy(buf, digits2::at((l0_1 << 1)), 2);
+        std::memcpy(buf + 2, digits2::at(l2_3 << 1), 2);
+        std::memcpy(buf + 4, digits2::at(l4_5 << 1), 2);
+        std::memcpy(buf + 6, digits2::at(l6_7 << 1), 2);
+        return buf + 8;
+    }
+
+    inline char *itoa_ge_1e8_lt_1ea(uint32_t val, char *buf) noexcept
+    {
+        uint32_t l0_5 = static_cast<uint32_t>((static_cast<uint64_t>(3518437209UL) * val) >> 45);
+        uint32_t l0_1 = static_cast<uint32_t>((static_cast<uint64_t>(429497UL) * l0_5) >> 32);
+        uint32_t l2_5 = l0_5 - (static_cast<uint32_t>(10'000U) * l0_1);
+        uint32_t l2_3 = (static_cast<uint32_t>(5243U) * l2_5) >> 19;
+        uint32_t l4_5 = l2_5 - (static_cast<uint32_t>(100U) * l2_3);
+        uint32_t l6_9 = val - (static_cast<uint32_t>(10'000U) * l0_5);
+        uint32_t l6_7 = (static_cast<uint32_t>(5243U) * l6_9) >> 19;
+        uint32_t l8_9 = l6_9 - (static_cast<uint32_t>(100U) * l6_7);
+        unsigned leading_zero = l0_1 < 10U;
+        std::memcpy(buf, digits2::at((l0_1 << 1) + leading_zero), 2);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+        buf -= leading_zero;
+#pragma GCC diagnostic pop
+        std::memcpy(buf + 2, digits2::at(l2_3 << 1), 2);
+        std::memcpy(buf + 4, digits2::at(l4_5 << 1), 2);
+        std::memcpy(buf + 6, digits2::at(l6_7 << 1), 2);
+        std::memcpy(buf + 8, digits2::at(l8_9 << 1), 2);
+        return buf + 10;
+    }
+
+    template<typename T, typename U = std::remove_cv_t<std::remove_reference_t<T>>,
+        std::enable_if_t<std::is_unsigned_v<U> && sizeof(U) == sizeof(uint32_t), bool> = true>
+    inline constexpr char *itoa(T &&val, char *buf) noexcept
+    {
+        if (val < 100U)
+        {
+            return itoa_lt_1e2(val, buf);
+        }
+        else if (val < 10'000U)
+        {
+            return itoa_ge_1e2_lt_1e4(val, buf);
+        }
+        else if (val < static_cast<uint32_t>(1'000'000UL))
+        {
+            return itoa_ge_1e4_lt_1e6(val, buf);
+        }
+        else if (val < static_cast<uint32_t>(100'000'000UL))
+        {
+            return itoa_ge_1e6_lt_1e8(val, buf);
+        }
+        else
+        {
+            return itoa_ge_1e8_lt_1ea(val, buf);
+        }
+    }
+
+    template<typename T, typename U = std::remove_cv_t<std::remove_reference_t<T>>,
+        std::enable_if_t<std::is_signed_v<U> && sizeof(U) == sizeof(int32_t), bool> = true>
+    inline constexpr char *itoa(T &&val, char *buf) noexcept
+    {
+        unsigned sign = val < 0;
+        uint32_t uval = static_cast<uint32_t>(val);
+        *buf = '-';
+        return itoa(sign ? static_cast<uint32_t>(~uval + 1) : uval, buf + sign);
+    }
+
+    inline char *itoa_lt_1e8(uint32_t val, char *buf) noexcept
+    {
+        if (val < 100U)
+        {
+            return itoa_lt_1e2(val, buf);
+        }
+        else if (val < 10'000U)
+        {
+            return itoa_ge_1e2_lt_1e4(val, buf);
+        }
+        else if (val < static_cast<uint32_t>(1'000'000UL))
+        {
+            return itoa_ge_1e4_lt_1e6(val, buf);
+        }
+        else
+        {
+            return itoa_ge_1e6_lt_1e8(val, buf);
+        }
+    }
+
+    inline char *itoa_ge_1e4_lt_1e8(uint32_t val, char *buf) noexcept
+    {
+        if (val < static_cast<uint32_t>(1'000'000UL))
+        {
+            return itoa_ge_1e4_lt_1e6(val, buf);
+        }
+        else
+        {
+            return itoa_ge_1e6_lt_1e8(val, buf);
+        }
+    }
+
+    inline char *itoa_ge_1e8_lt_1e16(uint64_t val, char *buf) noexcept
+    {
+        uint64_t l0_7 = val / 100'000'000UL;
+        uint32_t l8_f = static_cast<uint32_t>(val - (static_cast<uint64_t>(100'000'000UL) * l0_7));
+        buf = itoa_lt_1e8(static_cast<uint32_t>(l0_7), buf);
+        buf = itoa_ge_1e6_lt_1e8_lz(l8_f, buf);
+        return buf;
+    }
+
+    inline char *itoa_ge_1e16_lt_1e20(uint64_t val, char *buf) noexcept
+    {
+        uint64_t l0_b = val / 100'000'000UL;
+        uint32_t r0_7 = static_cast<uint32_t>(val - (static_cast<uint64_t>(100'000'000UL) * l0_b));
+        uint32_t l0_3 = static_cast<uint32_t>(l0_b / 10'000UL);
+        uint32_t l4_7 = static_cast<uint32_t>(l0_b - (static_cast<uint32_t>(10'000UL) * l0_3));
+        buf = itoa_ge_1e4_lt_1e8(l0_3, buf);
+        buf = itoa_ge_1e2_lt_1e4_lz(l4_7, buf);
+        buf = itoa_ge_1e6_lt_1e8_lz(r0_7, buf);
+        return buf;
+    }
+
+    template<typename T, typename U = std::remove_cv_t<std::remove_reference_t<T>>,
+        std::enable_if_t<std::is_unsigned_v<U> && sizeof(U) == sizeof(uint64_t), bool> = true>
+    inline constexpr char *itoa(T &&val, char *buf) noexcept
+    {
+        if (val < static_cast<uint64_t>(100'000'000UL))
+        {
+            return itoa_lt_1e8(static_cast<uint32_t>(val), buf);
+        }
+        else if (val < static_cast<uint64_t>(10'000'000'000'000'000ULL))
+        {
+            return itoa_ge_1e8_lt_1e16(val, buf);
+        }
+        else
+        {
+            return itoa_ge_1e16_lt_1e20(val, buf);
+        }
+    }
+
+    template<typename T, typename U = std::remove_cv_t<std::remove_reference_t<T>>,
+        std::enable_if_t<std::is_signed_v<U> && sizeof(U) == sizeof(int64_t), bool> = true>
+    inline constexpr char *itoa(T &&val, char *buf) noexcept
+    {
+        unsigned sign = val < 0;
+        uint64_t uval = static_cast<uint64_t>(val);
+        *buf = '-';
+        return itoa(sign ? static_cast<uint64_t>(~uval + 1) : uval, buf + sign);
+    }
+
+} // namespace charconv
+
 class Serializer final
 {
 public:
@@ -872,13 +1216,7 @@ protected:
         }
 
         char *buffer = reinterpret_cast<char *>(_buffer);
-        char *buffer_e = reinterpret_cast<char *>(_buffer_e);
-        const auto [ptr, ec] = std::to_chars(buffer, buffer_e, value);
-        if (ec != std::errc()) [[unlikely]]
-        {
-            error(static_cast<int>(ec));
-            return false;
-        }
+        char* ptr = charconv::itoa(std::forward<T>(value), buffer);
         _buffer = reinterpret_cast<unsigned char *>(ptr);
 
         return true;
