@@ -60,8 +60,8 @@ public:
             return STATUS(ENXIO, "Sensor is already initialized or in an invalid state");
         }
 
-        _board_type = detectBoard();
-        _board_config = getBoardConfig(_board_type);
+        _board_type = DYN_BOARD_TYPE_FROM_I2C_ONCE;
+        _board_config = DYN_BOARD_CONFIG_FORM_TYPE(_board_type);
         const size_t sr = _board_config.sample_rate;
         _channels = _info.configs["channels"].getValue<int>();
         _buffered_duration = _info.configs["buffered_duration"].getValue<int>();

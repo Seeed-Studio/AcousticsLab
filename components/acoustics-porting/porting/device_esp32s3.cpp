@@ -88,8 +88,7 @@ public:
             return STATUS_OK();
         }
 
-        auto board_type = porting::detectBoard();
-        _board_config = porting::getBoardConfig(board_type);
+        _board_config = DYN_BOARD_CONFIG_FORM_TYPE(DYN_BOARD_TYPE_FROM_I2C_ONCE);
         _info.name = _board_config.name;
         for (size_t i = 0; i < _board_config.gpio_pins_count; ++i)
         {
