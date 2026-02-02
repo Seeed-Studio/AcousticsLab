@@ -1,4 +1,3 @@
-#include "board/board_config.h"
 #include "board/board_detector.h"
 #include "core/logger.hpp"
 #include "core/status.hpp"
@@ -60,7 +59,7 @@ static size_t getFreeMemorySize() noexcept
 
 static constexpr const char DEVICE_MODEL[] = "ESP32-S3";
 static constexpr const char DEVICE_VERSION[] = "1.0.0";
-static constexpr const char DEVICE_NAME[] = BOARD_DEVICE_NAME;
+static constexpr const char DEVICE_NAME[] = "Unknown";
 static constexpr const size_t DEVICE_MEMORY_SIZE = 8 * 1024 * 1024;
 static constexpr const size_t DEVICE_NAME_LENGTH_MAX = 64;
 

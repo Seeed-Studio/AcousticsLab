@@ -30,6 +30,7 @@ struct BoardConfig
     gpio_num_t i2s_dout;
     i2s_role_t i2s_role;
     uint32_t sample_rate;
+    uint32_t dma_frame_count;
     const int *gpio_pins;
     size_t gpio_pins_count;
 };
@@ -100,19 +101,15 @@ inline const BoardConfig &__DynamicBoardConfigFromType(BoardType type) noexcept
 
     static const BoardConfig configs[] = {
         { BoardType::XIAO_S3, "XIAO ESP32-S3", true, GPIO_NUM_42, GPIO_NUM_41, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_NC,
-            GPIO_NUM_NC, I2S_ROLE_MASTER, 44100, xiao_s3_gpios, 6 },
+            GPIO_NUM_NC, I2S_ROLE_MASTER, 44100, 980, xiao_s3_gpios, 6 },
         { BoardType::RESPEAKER_LITE, "ReSpeaker Lite", false, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_8, GPIO_NUM_7,
-            GPIO_NUM_44, GPIO_NUM_43, I2S_ROLE_SLAVE, 16000, respeaker_lite_gpios, 6 },
+            GPIO_NUM_44, GPIO_NUM_43, I2S_ROLE_SLAVE, 16000, 800, respeaker_lite_gpios, 6 },
         { BoardType::RESPEAKER_XVF3800, "ReSpeaker XVF3800", false, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_8, GPIO_NUM_7,
-            GPIO_NUM_43, GPIO_NUM_44, I2S_ROLE_MASTER, 16000, respeaker_xvf3800_gpios, 5 },
+            GPIO_NUM_43, GPIO_NUM_44, I2S_ROLE_MASTER, 16000, 800, respeaker_xvf3800_gpios, 5 },
     };
 
-    for (const auto &cfg: configs)
-    {
-        if (cfg.type == type)
-            return cfg;
-    }
-    return configs[0]; // Default to ESP32-S3
+    const auto idx = static_cast<size_t>(type);
+    return (idx > 0 && idx <= 3) ? configs[idx - 1] : configs[0];
 }
 
 } // namespace porting

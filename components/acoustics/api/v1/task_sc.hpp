@@ -19,7 +19,6 @@
 #include "hal/engine.hpp"
 #include "hal/sensor.hpp"
 
-#include "board/board_config.h"
 #include "module/module_dag.hpp"
 #include "module/module_node.hpp"
 
@@ -55,6 +54,7 @@ namespace shared {
     inline constexpr const size_t sample_chunk_ms = 100;
     inline constexpr const size_t invoke_pull_ms = 10;
 
+    inline std::atomic<int> sample_rate = 16000;
     inline constexpr const float overlap_ratio_min = 0.f;
     inline constexpr const float overlap_ratio_max = 0.75f;
     inline std::atomic<float> overlap_ratio = 0.5f;
@@ -104,6 +104,7 @@ struct TaskSC final
                         return;
                     }
                     _sr = sr;
+                    shared::sample_rate.store(sr);
                     _fs = _sr * shared::sample_chunk_ms / 1000;
                     LOG(INFO, "Sample rate: %d, Frame size: %zu", _sr, _fs);
                 }
@@ -413,7 +414,7 @@ struct TaskSC final
                 _output = p_out_tsr;
             }
             {
-                _source_rate = BOARD_RAW_SAMPLE_RATE;
+                _source_rate = shared::sample_rate.load();
                 if (_source_rate != MODEL_TARGET_SR)
                 {
                     _needs_resampling = true;

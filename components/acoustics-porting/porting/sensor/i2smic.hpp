@@ -2,7 +2,7 @@
 #ifndef I2SMIC_HPP
 #define I2SMIC_HPP
 
-#include "board/board_config.h"
+#include "board/board_detector.h"
 #include "hal/sensor.hpp"
 
 #include <driver/gpio.h>
@@ -32,21 +32,10 @@ class SensorI2SMic final: public Sensor
 public:
     static inline core::ConfigObjectMap DEFAULT_CONFIGS() noexcept
     {
-#if BOARD_USE_PDM_MODE
-        return { CONFIG_OBJECT_DECL_INTEGER("clk_pin", "Clock pin number", BOARD_PDM_CLK_PIN, 0, 48),
-            CONFIG_OBJECT_DECL_INTEGER("din_pin", "Data pin number", BOARD_PDM_DIN_PIN, 0, 48),
-            CONFIG_OBJECT_DECL_INTEGER("sr", "PCM sample rate in Hz", BOARD_RAW_SAMPLE_RATE, 8000, 48000),
+        return { CONFIG_OBJECT_DECL_INTEGER("sr", "PCM sample rate in Hz", 16000, 8000, 48000),
             CONFIG_OBJECT_DECL_INTEGER("channels", "Number of channels", 1, 1, 1),
             CONFIG_OBJECT_DECL_INTEGER("buffered_duration", "Time duration of buffered data for DMA in seconds", 2, 1,
                 5) };
-#else
-        return { CONFIG_OBJECT_DECL_INTEGER("bclk_pin", "I2S BCLK pin", BOARD_I2S_BCLK_PIN, 0, 48),
-            CONFIG_OBJECT_DECL_INTEGER("ws_pin", "I2S WS/LRCLK pin", BOARD_I2S_WS_PIN, 0, 48),
-            CONFIG_OBJECT_DECL_INTEGER("sr", "PCM sample rate in Hz", BOARD_RAW_SAMPLE_RATE, 8000, 48000),
-            CONFIG_OBJECT_DECL_INTEGER("channels", "Number of channels", 1, 1, 1),
-            CONFIG_OBJECT_DECL_INTEGER("buffered_duration", "Time duration of buffered data for DMA in seconds", 2, 1,
-                5) };
-#endif
     }
 
     SensorI2SMic() noexcept : Sensor(Info(2, "I2S Microphone", Type::Microphone, { DEFAULT_CONFIGS() })) { }
@@ -63,6 +52,7 @@ public:
         _board_type = DYN_BOARD_TYPE_FROM_I2C_ONCE;
         _board_config = DYN_BOARD_CONFIG_FORM_TYPE(_board_type);
         const size_t sr = _board_config.sample_rate;
+        _info.configs["sr"].setValue(static_cast<int>(sr));
         _channels = _info.configs["channels"].getValue<int>();
         _buffered_duration = _info.configs["buffered_duration"].getValue<int>();
         _data_buffer_capacity_frames = _buffered_duration * sr;
@@ -82,7 +72,7 @@ public:
 
         if (!_rx_chan) [[likely]]
         {
-            const uint32_t frames_count = BOARD_DMA_FRAME_COUNT;
+            const uint32_t frames_count = _board_config.dma_frame_count;
             const uint32_t slots_count = _data_buffer_capacity_frames / frames_count;
             LOG(DEBUG,
                 "Creating I2S channel with sample rate %d, buffered frames %d, sync frame count %ld, slots count %ld",
