@@ -1028,9 +1028,8 @@ def build_demo():  # pylint: disable=too-many-locals,too-many-statements
             color="curve",
             x_lim=[0, SENSOR_CACHE["limit"]],
             height=500,
-            queue=False,
             label="Accelerometer Data",
-            show_fullscreen_button=True,
+            # buttons=["fullscreen"],  # Disabled due to Gradio 6.5.1 bug
             show_label=True,
         )
 
