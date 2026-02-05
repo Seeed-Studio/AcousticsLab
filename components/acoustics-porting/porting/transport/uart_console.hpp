@@ -48,12 +48,6 @@ public:
             return STATUS(EIO, "Failed to install USB Serial JTAG driver");
         }
 
-        if (!usb_serial_jtag_is_connected())
-        {
-            LOG(ERROR, "USB Serial JTAG is not connected");
-            return STATUS(ENOTCONN, "USB Serial JTAG is not connected");
-        }
-
         if (!_rx_buffer)
         {
             _rx_buffer = core::RingBuffer<std::byte>::create(_config.rx_buffer_size);

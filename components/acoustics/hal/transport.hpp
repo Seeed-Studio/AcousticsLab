@@ -122,7 +122,7 @@ public:
     {
         if (!initialized()) [[unlikely]]
         {
-            return STATUS(EFAULT, "Transport is not initialized");
+            return STATUS_OK();
         }
         const auto ret = syncReadBuffer();
         if (ret != 0) [[unlikely]]
