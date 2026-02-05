@@ -120,7 +120,20 @@ private:
             }
             if (!console_ptr || !console_ptr->initialized()) [[unlikely]]
             {
-                return STATUS(ENODEV, "Transport with ID " + std::to_string(console) + " is not registered");
+                // Fallback to first available transport as console
+                for (const auto &[id, transport]: transports)
+                {
+                    if (transport && transport->initialized())
+                    {
+                        console_ptr = transport;
+                        LOG(INFO, "Fallback to transport ID=%d as console, original console ID=%d", id, console);
+                        break;
+                    }
+                }
+            }
+            if (!console_ptr || !console_ptr->initialized()) [[unlikely]]
+            {
+                return STATUS(ENODEV, "Console transport is not registered or initialized");
             }
         }
 

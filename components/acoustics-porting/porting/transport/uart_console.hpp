@@ -32,7 +32,7 @@ public:
         return {};
     }
 
-    TransportUARTConsole() noexcept : Transport(Info(1, "UART Console", Type::UART, { DEFAULT_CONFIGS() })) { }
+    TransportUARTConsole() noexcept : Transport(Info(0, "UART Console", Type::UART, { DEFAULT_CONFIGS() })) { }
 
     core::Status init() noexcept override
     {
@@ -46,12 +46,6 @@ public:
         {
             LOG(ERROR, "Failed to install USB Serial JTAG driver: %s", esp_err_to_name(ret));
             return STATUS(EIO, "Failed to install USB Serial JTAG driver");
-        }
-
-        if (!usb_serial_jtag_is_connected())
-        {
-            LOG(ERROR, "USB Serial JTAG is not connected");
-            return STATUS(ENOTCONN, "USB Serial JTAG is not connected");
         }
 
         if (!_rx_buffer)
@@ -93,6 +87,11 @@ public:
         return STATUS_OK();
     }
 
+    inline bool initialized() const noexcept override
+    {
+        return _info.status >= Status::Idle && usb_serial_jtag_is_connected();
+    }
+
     core::Status updateConfig(const core::ConfigMap &configs) noexcept override
     {
         return STATUS(ENOTSUP, "Update config is not supported for UART transport");
@@ -115,6 +114,10 @@ public:
 
     inline size_t read(void *data, size_t size) noexcept override
     {
+        if (!initialized()) [[unlikely]]
+        {
+            return 0;
+        }
         if (!_rx_buffer) [[unlikely]]
         {
             return 0;
