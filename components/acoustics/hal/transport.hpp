@@ -38,7 +38,7 @@ public:
         return nullptr;
     }
 
-    const TransportMap& getTransports() const noexcept
+    const TransportMap &getTransports() const noexcept
     {
         return _transports;
     }
@@ -96,7 +96,7 @@ public:
     virtual core::Status init() noexcept = 0;
     virtual core::Status deinit() noexcept = 0;
 
-    inline bool initialized() const noexcept
+    virtual inline bool initialized() const noexcept
     {
         return _info.status >= Status::Idle;
     }

@@ -27,7 +27,7 @@
 #ifdef CONTEXT_CONSOLE
 #error "CONTEXT_CONSOLE is already defined. Please ensure it is defined only once."
 #else
-#define CONTEXT_CONSOLE 1
+#define CONTEXT_CONSOLE 0
 #endif
 
 namespace v1 {

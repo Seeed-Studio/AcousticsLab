@@ -33,7 +33,7 @@ public:
         return {};
     }
 
-    TransportUART1() noexcept : Transport(Info(2, "UART 1", Type::UART, { DEFAULT_CONFIGS() })) { }
+    TransportUART1() noexcept : Transport(Info(1, "UART 1", Type::UART, { DEFAULT_CONFIGS() })) { }
 
     core::Status init() noexcept override
     {
