@@ -17,6 +17,19 @@ namespace porting {
 
 enum class BoardType { UNKNOWN = 0, XIAO_S3, RESPEAKER_LITE, RESPEAKER_XVF3800 };
 
+inline BoardType __ConfiguredBoardType() noexcept
+{
+#if defined(PORTING_BOARD_MODEL_RESPEAKER_XVF3800) && PORTING_BOARD_MODEL_RESPEAKER_XVF3800
+    return BoardType::RESPEAKER_XVF3800;
+#elif defined(PORTING_BOARD_MODEL_RESPEAKER_LITE) && PORTING_BOARD_MODEL_RESPEAKER_LITE
+    return BoardType::RESPEAKER_LITE;
+#elif defined(PORTING_BOARD_MODEL_XIAO_S3) && PORTING_BOARD_MODEL_XIAO_S3
+    return BoardType::XIAO_S3;
+#else
+    return BoardType::XIAO_S3;
+#endif
+}
+
 struct BoardConfig
 {
     BoardType type;
@@ -43,6 +56,13 @@ struct BoardConfig
 inline BoardType __DynamicBoardTypeFromI2COnce() noexcept
 {
     static auto type = []() noexcept -> BoardType {
+        const auto configured = __ConfiguredBoardType();
+        if (configured != BoardType::XIAO_S3)
+        {
+            LOG(INFO, "Using configured board type without I2C probe: %d", static_cast<int>(configured));
+            return configured;
+        }
+
         LOG(INFO, "Detecting board type via I2C...");
 
         i2c_master_bus_config_t i2c_cfg = {
@@ -59,12 +79,13 @@ inline BoardType __DynamicBoardTypeFromI2COnce() noexcept
         i2c_master_bus_handle_t bus_handle;
         if (i2c_new_master_bus(&i2c_cfg, &bus_handle) != ESP_OK)
         {
-            LOG(WARNING, "Failed to init I2C, defaulting to XIAO S3");
-            return BoardType::XIAO_S3;
+            LOG(WARNING, "Failed to init I2C, falling back to configured board type: %d",
+                static_cast<int>(configured));
+            return configured;
         }
 
         // Check for ReSpeaker Lite (I2C address 0x42)
-        if (i2c_master_probe(bus_handle, 0x42, 100) == ESP_OK)
+        if (i2c_master_probe(bus_handle, 0x42, 200) == ESP_OK)
         {
             i2c_del_master_bus(bus_handle);
             LOG(INFO, "Detected: ReSpeaker Lite (I2C 0x42)");
@@ -72,7 +93,7 @@ inline BoardType __DynamicBoardTypeFromI2COnce() noexcept
         }
 
         // Check for 0x2C device
-        if (i2c_master_probe(bus_handle, 0x2C, 100) == ESP_OK)
+        if (i2c_master_probe(bus_handle, 0x2C, 200) == ESP_OK)
         {
             i2c_del_master_bus(bus_handle);
             LOG(INFO, "Detected: ReSpeaker XVF3800 (I2C 0x2C)");
@@ -81,8 +102,9 @@ inline BoardType __DynamicBoardTypeFromI2COnce() noexcept
 
         i2c_del_master_bus(bus_handle);
 
-        LOG(INFO, "Default: XIAO ESP32-S3");
-        return BoardType::XIAO_S3;
+        LOG(INFO, "No known I2C board detected, falling back to configured board type: %d",
+            static_cast<int>(configured));
+        return configured;
     }();
 
     return type;
@@ -105,7 +127,7 @@ inline const BoardConfig &__DynamicBoardConfigFromType(BoardType type) noexcept
         { BoardType::RESPEAKER_LITE, "ReSpeaker Lite", false, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_8, GPIO_NUM_7,
             GPIO_NUM_44, GPIO_NUM_43, I2S_ROLE_SLAVE, 16000, 800, respeaker_lite_gpios, 6 },
         { BoardType::RESPEAKER_XVF3800, "ReSpeaker XVF3800", false, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_8, GPIO_NUM_7,
-            GPIO_NUM_43, GPIO_NUM_44, I2S_ROLE_MASTER, 16000, 800, respeaker_xvf3800_gpios, 5 },
+            GPIO_NUM_43, GPIO_NUM_44, I2S_ROLE_SLAVE, 48000, 2400, respeaker_xvf3800_gpios, 5 },
     };
 
     const auto idx = static_cast<size_t>(type);

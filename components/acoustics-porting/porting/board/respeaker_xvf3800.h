@@ -3,8 +3,8 @@
 #define BOARD_RESPEAKER_XVF3800_H
 
 // Board: Seeed Studio ReSpeaker XVF3800
-// Microphone: I2S XMOS (Master Mode)
-// Sample Rate: 16kHz
+// Microphone: I2S XMOS (Slave Mode)
+// Sample Rate: 48kHz
 
 #include <driver/gpio.h>
 #include <driver/i2s_std.h>
@@ -15,7 +15,7 @@
 #define BOARD_USE_I2S_STD_MODE 1
 
 // I2S Role
-#define BOARD_I2S_ROLE I2S_ROLE_MASTER
+#define BOARD_I2S_ROLE I2S_ROLE_SLAVE
 
 // I2S Standard Mode Pins
 #define BOARD_I2S_BCLK_PIN GPIO_NUM_8
@@ -24,10 +24,10 @@
 #define BOARD_I2S_DOUT_PIN GPIO_NUM_44
 
 // Sample Rate
-#define BOARD_RAW_SAMPLE_RATE 16000
+#define BOARD_RAW_SAMPLE_RATE 48000
 
 // DMA Configuration
-#define BOARD_DMA_FRAME_COUNT 800
+#define BOARD_DMA_FRAME_COUNT 2400
 
 // GPIO Pins for device control
 #define BOARD_GPIO_PINS { 1, 3, 4, 43, 44 }

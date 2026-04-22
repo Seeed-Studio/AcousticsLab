@@ -55,6 +55,12 @@ public:
         _info.configs["sr"].setValue(static_cast<int>(sr));
         _channels = _info.configs["channels"].getValue<int>();
         _buffered_duration = _info.configs["buffered_duration"].getValue<int>();
+        if (_board_config.use_pdm && _buffered_duration > 1)
+        {
+            _buffered_duration = 1.5;
+            _info.configs["buffered_duration"].setValue(static_cast<int>(_buffered_duration));
+            LOG(INFO, "Using reduced DMA buffered duration for PDM microphone: %zu second", _buffered_duration);
+        }
         _data_buffer_capacity_frames = _buffered_duration * sr;
 
         if (!_data_buffer) [[likely]]

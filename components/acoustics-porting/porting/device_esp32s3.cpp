@@ -66,6 +66,12 @@ static constexpr const size_t DEVICE_NAME_LENGTH_MAX = 64;
 static constexpr const char DEFAULT_DEVICE_NAME_PATH[] = ".device_name";
 static constexpr const char DEFAULT_BOOT_COUNT_PATH[] = ".boot_count";
 
+static bool isAudioSignalPin(const BoardConfig &config, int pin) noexcept
+{
+    return pin == config.pdm_clk || pin == config.pdm_din || pin == config.i2s_bclk || pin == config.i2s_ws
+        || pin == config.i2s_din || pin == config.i2s_dout;
+}
+
 class DeviceESP32S3 final: public hal::Device
 {
 public:
@@ -89,11 +95,23 @@ public:
 
         _board_config = DYN_BOARD_CONFIG_FORM_TYPE(DYN_BOARD_TYPE_FROM_I2C_ONCE);
         _info.name = _board_config.name;
-        for (size_t i = 0; i < _board_config.gpio_pins_count; ++i)
+        if (_board_config.type == BoardType::XIAO_S3)
         {
-            int pin = _board_config.gpio_pins[i];
-            gpio_set_direction(static_cast<gpio_num_t>(pin), GPIO_MODE_OUTPUT);
-            gpio_set_pull_mode(static_cast<gpio_num_t>(pin), GPIO_FLOATING);
+            for (size_t i = 0; i < _board_config.gpio_pins_count; ++i)
+            {
+                int pin = _board_config.gpio_pins[i];
+                if (isAudioSignalPin(_board_config, pin))
+                {
+                    LOG(DEBUG, "Skipping GPIO%d device output init because it is used by audio interface", pin);
+                    continue;
+                }
+                gpio_set_direction(static_cast<gpio_num_t>(pin), GPIO_MODE_OUTPUT);
+                gpio_set_pull_mode(static_cast<gpio_num_t>(pin), GPIO_FLOATING);
+            }
+        }
+        else
+        {
+            LOG(INFO, "Skipping board GPIO output init for %s", _board_config.name);
         }
 
 
