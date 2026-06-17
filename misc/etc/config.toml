@@ -1,0 +1,9 @@
+[mic.mic]
+kind = "first_available"
+
+[mic.channel]
+kind = "auto"
+
+[inference]
+hop_samples = 44100
+top_k = 20

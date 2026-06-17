@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package acoustics;
+
+// InferenceFrame -- one classification result emitted at the configured
+// inference stride.  `top_k` carries the top N classes (per
+// InferenceCfg.top_k); `head_id` identifies which Head produced this so
+// downstream consumers can disambiguate when the operator swaps
+// weights.
+//
+// Wire-format invariants:
+//   * field numbers 1-15 are reserved for hot fields (1-byte tags)
+//   * adding a field at 16+ is non-breaking
+//   * renumbering or removing is a wire-breaking change
+//
+// Additive scalars are `optional` so receivers can distinguish "field
+// absent" from "field zero" (proto3 default-suppression).
+//
+// `t_us_capture_monotonic` and `t_us_publish_unix` disambiguate clock
+// domains.  No `reserved` block: with no third-party peers,
+// wire-breaking renumbers ship as fresh-start replacements.
+//   * `t_us_capture_monotonic` -- CLOCK_MONOTONIC microseconds
+//     mapped to `common::time::CaptureTime`.  Sampled at the audio
+//     producer's `Writer::push` callback via a `BufferTimingAnchor`
+//     and projected to the FIRST 44.1 kHz sample of the inference
+//     window (window-start convention: "this prediction is about
+//     audio that started at t").  Pairs with
+//     `AudioFrame.t_us_capture_monotonic` to within ~1 ms so
+//     clients can wall-align inference frames to the audio they
+//     classify.
+//   * `t_us_publish_unix` -- wall-clock microseconds since the Unix
+//     epoch, mapped to `common::time::WallTime`.  Sampled at engine
+//     emit time; intended for cross-process correlation, not audio
+//     synchronisation.
+// The `window_start_ns` field was load-bearing for nothing in
+// production (no consumer queried it post-decode); dropped.
+//
+// `head_version` carries the `common::version::ResourceVersion` of the
+// head snapshot that produced this frame's logits.  Operators correlate
+// `head_id` (which weights) with `head_version` (which generation of
+// those weights), closing the "head_id mixes backbone-A + head-B" risk.
+message InferenceFrame {
+  uint64 seq = 1;
+  optional uint64 t_us_capture_monotonic = 2;
+  optional uint64 t_us_publish_unix      = 7;
+  repeated TopK top_k = 4;
+  optional string head_id = 5;
+  // Atomic with the snapshot via `HotHead::snapshot_with_version`.
+  // Always present in production frames; `optional` only so absence is
+  // a structural signal rather than the zero sentinel.
+  optional uint64 head_version = 9;
+}
+
+message TopK {
+  uint32 class_idx = 1;
+  string label     = 2;
+  float  prob      = 3;
+}

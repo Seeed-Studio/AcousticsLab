@@ -1,0 +1,9 @@
+*.tar.gz
+
+/sc_preproc_model/
+
+/metadata.json
+/model.json
+
+/group1-shard1of2
+/group1-shard2of2

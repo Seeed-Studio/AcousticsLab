@@ -1,0 +1,7 @@
+disallowed-types = [
+    { path = "std::sync::Mutex", reason = "use parking_lot::Mutex (workspace convention; non-poisoning, faster, no Result<Guard>)" },
+]
+
+disallowed-methods = [
+    { path = "std::fs::write", reason = "use file_mgr::fs_atomic::put_atomic; raw writes lose the tempfile + rename + dir-fsync atomicity" },
+]

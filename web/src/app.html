@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="AcousticsLab: a local acoustic classifier operator console for live spectrogram visualization, dataset slicing, head training, and hot-swap deployment."
+    />
+    <title>AcousticsLab</title>
+    <script>
+      (function () {
+        try {
+          var m = localStorage.getItem('acoustics-theme');
+          var auto = m !== 'light' && m !== 'dark';
+          var dark = m === 'dark' || (auto && matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          if (dark) root.classList.add('dark');
+          root.style.colorScheme = dark ? 'dark' : 'light';
+        } catch {}
+      })();
+    </script>
+    <script>
+      (function () {
+        try {
+          var supported = ['en'];
+          var m = localStorage.getItem('acoustics-locale');
+          if (m && supported.indexOf(m) >= 0) {
+            document.documentElement.lang = m;
+            return;
+          }
+          var langs =
+            navigator.languages && navigator.languages.length
+              ? navigator.languages
+              : navigator.language
+                ? [navigator.language]
+                : [];
+          for (var i = 0; i < langs.length; i++) {
+            if (supported.indexOf(langs[i]) >= 0) {
+              document.documentElement.lang = langs[i];
+              return;
+            }
+          }
+        } catch {}
+      })();
+    </script>
+    %sveltekit.head%
+  </head>
+  <body class="min-h-screen bg-page text-fg antialiased">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

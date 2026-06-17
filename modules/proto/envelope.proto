@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package acoustics;
+
+import "audio_stream.proto";
+import "inference_stream.proto";
+
+// Top-level wire envelope for every WS / UDS streaming write.  All
+// clients decode the envelope first and dispatch on the `payload`
+// oneof.
+//
+// ## Field numbering convention
+//
+//   * 1-9   reserved for envelope metadata (cursor / ack-id / flags
+//           if added later).  Each costs a 1-byte tag.
+//   * 10-15 reserved for streaming payload variants (1-byte tags;
+//           hot path).
+//   * 16+   reserved for control-plane variants (heartbeat, status
+//           added when streaming control becomes a thing; today's
+//           heartbeat is REST-only via `GET /api/v1/status`).
+//
+// ## `oneof` semantics
+//
+// At-most-one variant set per envelope.  Receivers that see an unknown
+// variant tag (forward-compat) MAY drop the envelope.
+//
+// ## Per-message overhead
+//
+// `oneof payload` discriminator is 1 byte (tag for field 10/11) +
+// 1-2 bytes for the inner length varint.  Steady-state envelope
+// overhead is ~2 bytes per message; at 4 Hz inference + 50 Hz audio
+// that is ~108 B/s of envelope tax -- single-digit ppm of broadcast
+// bandwidth.
+message Envelope {
+  oneof payload {
+    AudioFrame     audio     = 10;
+    InferenceFrame inference = 11;
+    // Reserved for future:
+    //   Heartbeat  heartbeat = 12;
+    //   Status     status    = 13;
+    // Adding these is additive -- receivers that don't recognize the
+    // tag skip the variant per proto3 unknown-field semantics.
+  }
+}

@@ -1,0 +1,18 @@
+# Node
+node_modules/
+*-lock.json
+
+# SvelteKit build output
+.svelte-kit/
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vite cache
+.vite/

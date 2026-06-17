@@ -1,0 +1,455 @@
+@import 'tailwindcss';
+
+/* `.dark` on any ancestor flips the token overrides below. `:where(...)` keeps specificity at 0
+   so `dark:` variants don't fight author utilities later in the cascade. `dark:bg-foo` is an
+   escape hatch; most styling uses semantic tokens that flip automatically without a `dark:` prefix. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* Status "ok" pulse. Reaches opacity 0 exactly at 100% (unlike `animate-ping`, which holds
+     scale(2)/opacity(0) for the last 25% and reads as discrete blinks) so pulses ripple gaplessly.
+     2s is calmer than Tailwind's 1s. */
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+
+  /* Semantic colour tokens. Components reference these via Tailwind utilities (bg-surface, text-fg,
+     border-line, …); the .dark block below redefines the values per-mode and utilities follow.
+
+     Naming convention:
+     - `bg-*` surfaces; `text-*` ink; `border-line[-strong|-subtle]` hairlines
+     - `*-accent*` interactive (blue), the ONE hue meaning "the operator can act on this"
+     - `*-success|-warning|-danger*` status families, each with six variants (solid / solid-fg /
+       soft / soft-fg / line / dot)
+     - `*-disabled*` muted controls
+
+     Cross-mode invariants:
+     - `--color-canvas` is the waveform + spectrogram floor; its value is mirrored into the
+       spectrogram LUT JS-side, so changing it here must be changed there too.
+     - `--color-accent` stays `#3b82f6` in both modes (blue reads on either substrate, and a
+       constant accent keeps cross-mode focus-ring screenshots matching).
+     - Status DOT colours read on both backgrounds without flipping; only the SOFT (bg + border +
+       text) variants flip per mode. */
+
+  /* Surfaces */
+  --color-page: #fafafa; /* zinc-50 */
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f4f5; /* zinc-100 */
+  --color-canvas: #fafafa; /* pinned to waveform/spectrogram floor */
+  --color-canvas-mask: rgb(24 24 27 / 0.4); /* zinc-900/40, trim-waveform overlay */
+  --color-elevated: #ffffff; /* popovers, dropdowns, modal frame */
+  --color-scrim: rgb(24 24 27 / 0.5); /* zinc-900/50, modal backdrop */
+
+  /* Lines (hairline borders + dividers) */
+  --color-line: #e4e4e7; /* zinc-200 */
+  --color-line-strong: #d4d4d8; /* zinc-300 */
+  --color-line-subtle: #f4f4f5; /* zinc-100 */
+
+  /* Ink (text) */
+  --color-fg: #18181b; /* zinc-900 */
+  --color-fg-secondary: #3f3f46; /* zinc-700 */
+  --color-fg-muted: #71717a; /* zinc-500 */
+  --color-fg-subtle: #a1a1aa; /* zinc-400 */
+  --color-fg-on-accent: #ffffff; /* text on saturated accent / status fills */
+
+  /* Interactive (blue) */
+  --color-accent: #3b82f6; /* blue-500, constant across modes */
+  --color-accent-hover: #2563eb; /* blue-600 */
+  --color-accent-soft: #eff6ff; /* blue-50 */
+  --color-accent-soft-fg: #1e40af; /* blue-800 */
+  --color-accent-line: #bfdbfe; /* blue-200, soft-bg companion border */
+  --color-accent-tint: #e5f0fe; /* ~blue-75 (between blue-50 and blue-100): a barely-there step
+                                   above accent-soft for a badge fill that sits ON an accent-soft
+                                   surface, kept at the quiet floor of perceptibility */
+
+  /* Status: success (emerald) */
+  --color-success: #10b981; /* emerald-500 */
+  --color-success-fg: #ffffff;
+  --color-success-soft: #ecfdf5; /* emerald-50 */
+  --color-success-soft-fg: #065f46; /* emerald-800 */
+  --color-success-line: #a7f3d0; /* emerald-200 */
+  --color-success-dot: #10b981;
+
+  /* Status: warning (amber) */
+  --color-warning: #d97706; /* amber-600 */
+  --color-warning-hover: #b45309; /* amber-700, one tier darker for hover */
+  --color-warning-fg: #ffffff;
+  --color-warning-soft: #fffbeb; /* amber-50 */
+  --color-warning-soft-fg: #78350f; /* amber-900 */
+  --color-warning-line: #fde68a; /* amber-200 */
+  --color-warning-dot: #f59e0b; /* amber-500 */
+
+  /* Status: danger (rose) */
+  --color-danger: #e11d48; /* rose-600 */
+  --color-danger-hover: #be123c; /* rose-700, one tier darker for hover */
+  --color-danger-fg: #ffffff;
+  --color-danger-soft: #fff1f2; /* rose-50 */
+  --color-danger-soft-fg: #881337; /* rose-900 */
+  --color-danger-line: #fecdd3; /* rose-200 */
+  --color-danger-dot: #f43f5e; /* rose-500, also drives the aria-invalid focus ring */
+
+  /* Disabled controls */
+  --color-disabled: #e4e4e7; /* zinc-200 */
+  --color-disabled-fg: #a1a1aa; /* zinc-400 */
+
+  /* Elevations. Light mode uses Tailwind's classic drop-shadow recipe. Dark mode (below) swaps to
+     an inset translucent-white hairline + glow, since drop shadows are near-invisible on a dark
+     substrate. */
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-popover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* Dark-mode token overrides. Every @theme variable above must reappear here one-for-one; a missing
+   dark entry silently falls back to the light value and that surface renders mid-flip.
+
+   Dark anchor: page (zinc-950) bottoms the depth stack; surface (zinc-900) is one tier above, as
+   white is above zinc-50 in light; surface-2 (zinc-800) is the recessed/nested tier. Canvas
+   (#0a0a0a) sits a hair below page so the waveform/spectrogram reads as "the data surface" against
+   a bg-surface (zinc-900) panel without a visible border. Spectrogram peak (#f4f4f5) matches
+   --color-fg so peak ink density equals body-text density, the same parity as light.
+
+   Status soft variants use translucent dark-tinted backgrounds (e.g. rose-950 at 40%) rather than
+   saturated mid-tones (rose/amber/emerald-200), which would draw the eye off content on a dark page.
+   Companion text is a -300 tone (L*≈80), which passes WCAG AA (≥4.5:1) against the tinted bg without
+   the glare of a -200 tone. */
+.dark {
+  --color-page: #09090b; /* zinc-950 */
+  --color-surface: #18181b; /* zinc-900 */
+  --color-surface-2: #27272a; /* zinc-800 */
+  --color-canvas: #0a0a0a; /* waveform/spectrogram floor (dark) */
+  --color-canvas-mask: rgb(
+    244 244 245 / 0.2
+  ); /* light wash atop the near-black canvas (a dark overlay would be invisible). Alpha tuned so the
+        unselected-region lift produces a ~50 RGB step from the canvas floor, matching the contrast
+        reduction the light-mode zinc-900/40 mask gives, so selection discrimination reads alike in either mode. */
+  --color-elevated: #18181b; /* zinc-900 */
+  --color-scrim: rgb(0 0 0 / 0.6); /* deeper than light's 50% for the dark substrate */
+
+  --color-line: #27272a; /* zinc-800 */
+  --color-line-strong: #3f3f46; /* zinc-700 */
+  --color-line-subtle: rgb(39 39 42 / 0.6); /* zinc-800 @ 60%, nearly-invisible inner divider */
+
+  --color-fg: #f4f4f5; /* zinc-100 */
+  --color-fg-secondary: #d4d4d8; /* zinc-300 */
+  --color-fg-muted: #a1a1aa; /* zinc-400 */
+  --color-fg-subtle: #71717a; /* zinc-500 */
+  --color-fg-on-accent: #ffffff;
+
+  --color-accent: #3b82f6; /* blue-500, unchanged */
+  --color-accent-hover: #60a5fa; /* blue-400, lighter for hover on dark */
+  --color-accent-soft: rgb(23 37 84 / 0.4); /* blue-950 @ 40% */
+  --color-accent-soft-fg: #93c5fd; /* blue-300 */
+  --color-accent-line: rgb(30 64 175 / 0.5); /* blue-800 @ 50% */
+  --color-accent-tint: rgb(27 48 111 / 0.42); /* ~blue-925 @ 42%, dark analog of ~blue-75 */
+
+  --color-success: #10b981; /* unchanged */
+  --color-success-fg: #ffffff;
+  --color-success-soft: rgb(2 44 34 / 0.4); /* emerald-950 @ 40% */
+  --color-success-soft-fg: #6ee7b7; /* emerald-300 */
+  --color-success-line: rgb(6 95 70 / 0.5); /* emerald-800 @ 50% */
+  --color-success-dot: #10b981;
+
+  --color-warning: #d97706; /* unchanged */
+  --color-warning-hover: #f59e0b; /* amber-500, one tier lighter for hover on dark */
+  --color-warning-fg: #ffffff;
+  --color-warning-soft: rgb(69 26 3 / 0.4); /* amber-950 @ 40% */
+  --color-warning-soft-fg: #fcd34d; /* amber-300 */
+  --color-warning-line: rgb(120 53 15 / 0.5); /* amber-900 @ 50% */
+  --color-warning-dot: #f59e0b;
+
+  --color-danger: #e11d48; /* unchanged */
+  --color-danger-hover: #f43f5e; /* rose-500, one tier lighter for hover on dark */
+  --color-danger-fg: #ffffff;
+  --color-danger-soft: rgb(76 5 25 / 0.4); /* rose-950 @ 40% */
+  --color-danger-soft-fg: #fda4af; /* rose-300 */
+  --color-danger-line: rgb(159 18 57 / 0.5); /* rose-800 @ 50% */
+  --color-danger-dot: #f43f5e;
+
+  --color-disabled: #27272a; /* zinc-800 */
+  --color-disabled-fg: #52525b; /* zinc-600 */
+
+  /* Inset hairline carries the "lifted off substrate" read on dark; the outer drop shadow adds a
+     soft halo beneath modals/popovers so they still register as floating above the page chrome. */
+  --shadow-card: inset 0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-popover: inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 12px 32px rgb(0 0 0 / 0.5);
+  --shadow-modal: inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 20px 48px rgb(0 0 0 / 0.6);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* `color-scheme` lives on the root element ONLY. The first-paint script in app.html and the theme
+   store both set an inline single-mode `color-scheme` on `documentElement`, which overrides this
+   rule on `html` but NOT on a separate `body` declaration; with `body` also declared `light dark`
+   it would keep resolving native controls/scrollbars by the OS preference (dark scrollbars for a
+   light app on a dark-OS machine).
+   Declaring only on `:root` keeps the JS-disabled OS fallback while letting the inline override
+   inherit down to `body` and descendants, so native chrome stays in step with the app's mode. */
+html {
+  color-scheme: light dark;
+}
+
+/* Shared fixed height for the visualization + inference panes at EVERY breakpoint, not just where
+   they share a grid row (lg+). When stacked single-column (<lg) an explicit height is still required:
+   otherwise the canvases' DPR-sized width/height attributes feed their intrinsic aspect ratio
+   (≈4.46:1) back into content sizing, so panel height tracks viewport width and the panels
+   shrink/grow during a window drag. Pinning forces both layouts to one vertical budget.
+
+   Derivation (px), with the card body's asymmetric `pt-3.5 pb-5`: the 14px top inset is 6px tighter
+   than the sides to cancel the optical gap above a `text-sm` heading cap (for 14/20 SF Pro Text the
+   half-leading 1.5 + ascent-above-cap 4.14 ≈ 5.6px sit above the cap, so pt-3.5 lands the cap top at
+   ~20px, matching the side ink within 0.5px):
+     border top 1 + pt-3.5 14 + header 32 (text-sm 20 + mb-3 12)
+     + waveform 179 + gap-2 8 + spectro 179 + pb-5 20 + border bot 1  = 434px = 27.125rem
+   Waveform and spectrogram each take `flex-1 min-h-0`, splitting the inner 366px 50/50; the
+   inference pane absorbs overflow via `flex-1 min-h-0 overflow-y-auto` so a long Top-K never inflates
+   it. Both panes stay the same height as each other in either layout. */
+:root {
+  --vis-panel-h: 27.125rem;
+
+  /* Per-side gap between any floating surface (modal, popover, tip panel) and the viewport edge.
+     Each such surface subtracts twice this value from its effective width so the card never bleeds
+     to the edges on a narrow phone (reads as a card, not a fullscreen takeover). Hoisted so a
+     "more breathing room" change lands in one place. */
+  --popover-edge-inset: 1rem;
+}
+
+/* Squircle corner curves on every rounded element via CSS Corner Shaping (a smoother superellipse
+   than the circular border-radius arc). Browsers without support silently fall back to circular
+   curves, so this is purely additive. */
+*,
+*::before,
+*::after {
+  corner-shape: squircle;
+}
+
+/* Pill/circular shapes keep their perfect-circular arcs; squircle on a maxed-out border-radius
+   gives a subtly different cap curve that breaks the "pill" visual identity. */
+.rounded-full,
+.rounded-full::before,
+.rounded-full::after {
+  corner-shape: round;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Keyboard focus indicator: accent at 60% alpha. No border-radius override needed; browsers run an
+   offset outline around the element's own radius, so rounded controls get a matching shape for free.
+   `outline-offset: 1px` (not 2px): a 2px gap reads as a "double border" against the input's own
+   line-coloured stroke. `color-mix` resolves at paint time, so the colour follows --color-accent
+   across modes without a per-mode rule. */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
+/* Text inputs and custom-styled selects use a tighter halo focus ring instead of the offset outline
+   above. The halo sits flush against the element's own border (0 gap) so the focus state reads as
+   the input shape, just thicker, not a separate ring floating beside it. Buttons/links keep the
+   global outline because a halo against a filled bg would merge with it or look muddy. */
+input:focus-visible,
+textarea:focus-visible,
+.select-chevron:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+/* Invalid-state focus override: same halo geometry, danger tinting, so an `aria-invalid="true"`
+   input shows the focus indicator AS an error rather than the calm accent. Must stay in unlayered
+   base CSS: the accent rule above is also unlayered, and unlayered styles beat layered ones for
+   normal weight regardless of specificity, so a Tailwind `focus-visible:border-danger-*` utility
+   (in `@layer utilities`) could never win against it. The attribute selector adds one specificity
+   step over `input:focus-visible` so this wins for invalid inputs. `--color-danger-dot` (rose-500)
+   stays constant across modes so the indicator reads consistently. */
+input[aria-invalid='true']:focus-visible,
+textarea[aria-invalid='true']:focus-visible {
+  border-color: var(--color-danger-dot);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger-dot) 18%, transparent);
+}
+
+/* Range inputs carry their own focus treatment on the thumb pseudo-elements; the global outline
+   would render around the whole hit-area and read as noise. */
+input[type='range']:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* Strip the browser's appearance and paint our own dropdown chevron so every select reads
+   identically. <select> backgrounds honour no CSS `currentColor`, so the stroke colour is baked
+   into the SVG data URL and we ship two URL-encoded copies swapped via the `.dark` ancestor: light
+   uses #71717a, dark #a1a1aa (each is --color-fg-muted in its mode). */
+.select-chevron {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%2371717a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 5 6 8 9 5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.55rem center;
+  background-size: 0.75rem;
+  padding-right: 1.875rem;
+}
+.dark .select-chevron {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23a1a1aa' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 5 6 8 9 5'/%3E%3C/svg%3E");
+}
+
+/* Selects opt out of the outline focus (the halo above wins). Chromium matches :focus-visible on a
+   <select> as soon as it's clicked, so the outline would flash behind the open popup; the popup plus
+   the tinted border carry enough focus cue. */
+.select-chevron:focus,
+.select-chevron:focus-visible {
+  outline: none;
+}
+
+/* Scroll-aware fade masks for overflowing lists. The owner toggles these classes from JS based on
+   scrollTop/scrollHeight so the fade appears only in the direction where more content is hidden. The
+   28px gradient reads as a "more above/below" affordance better than a hairline. */
+.fade-edge-top {
+  mask-image: linear-gradient(to bottom, transparent 0, black 28px, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 28px, black 100%);
+}
+.fade-edge-bottom {
+  mask-image: linear-gradient(to top, transparent 0, black 28px, black 100%);
+  -webkit-mask-image: linear-gradient(to top, transparent 0, black 28px, black 100%);
+}
+.fade-edge-top.fade-edge-bottom {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 28px,
+    black calc(100% - 28px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 28px,
+    black calc(100% - 28px),
+    transparent 100%
+  );
+}
+
+/* Normalized range slider. Native rendering diverges between Chromium and Firefox; collapse the
+   differences so every slider shares one track height, thumb size, hover feedback, and focus ring.
+   Input height is tuned to a text-xs/py-1.5/1px-border select so sliders and selects share row
+   baselines side-by-side. */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 1.875rem; /* 30px, matches select height */
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+input[type='range']:focus {
+  outline: none;
+}
+
+/* Filled portion of the track. The component sets `--slider-percent: NN%` inline so Chrome paints a
+   two-stop gradient on the runnable-track; Firefox uses its dedicated ::-moz-range-progress pseudo.
+   The 6px track gives the slider weight comparable to the 30px-tall selects beside it. Colours use
+   the accent + line tokens so it flips per mode without an extra rule. */
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  corner-shape: round;
+  background: linear-gradient(
+    to right,
+    var(--color-accent) 0,
+    var(--color-accent) var(--slider-percent, 0%),
+    var(--color-line) var(--slider-percent, 0%),
+    var(--color-line) 100%
+  );
+}
+input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  corner-shape: round;
+  background: var(--color-line);
+}
+input[type='range']::-moz-range-progress {
+  height: 6px;
+  border-radius: 9999px;
+  corner-shape: round;
+  background: var(--color-accent);
+}
+
+/* Thumb border tracks `--color-surface` so the ring around the saturated accent thumb reads as
+   breathing room against the surrounding panel in either mode. The drop shadow is barely visible on
+   dark; kept for the subtle "thumb above the track" affordance in light. */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  corner-shape: round;
+  background: var(--color-accent);
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
+  /* Centre the 16 px thumb on the 6 px track: shift up by (16-6)/2 = 5 px. */
+  margin-top: -5px;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  corner-shape: round;
+  background: var(--color-accent);
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+input[type='range']:hover::-webkit-slider-thumb {
+  transform: scale(1.08);
+}
+input[type='range']:hover::-moz-range-thumb {
+  transform: scale(1.08);
+}
+
+input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+input[type='range']:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+/* Disabled state uses cursor + thumb-colour cues only, no element-level opacity: an opacity-dim
+   container already wraps the slider during auto-apply, and stacking opacities would darken it past
+   parity with the muted selects. `cursor: wait` matches the selects' `disabled:cursor-wait`. */
+input[type='range']:disabled {
+  cursor: wait;
+}
+input[type='range']:disabled::-webkit-slider-thumb {
+  background: var(--color-fg-subtle);
+}
+input[type='range']:disabled::-moz-range-thumb {
+  background: var(--color-fg-subtle);
+}

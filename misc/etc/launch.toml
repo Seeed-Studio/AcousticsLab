@@ -1,0 +1,74 @@
+## Linux first-choice ALSA candidate.  Compiled only with
+## `--features alsa-real`; otherwise FirstAvailable falls through to
+## the mock candidate below.  Replace `hw_spec` to match your
+## hardware -- `arecord -L` enumerates available capture PCMs.
+[[mic.candidates]]
+id = "linux-default"
+channels = [0]
+
+[mic.candidates.source]
+kind = "alsa"
+hw_spec = "hw:CARD=EarPods,DEV=0"
+# 960 frames at 48 kHz is 20 ms, matching the Opus stream frame.
+period_size = 960
+buffer_size = 3840
+
+[[mic.candidates]]
+id = "default-mock"
+channels = [0]
+
+[mic.candidates.source]
+kind = "mock"
+period_size = 512
+sample_rate = 44100
+
+[[mic.candidates.source.waveforms]]
+kind = "sine"
+freq_hz = 1000.0
+amplitude = 0.25
+
+# Raw inference output: a length-prefixed protobuf Envelope stream of
+# results for other local processes to consume (no WebSocket ceremony).
+# Omit this whole section to bind no raw socket -- the WebSocket
+# `/stream/infer` endpoint on `[api]` still serves clients.  The
+# listener is connection-capped (16) internally.
+[output.inference]
+uds_path = "misc/share/acousticsd-result.sock"
+uds_mode = 438
+
+# HTTP API + WebSocket streams (/stream/audio, /stream/infer) + SSE.
+# Configure a TCP bind (browsers/LAN) and/or a UDS path (local tools);
+# at least one is required.  The browser web UI can only reach the TCP
+# bind, so it ships active here.
+[api]
+tcp_bind = "127.0.0.1:8787"
+broadcast_capacity = 64
+# Serve the same HTTP/WS surface over a local Unix socket too
+# (optional; uncomment both lines to enable):
+# uds_path = "misc/share/acousticsd-api.sock"
+# uds_mode = 438
+# Cross-origin handling (HTTP CORS + WebSocket Origin filtering) is
+# NOT done by the daemon -- front it with a reverse proxy that owns
+# TLS/auth/CORS, or serve the web UI same-origin.  `[api.tcp_policy]`
+# (optional) still tunes the WS connection cap + subprotocol gate.
+
+[[backbone.candidates]]
+kind = "rknn"
+path = "misc/backbones/backbone.rknn"
+
+[[backbone.candidates]]
+kind = "burn"
+path = "misc/backbones/backbone.mpk"
+
+[head.default]
+path = "misc/heads/default/head.mpk"
+labels_path = "misc/heads/default/labels.txt"
+
+[training_defaults]
+epochs = 50
+batch_size = 16
+learning_rate_e6 = 100
+
+[file]
+max_upload_bytes = 268435456
+max_concurrent_uploads = 4
