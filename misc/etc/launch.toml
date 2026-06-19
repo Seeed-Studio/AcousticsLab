@@ -33,7 +33,7 @@ amplitude = 0.25
 # `/stream/infer` endpoint on `[api]` still serves clients.  The
 # listener is connection-capped (16) internally.
 [output.inference]
-uds_path = "misc/share/acousticsd-result.sock"
+uds_path = "misc/share/acousticslabd-result.sock"
 uds_mode = 438
 
 # HTTP API + WebSocket streams (/stream/audio, /stream/infer) + SSE.
@@ -45,7 +45,7 @@ tcp_bind = "127.0.0.1:8787"
 broadcast_capacity = 64
 # Serve the same HTTP/WS surface over a local Unix socket too
 # (optional; uncomment both lines to enable):
-# uds_path = "misc/share/acousticsd-api.sock"
+# uds_path = "misc/share/acousticslabd-api.sock"
 # uds_mode = 438
 # Cross-origin handling (HTTP CORS + WebSocket Origin filtering) is
 # NOT done by the daemon -- front it with a reverse proxy that owns

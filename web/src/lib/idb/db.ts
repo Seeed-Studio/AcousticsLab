@@ -4,7 +4,7 @@ import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb';
 // sha256 is the id, daemon filename `<sha>.wav`, and cache key at once, so re-upload is idempotent.
 // Spectrogram PNGs bake palette per theme, so each hash is cached per-mode (light/dark separate stores).
 
-export const DB_NAME = 'acoustics-lab';
+export const DB_NAME = 'acousticslab';
 export const DB_VERSION = 8;
 
 export const STORE_CATEGORIES = 'categories' as const;

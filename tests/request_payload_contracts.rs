@@ -7,7 +7,7 @@
 
 #![allow(clippy::disallowed_methods)]
 
-use acoustics_lab::file_mgr::{
+use acousticslab::file_mgr::{
     ConvertRequest, ConverterPath, LabelsFormat, MAX_BATCH_SIZE, MAX_EPOCHS, MAX_LEARNING_RATE,
     TrainRequest, TrainingCfg, canonical_training_cfg_sha256, from_manifest_value,
     to_manifest_value, validate_convert_request, validate_training_cfg,

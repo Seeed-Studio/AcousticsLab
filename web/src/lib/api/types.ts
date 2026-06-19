@@ -1,4 +1,4 @@
-// Mirrors the acousticsd REST contract; the Rust modules are authoritative.
+// Mirrors the acousticslabd REST contract; the Rust modules are authoritative.
 
 export type Uuid = string;
 export type Rfc3339 = string;

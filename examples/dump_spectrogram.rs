@@ -10,8 +10,8 @@
 
 use std::io::Read;
 
-use acoustics_lab::common::dims::{NBins, NFrames, WaveformLen};
-use acoustics_lab::preproc::Preproc;
+use acousticslab::common::dims::{NBins, NFrames, WaveformLen};
+use acousticslab::preproc::Preproc;
 
 fn main() -> std::process::ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();

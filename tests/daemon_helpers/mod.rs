@@ -1,4 +1,4 @@
-//! Daemon integration-test harness: boots the production `acousticsd` binary as a
+//! Daemon integration-test harness: boots the production `acousticslabd` binary as a
 //! child process. Out-of-process to exercise the real `main()` (panic-hook/allocator/
 //! tokio init an in-process call would inherit pre-set) and because lifecycle tests kill
 //! it mid-flight; `--mock-audio` + `--no-inference` run it on macOS/Linux-CI without sound/NPU.
@@ -65,7 +65,7 @@ impl Default for CheckProfile {
     }
 }
 
-/// Spawn `acousticsd --check ...`, wait for exit, return a [`CheckRun`]; with no
+/// Spawn `acousticslabd --check ...`, wait for exit, return a [`CheckRun`]; with no
 /// `cwd_override` the child runs in a fresh tempdir dropped at fn exit.
 pub async fn launch_check_mode(profile: CheckProfile) -> Result<CheckRun> {
     // `_tmpdir_guard` owns+deletes the TempDir; override branch is `None` so the
@@ -91,7 +91,7 @@ pub async fn launch_check_mode(profile: CheckProfile) -> Result<CheckRun> {
     // `--config` is explicit: the flag has no default, so the harness owns the path.
     let workspace_dir = cwd.join("workspace");
     let launch_path = misc_dir.join("launch.toml");
-    let bin = PathBuf::from(env!("CARGO_BIN_EXE_acousticsd"));
+    let bin = PathBuf::from(env!("CARGO_BIN_EXE_acousticslabd"));
     let mut cmd = tokio::process::Command::new(&bin);
     cmd.current_dir(&cwd)
         .arg("--workspace")
@@ -159,7 +159,7 @@ pub async fn launch_check_mode(profile: CheckProfile) -> Result<CheckRun> {
             let _ = tokio::time::timeout(reader_budget, stdout_handle).await;
             let _ = tokio::time::timeout(reader_budget, stderr_handle).await;
             return Err(anyhow::anyhow!(
-                "acousticsd --check exceeded {} ms timeout (cwd {}); \
+                "acousticslabd --check exceeded {} ms timeout (cwd {}); \
                  likely a boot regression that wedges in --check mode",
                 profile.timeout.as_millis(),
                 cwd.display(),
@@ -327,7 +327,7 @@ pub async fn launch_long_running(profile: CheckProfile) -> anyhow::Result<Runnin
     }
     let workspace_dir = tmpdir.path().join("workspace");
     let launch_path = misc_dir.join("launch.toml");
-    let bin = PathBuf::from(env!("CARGO_BIN_EXE_acousticsd"));
+    let bin = PathBuf::from(env!("CARGO_BIN_EXE_acousticslabd"));
     let mut cmd = tokio::process::Command::new(&bin);
     cmd.current_dir(tmpdir.path())
         .arg("--workspace")

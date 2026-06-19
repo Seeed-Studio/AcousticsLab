@@ -1,14 +1,14 @@
 // Test scaffolding writes .bin fixtures via `std::fs::write`; clippy.toml's atomic-writer rule is production-only.
 #![allow(clippy::disallowed_methods)]
 
-//! Wire-format snapshot: encodes a canonical instance of each streamed `acoustics_lab::proto::*`
+//! Wire-format snapshot: encodes a canonical instance of each streamed `acousticslab::proto::*`
 //! frame type (`AudioFrame`, `InferenceFrame`, `TopK`) and asserts the bytes match a checked-in
 //! fixture, so any accidental wire change is a
 //! PR-visible byte diff. `UPDATE_SNAPSHOTS=1` rewrites fixtures in place to carry an intentional
 //! delta into review. Single-version protocol (clients are this daemon's own consumers only); a
 //! future re-version is a fresh-start replacement regenerating this fixture.
 
-use acoustics_lab::proto::{AudioFrame, InferenceFrame, TopK};
+use acousticslab::proto::{AudioFrame, InferenceFrame, TopK};
 use prost::Message;
 use std::path::{Path, PathBuf};
 
@@ -62,7 +62,7 @@ fn assert_snapshot(name: &str, actual: &[u8]) {
 }
 
 fn canonical_audio_frame() -> AudioFrame {
-    use acoustics_lab::proto::audio_frame::Codec;
+    use acousticslab::proto::audio_frame::Codec;
     AudioFrame {
         seq: 0xDEAD_BEEF_CAFE_F00D,
         // Both clock stamps present so the snapshot exercises both proto field tags.

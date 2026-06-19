@@ -23,11 +23,11 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use acoustics_lab::common::dims::{BackboneFeatureDim, NBins, NFrames};
-use acoustics_lab::common::ids::HeadId;
-use acoustics_lab::inference::{BurnBackbone, HotHead, head_forward, softmax_into};
-use acoustics_lab::preproc::Preproc;
-use acoustics_lab::preproc::wav_io::{self, ResamplerCache};
+use acousticslab::common::dims::{BackboneFeatureDim, NBins, NFrames};
+use acousticslab::common::ids::HeadId;
+use acousticslab::inference::{BurnBackbone, HotHead, head_forward, softmax_into};
+use acousticslab::preproc::Preproc;
+use acousticslab::preproc::wav_io::{self, ResamplerCache};
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();

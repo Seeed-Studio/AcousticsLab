@@ -3,7 +3,7 @@
 //! 20 ms packets/feed (count varies with resampler residue). Production
 //! encoder defaults; criterion's 3 s warm_up_time covers predictor warm-up.
 
-use acoustics_lab::opus_stream::{OpusEngine, PCM_PULL_CHUNK};
+use acousticslab::opus_stream::{OpusEngine, PCM_PULL_CHUNK};
 use bytes::Bytes;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;

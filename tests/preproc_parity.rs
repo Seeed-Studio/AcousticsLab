@@ -4,8 +4,8 @@
 //! `(x - mean) / (sqrt(var) + 1e-4)` z-norm epsilon (re-inflates p99 to
 //! ~1.4e-4..3.8e-4); max|D| < 2e-2 stays loose for the rustfft-vs-TF FFT floor.
 
-use acoustics_lab::common::dims::{NBins, NFrames, WaveformLen};
-use acoustics_lab::preproc::Preproc;
+use acousticslab::common::dims::{NBins, NFrames, WaveformLen};
+use acousticslab::preproc::Preproc;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 

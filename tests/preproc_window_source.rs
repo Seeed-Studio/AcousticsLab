@@ -3,8 +3,8 @@
 //! bundled `.bin`) and a standalone reimplementation `PreprocWithWindow` fed the
 //! `.npy`-sourced window -- to probe which window source moves the DC-bin outlier.
 
-use acoustics_lab::common::dims::{NBins, NFrames};
-use acoustics_lab::preproc::{FRAME_LEN, Preproc};
+use acousticslab::common::dims::{NBins, NFrames};
+use acousticslab::preproc::{FRAME_LEN, Preproc};
 use rustfft::{FftPlanner, num_complex::Complex32};
 
 struct PreprocWithWindow {
@@ -25,8 +25,8 @@ impl PreprocWithWindow {
     // Preproc::spectrogram: divides by bare std (no Z_NORM_EPSILON), accumulates mean/var
     // in f64, takes norm().ln() not 0.5*norm_sqr().ln(), and uses a full complex FFT.
     fn spectrogram(&self, pcm: &[f32; 44032]) -> Box<[[f32; NBins::USIZE]; NFrames::USIZE]> {
-        use acoustics_lab::common::dims::HopSamples;
-        use acoustics_lab::preproc::FRONT_PAD;
+        use acousticslab::common::dims::HopSamples;
+        use acousticslab::preproc::FRONT_PAD;
         let mut buf = [Complex32::new(0.0, 0.0); FRAME_LEN];
         let mut out = Box::new([[0.0f32; NBins::USIZE]; NFrames::USIZE]);
         for t in 0..NFrames::USIZE {

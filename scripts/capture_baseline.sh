@@ -15,7 +15,7 @@ echo "Capturing baseline at SHA ${GIT_SHA}"
 
 for b in audio_buffer_ring_throughput opus_stream_encode_frame inference_engine_run_window; do
     echo "bench: ${b}"
-    cargo bench -p acoustics-lab --bench "${b}" -q
+    cargo bench -p acousticslab --bench "${b}" -q
 done
 
 python3 - "$GIT_SHA" "$OUTPUT" <<'PY'

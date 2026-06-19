@@ -10,22 +10,22 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use acoustics_lab::common::ids::{HeadId, JobId, WorkspaceId};
-use acoustics_lab::common::workspace::{
+use acousticslab::common::ids::{HeadId, JobId, WorkspaceId};
+use acousticslab::common::workspace::{
     HeadIndex, HeadManifest, HeadRecord, WorkspaceCore, WorkspaceRevision,
 };
-use acoustics_lab::file_mgr::active_head_writer::{
+use acousticslab::file_mgr::active_head_writer::{
     ActivationOriginInput, DefaultHeadSource, HeadInnerLoader, PendingActivation,
     publish_active_generation, stage_and_validate_activation, staging_path_for,
 };
-use acoustics_lab::file_mgr::schema::{
+use acousticslab::file_mgr::schema::{
     ACTIVE_HEAD_FILENAME, active_current_path, active_generation_dir, head_artifact_path,
     head_manifest_path, heads_dir, read_active_current, read_workspace_core, workspace_dir_for,
     workspaces_dir, write_head_index, write_head_manifest, write_workspace_core,
 };
-use acoustics_lab::file_mgr::staging::{DeleteTombstone, stage_payload, write_tombstone};
-use acoustics_lab::file_mgr::time_util::now_rfc3339;
-use acoustics_lab::file_mgr::{RecoveryActiveResult, WorkspaceCacheCell, recover_all};
+use acousticslab::file_mgr::staging::{DeleteTombstone, stage_payload, write_tombstone};
+use acousticslab::file_mgr::time_util::now_rfc3339;
+use acousticslab::file_mgr::{RecoveryActiveResult, WorkspaceCacheCell, recover_all};
 use sha2::{Digest, Sha256};
 
 fn synth_loader() -> Box<HeadInnerLoader> {
@@ -363,7 +363,7 @@ fn legacy_active_manifest_falls_back_to_bundled_default() {
     // reaching the streaming-hash gates.
     std::fs::write(gen_dir.join(ACTIVE_HEAD_FILENAME), b"any").unwrap();
     std::fs::write(
-        gen_dir.join(acoustics_lab::file_mgr::schema::ACTIVE_LABELS_FILENAME),
+        gen_dir.join(acousticslab::file_mgr::schema::ACTIVE_LABELS_FILENAME),
         "alpha\n",
     )
     .unwrap();
@@ -381,13 +381,13 @@ fn legacy_active_manifest_falls_back_to_bundled_default() {
         "activated_at": "2026-05-07T12:34:56Z",
     });
     std::fs::write(
-        gen_dir.join(acoustics_lab::file_mgr::schema::ACTIVE_MANIFEST_FILENAME),
+        gen_dir.join(acousticslab::file_mgr::schema::ACTIVE_MANIFEST_FILENAME),
         serde_json::to_vec(&round_1_manifest).unwrap(),
     )
     .unwrap();
-    acoustics_lab::file_mgr::schema::write_active_current(
+    acousticslab::file_mgr::schema::write_active_current(
         root,
-        &acoustics_lab::file_mgr::schema::ActiveCurrentPointer {
+        &acousticslab::file_mgr::schema::ActiveCurrentPointer {
             activation_id: activation_id.clone(),
         },
     )
@@ -555,7 +555,7 @@ fn per_workspace_heads_corruption_skips_head_half_but_drains_tombstones() {
 
     // Real dataset-delete tombstone + payload in ws_b's `.tmp/`, to prove the
     // drain ran despite corrupt heads.json (not just that ws_b was scanned).
-    use acoustics_lab::common::asset_path::AssetPath;
+    use acousticslab::common::asset_path::AssetPath;
     let ws_b_staging = ws_dir_b.join(".tmp");
     let ws_b_tombstone = DeleteTombstone::Dataset {
         job_id: JobId::new(),
@@ -614,7 +614,7 @@ fn per_workspace_heads_corruption_skips_head_half_but_drains_tombstones() {
 /// from `recover_all`; the variant is dispatched by tombstone filename prefix.
 #[test]
 fn recover_all_drains_dataset_and_converter_tombstones_together() {
-    use acoustics_lab::common::asset_path::AssetPath;
+    use acousticslab::common::asset_path::AssetPath;
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     let (default_head, default_labels, _) = seed_active_generation(root, b"DEFAULT-MPK", "cat\n");

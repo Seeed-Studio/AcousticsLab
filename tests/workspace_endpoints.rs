@@ -5,7 +5,7 @@
 
 use std::time::{Duration, Instant};
 
-use acoustics_lab::api::router_v1_nested;
+use acousticslab::api::router_v1_nested;
 use axum::http::{Method, StatusCode};
 
 mod api_fixtures;

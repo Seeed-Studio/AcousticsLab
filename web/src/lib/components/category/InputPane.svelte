@@ -86,7 +86,7 @@
     groupId?: string;
   }
 
-  const SOURCE_STORAGE_KEY = 'acoustics-lab:input-device-id';
+  const SOURCE_STORAGE_KEY = 'acousticslab:input-device-id';
   const STREAM_KEY = ':stream';
   const DEFAULT_MIC_KEY = ':mic'; // distinct from an absent entry (-> stream default)
   const DEFAULT_SOURCE_KEY = STREAM_KEY;

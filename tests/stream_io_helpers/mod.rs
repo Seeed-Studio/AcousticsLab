@@ -4,7 +4,7 @@
 
 #![allow(dead_code)]
 
-use acoustics_lab::stream_io::{StreamRouter, TransportPolicy, serve_tcp};
+use acousticslab::stream_io::{StreamRouter, TransportPolicy, serve_tcp};
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;

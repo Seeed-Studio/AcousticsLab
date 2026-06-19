@@ -23,12 +23,12 @@ use std::time::Duration;
 // non-poisoning, so lock sites stay infallible.
 use parking_lot::Mutex;
 
-use acoustics_lab::common::dims::{BackboneFeatureDim, NBins, NFrames, WaveformLen};
-use acoustics_lab::common::ids::HeadId;
-use acoustics_lab::inference::{
+use acousticslab::common::dims::{BackboneFeatureDim, NBins, NFrames, WaveformLen};
+use acousticslab::common::ids::HeadId;
+use acousticslab::inference::{
     BurnBackbone, HotHead, head_forward, softmax_into, top_k_indices_into,
 };
-use acoustics_lab::preproc::Preproc;
+use acousticslab::preproc::Preproc;
 
 /// Capture subprocess emits PCM at exactly this rate, so the external tool
 /// (not us) does the resampling.

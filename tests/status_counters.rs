@@ -6,8 +6,8 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use acoustics_lab::api::router_v1_nested;
-use acoustics_lab::status::WorkspaceMetrics;
+use acousticslab::api::router_v1_nested;
+use acousticslab::status::WorkspaceMetrics;
 use axum::http::{Method, StatusCode};
 
 mod api_fixtures;
@@ -22,23 +22,23 @@ static METRICS_TEST_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new
 /// Wires file_mgr metrics hooks to `metrics`; the `OnceLock`s are single-shot, so re-calls no-op.
 fn install_metrics_hooks(metrics: Arc<WorkspaceMetrics>) {
     let m = Arc::clone(&metrics);
-    acoustics_lab::file_mgr::metrics_hooks::install_workspace_core_write_hook(move |d| {
+    acousticslab::file_mgr::metrics_hooks::install_workspace_core_write_hook(move |d| {
         m.record_workspace_core_write(d);
     });
     let m = Arc::clone(&metrics);
-    acoustics_lab::file_mgr::metrics_hooks::install_head_index_write_hook(move |d| {
+    acousticslab::file_mgr::metrics_hooks::install_head_index_write_hook(move |d| {
         m.record_head_index_write(d);
     });
     let m = Arc::clone(&metrics);
-    acoustics_lab::file_mgr::metrics_hooks::install_upload_hook(move |bytes| {
+    acousticslab::file_mgr::metrics_hooks::install_upload_hook(move |bytes| {
         m.record_upload(bytes);
     });
     let m = Arc::clone(&metrics);
-    acoustics_lab::file_mgr::metrics_hooks::install_dataset_mutation_rejected_hook(move || {
+    acousticslab::file_mgr::metrics_hooks::install_dataset_mutation_rejected_hook(move || {
         m.record_dataset_mutation_rejected();
     });
     let m = Arc::clone(&metrics);
-    acoustics_lab::file_mgr::metrics_hooks::install_job_events_dropped_hook(move |n| {
+    acousticslab::file_mgr::metrics_hooks::install_job_events_dropped_hook(move |n| {
         m.record_job_events_dropped(n);
     });
 }
@@ -102,10 +102,10 @@ async fn upload_increments_counters_on_status_wire() {
     let _g = METRICS_TEST_LOCK.lock().await;
     let dir = tempfile::tempdir().unwrap();
     let metrics = Arc::new(WorkspaceMetrics::new());
-    acoustics_lab::status::workspace_metrics::install_for_tests(Arc::clone(&metrics));
+    acousticslab::status::workspace_metrics::install_for_tests(Arc::clone(&metrics));
     // A sibling test may already own the OnceLock global; assert against the winner.
     let metrics_for_assert: Arc<WorkspaceMetrics> =
-        match acoustics_lab::status::workspace_metrics::global() {
+        match acousticslab::status::workspace_metrics::global() {
             Some(g) => Arc::clone(g),
             None => metrics,
         };
@@ -154,8 +154,8 @@ async fn upload_increments_counters_on_status_wire() {
 async fn boot_orphans_swept_records_on_metrics_global() {
     let _g = METRICS_TEST_LOCK.lock().await;
     let metrics = Arc::new(WorkspaceMetrics::new());
-    acoustics_lab::status::workspace_metrics::install_for_tests(Arc::clone(&metrics));
-    let pinned: Arc<WorkspaceMetrics> = match acoustics_lab::status::workspace_metrics::global() {
+    acousticslab::status::workspace_metrics::install_for_tests(Arc::clone(&metrics));
+    let pinned: Arc<WorkspaceMetrics> = match acousticslab::status::workspace_metrics::global() {
         Some(g) => Arc::clone(g),
         None => metrics,
     };
@@ -188,8 +188,8 @@ async fn boot_orphans_swept_records_on_metrics_global() {
 async fn mutation_rejections_dispatch_per_tree() {
     let _g = METRICS_TEST_LOCK.lock().await;
     let metrics = Arc::new(WorkspaceMetrics::new());
-    acoustics_lab::status::workspace_metrics::install_for_tests(Arc::clone(&metrics));
-    let pinned: Arc<WorkspaceMetrics> = match acoustics_lab::status::workspace_metrics::global() {
+    acousticslab::status::workspace_metrics::install_for_tests(Arc::clone(&metrics));
+    let pinned: Arc<WorkspaceMetrics> = match acousticslab::status::workspace_metrics::global() {
         Some(g) => Arc::clone(g),
         None => metrics,
     };

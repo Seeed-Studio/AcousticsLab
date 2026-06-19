@@ -5,7 +5,7 @@
 //! prints a [`crate::status::StatusSnapshot`] JSON, exits 0 iff healthy.
 
 // `#[global_allocator]` (mimalloc) lives on the binary, NOT here: a library
-// allocator conflicts with test binaries linking `acoustics_lab`. mimalloc =
+// allocator conflicts with test binaries linking `acousticslab`. mimalloc =
 // aggressive OS-return (vs ptmalloc fragmentation under the converter/training
 // spike) + no background thread contesting the audio capture thread.
 use crate::daemon::drain_registry;
@@ -69,7 +69,7 @@ const INFERENCE_BROADCAST_CAPACITY: usize = 64;
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "acoustics_lab",
+    name = "acousticslabd",
     version,
     about = "On-device audio classification daemon."
 )]
@@ -153,7 +153,7 @@ impl Cli {
     }
 }
 
-/// Top-level entry point the thin `acousticsd` binary calls.
+/// Top-level entry point the thin `acousticslabd` binary calls.
 pub fn run() -> Result<()> {
     let args = Cli::parse();
     // `max_blocking_threads` / `thread_stack_size` stay at tokio defaults
@@ -170,7 +170,7 @@ pub fn run() -> Result<()> {
             // the subscriber is installed. Pin failure non-fatal.
             if let Err(e) = crate::sched::pin_to_core(TOKIO_PIN_CORE) {
                 eprintln!(
-                    "acousticsd: tokio worker pin_to_core({}) failed: {}; \
+                    "acousticslabd: tokio worker pin_to_core({}) failed: {}; \
                      continuing on default placement",
                     TOKIO_PIN_CORE, e,
                 );
@@ -228,7 +228,7 @@ async fn async_main(args: Cli) -> Result<()> {
     // rotation, max 7 files, auto-pruned by the appender.
     let appender = tracing_appender::rolling::RollingFileAppender::builder()
         .rotation(tracing_appender::rolling::Rotation::DAILY)
-        .filename_prefix("acousticsd")
+        .filename_prefix("acousticslabd")
         .filename_suffix("log")
         .max_log_files(7)
         .build(&log_dir)
@@ -272,7 +272,7 @@ async fn async_main(args: Cli) -> Result<()> {
             .unwrap_or_else(|| "<unknown>".into());
         let payload = info.payload();
         let msg = crate::common::error::panic_payload_to_string(payload);
-        eprintln!("acousticsd: PANIC at {location}: {msg}");
+        eprintln!("acousticslabd: PANIC at {location}: {msg}");
         // Backtrace gated on RUST_BACKTRACE. Flat snake_case field names:
         // `tracing`'s macro matcher rejects dotted/quoted forms and snake_case
         // is portable across fmt + json.
@@ -1216,7 +1216,7 @@ async fn async_main(args: Cli) -> Result<()> {
                 // blocks on a NEW signal (the consumed echo isn't redelivered),
                 // so no busy-spin.
             }
-            eprintln!("acousticsd: second signal received during drain; hard-exit");
+            eprintln!("acousticslabd: second signal received during drain; hard-exit");
             std::process::exit(1);
         });
     }
@@ -1251,13 +1251,13 @@ async fn async_main(args: Cli) -> Result<()> {
     {
         Ok(Ok(())) => false,
         Ok(Err(e)) => {
-            eprintln!("acousticsd: mic arbitrator stop join error: {e}");
+            eprintln!("acousticslabd: mic arbitrator stop join error: {e}");
             tracing::warn!(target: "acoustics", err = %e, "mic arbitrator stop join error");
             false
         }
         Err(_elapsed) => {
             eprintln!(
-                "acousticsd: mic arbitrator stop exceeded {:?}; skipping",
+                "acousticslabd: mic arbitrator stop exceeded {:?}; skipping",
                 ARB_STOP_BUDGET
             );
             tracing::warn!(
@@ -1912,7 +1912,7 @@ async fn boot_inference(
                     // `WorkerGuard::drop`), so this is the only sink guaranteed
                     // to reach journald.
                     eprintln!(
-                        "acousticsd: ABORT -- inference engine wedged \
+                        "acousticslabd: ABORT -- inference engine wedged \
                          {hb_silence_ms} ms (last_state={state:?}, \
                          frames_emitted={emitted}); external supervisor \
                          must restart",

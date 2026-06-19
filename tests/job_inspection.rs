@@ -10,11 +10,11 @@
 
 use std::sync::Arc;
 
-use acoustics_lab::api::router_v1_nested;
-use acoustics_lab::common::asset_path::AssetPath;
-use acoustics_lab::common::ids::HeadId;
-use acoustics_lab::common::workspace::{JobReference, JobType};
-use acoustics_lab::file_mgr::{FsService, JobRegistry, RegistryJobResult};
+use acousticslab::api::router_v1_nested;
+use acousticslab::common::asset_path::AssetPath;
+use acousticslab::common::ids::HeadId;
+use acousticslab::common::workspace::{JobReference, JobType};
+use acousticslab::file_mgr::{FsService, JobRegistry, RegistryJobResult};
 use axum::Router;
 use axum::body::to_bytes;
 use axum::http::{Method, StatusCode};
@@ -55,7 +55,7 @@ async fn get_jobs_includes_running_job() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     let handle = h
         .jobs
         .try_acquire(
@@ -104,7 +104,7 @@ async fn get_jobs_includes_running_job() {
 async fn get_job_returns_404_for_unknown_id() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
-    let phantom = acoustics_lab::common::ids::JobId::new();
+    let phantom = acousticslab::common::ids::JobId::new();
     let resp = call(
         &h.router,
         Method::GET,
@@ -120,7 +120,7 @@ async fn job_events_returns_409_event_gap_on_stale_after_seq() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     let handle = h
         .jobs
         .try_acquire(
@@ -155,7 +155,7 @@ async fn job_conflict_on_overlapping_train_admission() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws).unwrap();
     let _h1 = h
         .jobs
         .try_acquire(
@@ -180,7 +180,7 @@ async fn job_conflict_on_overlapping_train_admission() {
         .unwrap_err();
     assert!(matches!(
         err,
-        acoustics_lab::file_mgr::RegistryConflict::AnotherTrainRunning
+        acousticslab::file_mgr::RegistryConflict::AnotherTrainRunning
     ));
     // Dataset-delete coexists with an active train in the same workspace,
     // grabbing the single delete slot.
@@ -201,8 +201,8 @@ async fn training_log_page_reads_jsonl_file() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
-    let job_id = acoustics_lab::common::ids::JobId::new();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let job_id = acousticslab::common::ids::JobId::new();
     let workspace_dir = h
         .files
         .workspace_tmpdir(&ws_id)
@@ -251,7 +251,7 @@ async fn delete_training_logs_refuses_while_train_active_and_succeeds_after() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     let workspace_dir = h
         .files
         .workspace_tmpdir(&ws_id)
@@ -260,7 +260,7 @@ async fn delete_training_logs_refuses_while_train_active_and_succeeds_after() {
         .to_path_buf();
     let log_dir = workspace_dir.join("training_logs");
     std::fs::create_dir_all(&log_dir).unwrap();
-    let job_id = acoustics_lab::common::ids::JobId::new();
+    let job_id = acousticslab::common::ids::JobId::new();
     std::fs::write(
         log_dir.join(format!("{job_id}.jsonl")),
         r#"{"seq":1,"at":"2026-05-07T12:00:00Z","message":"hi"}"#,
@@ -339,7 +339,7 @@ async fn job_events_sse_replays_then_terminates() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     let handle = h
         .jobs
         .try_acquire(
@@ -387,7 +387,7 @@ async fn get_jobs_surfaces_converter_delete_job_type() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     // ConverterDelete shares the `max_delete_jobs` slot with the other delete
     // subtypes.
     let handle = h
@@ -418,7 +418,7 @@ async fn job_snapshot_carries_target_path_not_legacy_dataset_path() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     let target = AssetPath::parse("audio/cat").unwrap();
     let handle = h
         .jobs
@@ -459,7 +459,7 @@ async fn delete_converter_logs_refuses_while_convert_active_and_succeeds_after()
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     // The job id here is arbitrary: the DELETE 409 fires from the
     // active-convert gate before any I/O on the log dir.
     let workspace_dir = h
@@ -470,7 +470,7 @@ async fn delete_converter_logs_refuses_while_convert_active_and_succeeds_after()
         .to_path_buf();
     let log_dir = workspace_dir.join("converter_logs");
     std::fs::create_dir_all(&log_dir).unwrap();
-    let job_id = acoustics_lab::common::ids::JobId::new();
+    let job_id = acousticslab::common::ids::JobId::new();
     std::fs::write(
         log_dir.join(format!("{job_id}.jsonl")),
         r#"{"seq":1,"at":"2026-05-08T12:00:00Z","message":"hi"}"#,
@@ -552,7 +552,7 @@ async fn convert_job_terminal_carries_typed_result_with_head_id() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     let handle = h
         .jobs
         .try_acquire(
@@ -601,7 +601,7 @@ async fn train_typed_result_variant_round_trips_on_wire() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     let handle = h
         .jobs
         .try_acquire(
@@ -650,7 +650,7 @@ async fn get_jobs_lists_coexisting_jobs() {
     let dir = tempfile::tempdir().unwrap();
     let h = fresh_harness(dir.path());
     let ws_id_str = create_workspace(&h.router, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws_id_str).unwrap();
     let _train = h
         .jobs
         .try_acquire(

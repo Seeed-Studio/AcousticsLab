@@ -4,10 +4,10 @@
 //! meaningless logits but production matmul/conv shapes, so wall-clock is
 //! representative (no asserts). RKNN not benched (needs Linux+aarch64+NPU).
 
-use acoustics_lab::common::dims::{BackboneFeatureDim, NBins, NFrames, WaveformLen};
-use acoustics_lab::inference::head_forward;
-use acoustics_lab::model::Backbone;
-use acoustics_lab::preproc::Preproc;
+use acousticslab::common::dims::{BackboneFeatureDim, NBins, NFrames, WaveformLen};
+use acousticslab::inference::head_forward;
+use acousticslab::model::Backbone;
+use acousticslab::preproc::Preproc;
 use burn::backend::ndarray::NdArray;
 use burn::backend::ndarray::NdArrayDevice;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};

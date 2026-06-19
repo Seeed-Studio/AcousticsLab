@@ -394,7 +394,7 @@ mod tests {
 
     #[test]
     fn read_wav_mono_missing_file_returns_err() {
-        let path = std::path::Path::new("/nonexistent/.acoustics_lab/no-such.wav");
+        let path = std::path::Path::new("/nonexistent/.acousticslab/no-such.wav");
         let err = read_wav_mono(path).expect_err("missing file must be Err");
         match err {
             PreprocError::WavOpen { path: p, .. } => {

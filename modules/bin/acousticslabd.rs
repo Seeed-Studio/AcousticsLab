@@ -1,5 +1,5 @@
-//! Acoustics Lab daemon (`acousticsd`): thin binary wrapper around
-//! [`acoustics_lab::daemon::run`].
+//! Acoustics Lab daemon (`acousticslabd`): thin binary wrapper around
+//! [`acousticslab::daemon::run`].
 //!
 //! The `#[global_allocator]` (mimalloc v3) lives here, not in the lib: a
 //! lib-level decl would conflict with every test binary that links it.
@@ -22,11 +22,11 @@ fn install_pre_init_panic_hook() {
             .copied()
             .or_else(|| payload.downcast_ref::<String>().map(String::as_str))
             .unwrap_or("<non-string panic>");
-        eprintln!("acousticsd: PANIC during boot at {location}: {msg}");
+        eprintln!("acousticslabd: PANIC during boot at {location}: {msg}");
     }));
 }
 
 fn main() -> anyhow::Result<()> {
     install_pre_init_panic_hook();
-    acoustics_lab::daemon::run()
+    acousticslab::daemon::run()
 }

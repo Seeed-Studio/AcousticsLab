@@ -718,7 +718,7 @@ impl MicArbitrator {
                     );
                     // Non-blocking tracing appender may buffer the abort log; mirror to stderr + brief flush.
                     eprintln!(
-                        "acousticsd: ABORT -- mic-arbitrator panicked; \
+                        "acousticslabd: ABORT -- mic-arbitrator panicked; \
                          supervisor must restart"
                     );
                     std::thread::sleep(std::time::Duration::from_millis(50));
@@ -735,7 +735,7 @@ impl MicArbitrator {
                      aborting process (rlimit exhaustion or similar resource pressure)",
                 );
                 eprintln!(
-                    "acousticsd: ABORT -- mic-arbitrator thread spawn failed \
+                    "acousticslabd: ABORT -- mic-arbitrator thread spawn failed \
                      (err={e}); supervisor must restart"
                 );
                 std::thread::sleep(std::time::Duration::from_millis(50));

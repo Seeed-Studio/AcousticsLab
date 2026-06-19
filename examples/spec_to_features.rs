@@ -10,8 +10,8 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use acoustics_lab::common::dims::{BackboneFeatureDim, NBins, NFrames};
-use acoustics_lab::inference::BurnBackbone;
+use acousticslab::common::dims::{BackboneFeatureDim, NBins, NFrames};
+use acousticslab::inference::BurnBackbone;
 
 fn main() -> std::process::ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();

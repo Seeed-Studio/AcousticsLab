@@ -225,7 +225,7 @@ async fn post_active(
                     // stderr synchronously (journald-visible); 50ms sleep lets
                     // the appender thread drain the tracing::error above first.
                     eprintln!(
-                        "acousticsd: ABORT -- install_prevalidated divergence \
+                        "acousticslabd: ABORT -- install_prevalidated divergence \
                          (activation_id={}, err={}); supervisor must restart",
                         result.activation_id, e,
                     );

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cross-build a STATIC libasound.a for aarch64-linux-gnu so acousticsd links
+# Cross-build a STATIC libasound.a for aarch64-linux-gnu so acousticslabd links
 # ALSA statically (no DT_NEEDED libasound.so.2, no symbol-version skew with the
 # device). Downloads the pinned alsa-lib source (sha256-checked, cached), then
 # configures + builds the library with `zig cc` + zig's LLVM ar/ranlib.

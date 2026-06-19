@@ -69,18 +69,6 @@ interface DiscoveredRun {
   sizeBytes: number;
 }
 
-// Inert localStorage namespace for a since-removed soft-hide list; cleared on hydration.
-const LEGACY_HIDDEN_STORAGE_PREFIX = 'acoustics-lab:training-hidden:';
-
-function clearLegacyHiddenStorage(workspaceId: Uuid): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.removeItem(`${LEGACY_HIDDEN_STORAGE_PREFIX}${workspaceId}`);
-  } catch {
-    /* best-effort */
-  }
-}
-
 // An active job or a pinned terminal entry; same shape, `cancelling` meaningful only on the active slot.
 export interface TrackedTrainingJob {
   workspaceId: Uuid;
@@ -487,7 +475,6 @@ class TrainingStore {
     if (this.discoveredByWs.has(workspaceId)) return;
     if (this.hydratingByWs.get(workspaceId)) return;
     this.hydratingByWs.set(workspaceId, true);
-    clearLegacyHiddenStorage(workspaceId);
     try {
       const discovered = await this.fetchDiscoveryListing(workspaceId);
       this.discoveredByWs.set(workspaceId, discovered);
@@ -651,7 +638,6 @@ class TrainingStore {
     this.olderLoadingPendingByWs.delete(workspaceId);
     // Drop the coalesced recover Promise so a same-id remount fires fresh instead of coalescing onto it.
     this.recoveringByWs.delete(workspaceId);
-    clearLegacyHiddenStorage(workspaceId);
   }
 
   // Bind SSE from `afterSeq` (0 fresh; post-backfill cursor on a `recoverFromGap` rebind);

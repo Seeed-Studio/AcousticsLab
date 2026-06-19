@@ -641,11 +641,11 @@ mod tests {
             .validate()
             .expect("TCP-only [api] must validate");
 
-        let mut uds_only = fresh_api_with_uds(std::env::temp_dir().join("acoustics_lab_api.sock"));
+        let mut uds_only = fresh_api_with_uds(std::env::temp_dir().join("acousticslab_api.sock"));
         uds_only.tcp_bind = None;
         uds_only.validate().expect("UDS-only [api] must validate");
 
-        fresh_api_with_uds(std::env::temp_dir().join("acoustics_lab_api_both.sock"))
+        fresh_api_with_uds(std::env::temp_dir().join("acousticslab_api_both.sock"))
             .validate()
             .expect("dual-transport [api] must validate");
     }
@@ -758,7 +758,7 @@ mod tests {
     /// for a daemon-supervised process, so require an explicit parent.
     #[test]
     fn output_inference_cfg_rejects_uds_path_without_parent() {
-        let err = fresh_output_inference(PathBuf::from("acoustics_lab.sock"))
+        let err = fresh_output_inference(PathBuf::from("acousticslab.sock"))
             .validate()
             .expect_err("bare-filename uds_path must reject")
             .to_string();
@@ -784,11 +784,11 @@ mod tests {
     #[test]
     fn uds_mode_and_api_scalars_default_when_omitted() {
         let out: OutputInferenceCfg =
-            toml::from_str("uds_path = \"/run/acoustics_lab/out.sock\"\n").expect("parse output");
+            toml::from_str("uds_path = \"/run/acousticslab/out.sock\"\n").expect("parse output");
         assert_eq!(out.uds_mode, 0o666);
 
         let api: ApiCfg =
-            toml::from_str("uds_path = \"/run/acoustics_lab/api.sock\"\n").expect("parse api");
+            toml::from_str("uds_path = \"/run/acousticslab/api.sock\"\n").expect("parse api");
         assert_eq!(api.uds_mode, 0o666);
         assert_eq!(api.broadcast_capacity, 64);
         assert_eq!(api.tcp_bind, None);
@@ -798,7 +798,7 @@ mod tests {
     /// is set, since the mode is otherwise unused).
     #[test]
     fn api_cfg_rejects_oversized_uds_mode() {
-        let mut api = fresh_api_with_uds(std::env::temp_dir().join("acoustics_lab_mode.sock"));
+        let mut api = fresh_api_with_uds(std::env::temp_dir().join("acousticslab_mode.sock"));
         api.uds_mode = 0o10000; // one bit above 0o7777
         let err = api
             .validate()
@@ -819,7 +819,7 @@ mod tests {
         std::fs::write(
             &path,
             "[stream]\n\
-             uds_path = \"misc/share/acousticsd.sock\"\n\
+             uds_path = \"misc/share/acousticslabd.sock\"\n\
              tcp_bind = \"127.0.0.1:8787\"\n\
              broadcast_capacity = 64\n",
         )
@@ -1147,7 +1147,7 @@ mod tests {
                 .inference
                 .as_ref()
                 .map(|o| o.uds_path.as_path()),
-            Some(Path::new("misc/share/acousticsd-result.sock")),
+            Some(Path::new("misc/share/acousticslabd-result.sock")),
             "bundled launch.toml must own the local dev raw inference output socket",
         );
         // Pin bundled training_defaults + file caps so drift surfaces in CI.

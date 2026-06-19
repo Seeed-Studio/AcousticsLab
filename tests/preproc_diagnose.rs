@@ -1,6 +1,6 @@
 //! Diagnostic: locate where preproc spectrogram error vs reference concentrates.
-use acoustics_lab::common::dims::{NBins, NFrames, WaveformLen};
-use acoustics_lab::preproc::Preproc;
+use acousticslab::common::dims::{NBins, NFrames, WaveformLen};
+use acousticslab::preproc::Preproc;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 

@@ -6,7 +6,7 @@
 
 use std::time::{Duration, Instant};
 
-use acoustics_lab::api::router_v1_nested;
+use acousticslab::api::router_v1_nested;
 use axum::body::to_bytes;
 use axum::http::{Method, StatusCode, header};
 use axum::response::Response;
@@ -386,11 +386,11 @@ async fn assets_jsonl_page_round_trips_on_jsonl_file() {
 
     // Synthesise the converter_logs JSONL on disk; a wire-shape pin needs no real
     // producer run.
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws).unwrap();
     let workspace_dir = fixture_workspace_dir(dir.path(), ws_id.to_string());
     let log_dir = workspace_dir.join("converter_logs");
     std::fs::create_dir_all(&log_dir).unwrap();
-    let job_id = acoustics_lab::common::ids::JobId::new();
+    let job_id = acousticslab::common::ids::JobId::new();
     let log_path = log_dir.join(format!("{job_id}.jsonl"));
     let lines = [
         r#"{"seq":1,"at":"2026-05-07T12:00:00Z","message":"first"}"#,
@@ -680,11 +680,11 @@ async fn assets_byte_range_works_on_jsonl_file() {
     let dir = tempfile::tempdir().unwrap();
     let r = router_v1_nested(fresh_app_state(dir.path()));
     let ws = create_workspace(&r, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws).unwrap();
     let workspace_dir = fixture_workspace_dir(dir.path(), ws_id.to_string());
     let log_dir = workspace_dir.join("converter_logs");
     std::fs::create_dir_all(&log_dir).unwrap();
-    let job_id = acoustics_lab::common::ids::JobId::new();
+    let job_id = acousticslab::common::ids::JobId::new();
     let log_path = log_dir.join(format!("{job_id}.jsonl"));
     let raw = b"{\"seq\":1}\n{\"seq\":2}\n{\"seq\":3}\n";
     std::fs::write(&log_path, raw).unwrap();
@@ -710,11 +710,11 @@ async fn assets_byte_range_rejects_with_jsonl_paging_params() {
     let dir = tempfile::tempdir().unwrap();
     let r = router_v1_nested(fresh_app_state(dir.path()));
     let ws = create_workspace(&r, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws).unwrap();
     let workspace_dir = fixture_workspace_dir(dir.path(), ws_id.to_string());
     let log_dir = workspace_dir.join("converter_logs");
     std::fs::create_dir_all(&log_dir).unwrap();
-    let job_id = acoustics_lab::common::ids::JobId::new();
+    let job_id = acousticslab::common::ids::JobId::new();
     std::fs::write(
         log_dir.join(format!("{job_id}.jsonl")),
         b"{\"seq\":1}\n{\"seq\":2}\n",
@@ -802,11 +802,11 @@ async fn delete_assets_training_log_file_returns_async_job_id() {
     let dir = tempfile::tempdir().unwrap();
     let r = router_v1_nested(fresh_app_state(dir.path()));
     let ws = create_workspace(&r, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws).unwrap();
     let workspace_dir = fixture_workspace_dir(dir.path(), ws_id.to_string());
     let log_dir = workspace_dir.join("training_logs");
     std::fs::create_dir_all(&log_dir).unwrap();
-    let job_id = acoustics_lab::common::ids::JobId::new();
+    let job_id = acousticslab::common::ids::JobId::new();
     let log_path = log_dir.join(format!("{job_id}.jsonl"));
     std::fs::write(
         &log_path,
@@ -859,13 +859,13 @@ async fn delete_assets_converter_logs_whole_dir_returns_async_job_id() {
     let dir = tempfile::tempdir().unwrap();
     let r = router_v1_nested(fresh_app_state(dir.path()));
     let ws = create_workspace(&r, "main").await;
-    let ws_id = acoustics_lab::common::ids::WorkspaceId::parse(&ws).unwrap();
+    let ws_id = acousticslab::common::ids::WorkspaceId::parse(&ws).unwrap();
     let workspace_dir = fixture_workspace_dir(dir.path(), ws_id.to_string());
     let log_dir = workspace_dir.join("converter_logs");
     std::fs::create_dir_all(&log_dir).unwrap();
     let mut jsonl_paths = Vec::new();
     for n in 0..3 {
-        let job_id = acoustics_lab::common::ids::JobId::new();
+        let job_id = acousticslab::common::ids::JobId::new();
         let p = log_dir.join(format!("{job_id}.jsonl"));
         std::fs::write(&p, format!(r#"{{"seq":{n},"at":"2026-05-07T12:00:00Z"}}"#)).unwrap();
         jsonl_paths.push(p);
@@ -955,7 +955,7 @@ async fn delete_assets_training_log_file_missing_returns_404() {
     let dir = tempfile::tempdir().unwrap();
     let r = router_v1_nested(fresh_app_state(dir.path()));
     let ws = create_workspace(&r, "main").await;
-    let phantom = acoustics_lab::common::ids::JobId::new();
+    let phantom = acousticslab::common::ids::JobId::new();
 
     let resp = call(
         &r,

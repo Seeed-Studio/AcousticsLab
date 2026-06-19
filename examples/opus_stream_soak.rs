@@ -6,7 +6,7 @@
 //! because 60 s is too slow for routine `cargo test`; CI covers the same
 //! path at 5 s.
 
-use acoustics_lab::opus_stream::{
+use acousticslab::opus_stream::{
     FRAME_SAMPLES, IN_RATE_HZ, OUT_RATE_HZ, OpusEngine, PCM_PULL_CHUNK,
 };
 use bytes::Bytes;

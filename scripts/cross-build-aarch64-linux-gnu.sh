@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cross-build acousticsd for aarch64-unknown-linux-gnu via cargo-zigbuild on a
+# Cross-build acousticslabd for aarch64-unknown-linux-gnu via cargo-zigbuild on a
 # macOS host: zig cc/c++ wrappers + a locally cross-built static libasound.a (no
 # sysroot, no runtime libasound.so.2) + vendored opus. Forwards args to cargo
 # zigbuild (default: embedded release with alsa-real,rknpu).
@@ -30,5 +30,5 @@ ALSA_LINK_OVERRIDE=(
     --config "target.aarch64-unknown-linux-gnu.alsa.rustc-link-search=[\"native=${STUB_DIR}\"]"
 )
 
-[[ $# -eq 0 ]] && set -- --profile release-embedded --features alsa-real,rknpu --bin acousticsd
+[[ $# -eq 0 ]] && set -- --profile release-embedded --features alsa-real,rknpu --bin acousticslabd
 exec cargo zigbuild --target aarch64-unknown-linux-gnu "${ALSA_LINK_OVERRIDE[@]}" "$@"

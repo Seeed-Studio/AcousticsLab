@@ -47,11 +47,11 @@ async fn lifecycle_row2_no_backbone_inference_degraded() {
 
     let run = launch_check_mode(profile)
         .await
-        .expect("acousticsd --check launch must succeed");
+        .expect("acousticslabd --check launch must succeed");
 
     if run.exit_code != 0 || run.snapshot.is_none() {
         panic!(
-            "acousticsd --check failed (exit={}, elapsed={:?})\n\
+            "acousticslabd --check failed (exit={}, elapsed={:?})\n\
              ===== STDOUT =====\n{}\n\
              ===== STDERR =====\n{}",
             run.exit_code, run.elapsed, run.stdout, run.stderr,

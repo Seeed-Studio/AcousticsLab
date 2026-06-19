@@ -3,7 +3,7 @@
 //! measures read-side seqlock double-read of one inference window.
 //! Production capacity keeps wrap-around frequency realistic.
 
-use acoustics_lab::audio_buffer::AudioBuffer;
+use acousticslab::audio_buffer::AudioBuffer;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 

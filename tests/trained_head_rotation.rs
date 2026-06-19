@@ -1,5 +1,5 @@
 //! Crash-safety integration tests for the trained-head rotation
-//! primitive [`acoustics_lab::file_mgr::publish_trained_head`].
+//! primitive [`acousticslab::file_mgr::publish_trained_head`].
 //!
 //! The index commit (step 7) is the source of truth: it atomically
 //! moves the publish point, so a later best-effort cleanup failure
@@ -12,11 +12,11 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use acoustics_lab::common::ids::{HeadId, WorkspaceId};
-use acoustics_lab::common::workspace::{
+use acousticslab::common::ids::{HeadId, WorkspaceId};
+use acousticslab::common::workspace::{
     HeadIndex, HeadManifest, HeadRecord, MAX_HEADS_PER_WORKSPACE, WorkspaceCore, WorkspaceRevision,
 };
-use acoustics_lab::file_mgr::{
+use acousticslab::file_mgr::{
     HeadRotationResult, PendingHead, WorkspaceCacheCell, head_artifact_path, head_index_path,
     head_manifest_path, heads_dir, publish_trained_head, read_head_index, read_head_manifest,
     read_workspace_core, write_head_index, write_workspace_core,
@@ -362,7 +362,7 @@ fn rotation_converges_after_simulated_partial_crash() {
 /// shadowed by an empty create-side cache.
 #[tokio::test(flavor = "current_thread")]
 async fn delete_head_via_workspace_mgr_round_trip() {
-    use acoustics_lab::file_mgr::{FsService, FsServiceImpl};
+    use acousticslab::file_mgr::{FsService, FsServiceImpl};
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().to_path_buf();
     // Create via the production lifecycle path for a canonical layout.
@@ -425,7 +425,7 @@ async fn delete_head_via_workspace_mgr_round_trip() {
     // Deleting a phantom head_id surfaces 404.
     let phantom = HeadId::new();
     let err = fs.delete_head(&id, phantom).unwrap_err();
-    use acoustics_lab::common::error::{Categorized, ErrorKind};
+    use acousticslab::common::error::{Categorized, ErrorKind};
     assert_eq!(err.kind(), ErrorKind::NotFound);
 }
 
@@ -444,8 +444,8 @@ fn write_synth_active_generation(
     source_head_id: HeadId,
     workspace_revision: WorkspaceRevision,
 ) -> String {
-    use acoustics_lab::common::workspace::{ActiveHeadManifest, ActiveOrigin};
-    use acoustics_lab::file_mgr::{
+    use acousticslab::common::workspace::{ActiveHeadManifest, ActiveOrigin};
+    use acousticslab::file_mgr::{
         ActiveCurrentPointer, active_generation_dir, write_active_current, write_active_manifest,
     };
     let activation_id = "11111111-2222-4333-8444-555555555ace".to_string();
@@ -480,8 +480,8 @@ fn write_synth_active_generation(
 /// points elsewhere and the same delete then succeeds.
 #[tokio::test(flavor = "current_thread")]
 async fn delete_head_refuses_active_source_pin() {
-    use acoustics_lab::common::error::{Categorized, ErrorKind};
-    use acoustics_lab::file_mgr::{FileError, FsService, FsServiceImpl};
+    use acousticslab::common::error::{Categorized, ErrorKind};
+    use acousticslab::file_mgr::{FileError, FsService, FsServiceImpl};
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().to_path_buf();
     let create_fs: Arc<dyn FsService> = Arc::new(FsServiceImpl::new(root.clone()));
@@ -550,8 +550,8 @@ async fn delete_head_refuses_active_source_pin() {
 
     // Pointing the active manifest elsewhere releases the pin; h1 deletes.
     let other = HeadId::new();
-    use acoustics_lab::common::workspace::{ActiveHeadManifest, ActiveOrigin};
-    use acoustics_lab::file_mgr::write_active_manifest;
+    use acousticslab::common::workspace::{ActiveHeadManifest, ActiveOrigin};
+    use acousticslab::file_mgr::write_active_manifest;
     let new_manifest = ActiveHeadManifest {
         origin: ActiveOrigin::Head {
             source_workspace_id: id,
@@ -576,7 +576,7 @@ async fn delete_head_refuses_active_source_pin() {
 /// the second-oldest non-pinned head instead.
 #[tokio::test(flavor = "current_thread")]
 async fn publish_through_workspace_mgr_respects_active_pin() {
-    use acoustics_lab::file_mgr::{FsService, FsServiceImpl};
+    use acousticslab::file_mgr::{FsService, FsServiceImpl};
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().to_path_buf();
     let create_fs: Arc<dyn FsService> = Arc::new(FsServiceImpl::new(root.clone()));

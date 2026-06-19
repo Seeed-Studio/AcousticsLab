@@ -1,17 +1,17 @@
 [package]
-name = "acoustics-lab"
+name = "acousticslab"
 edition.workspace = true
 version.workspace = true
 license = "Apache-2.0"
 publish = false
 
 [lib]
-name = "acoustics_lab"
+name = "acousticslab"
 path = "modules/lib.rs"
 
 [[bin]]
-name = "acousticsd"
-path = "modules/bin/acousticsd.rs"
+name = "acousticslabd"
+path = "modules/bin/acousticslabd.rs"
 
 [dependencies]
 thiserror = { workspace = true }

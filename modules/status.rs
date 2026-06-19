@@ -690,7 +690,7 @@ mod tests {
         // Nanos suffix so parallel runs don't collide in the process-wide temp dir.
         let base = std::env::temp_dir();
         let unique = format!(
-            "acoustics_lab_status_cold_boot_{}_{}",
+            "acousticslab_status_cold_boot_{}_{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

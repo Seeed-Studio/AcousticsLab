@@ -4,7 +4,7 @@
 //! Each test brings up a fresh router + listener on an ephemeral port /
 //! tempdir socket; the cancellation token tears it down so the process exits.
 
-use acoustics_lab::stream_io::{
+use acousticslab::stream_io::{
     StreamRouter, TransportPolicy, bind_uds, serve_tcp, serve_uds, set_uds_permissions,
 };
 use bytes::Bytes;

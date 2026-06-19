@@ -9,12 +9,12 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use acoustics_lab::common::dims::{BackboneFeatureDim, WaveformLen};
-use acoustics_lab::common::ids::HeadId;
-use acoustics_lab::converter::{convert_tfjs, read_tfjs_labels};
-use acoustics_lab::file_mgr::FsServiceImpl;
-use acoustics_lab::inference::{BurnBackbone, HotHead, head_forward, softmax_into};
-use acoustics_lab::preproc::Preproc;
+use acousticslab::common::dims::{BackboneFeatureDim, WaveformLen};
+use acousticslab::common::ids::HeadId;
+use acousticslab::converter::{convert_tfjs, read_tfjs_labels};
+use acousticslab::file_mgr::FsServiceImpl;
+use acousticslab::inference::{BurnBackbone, HotHead, head_forward, softmax_into};
+use acousticslab::preproc::Preproc;
 
 fn crate_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()

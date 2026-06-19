@@ -1,4 +1,4 @@
-//! Acoustics Lab daemon library crate; the `acousticsd` binary calls [`daemon::run`].
+//! Acoustics Lab daemon library crate; the `acousticslabd` binary calls [`daemon::run`].
 
 // Inner `#![forbid(unsafe_code)]` scopes that guardrail to this subtree only.
 pub mod common;

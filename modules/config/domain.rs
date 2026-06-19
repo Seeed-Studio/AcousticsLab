@@ -177,7 +177,7 @@ fn validate_uds_path(uds_path: &Path, label: &str) -> Result<(), String> {
     let no_parent_err = || {
         format!(
             "{label} {:?} has no parent directory; specify a full path \
-             (e.g. /run/acoustics_lab.sock)",
+             (e.g. /run/acousticslab.sock)",
             uds_path.display()
         )
     };
@@ -192,7 +192,7 @@ fn validate_uds_path(uds_path: &Path, label: &str) -> Result<(), String> {
                 return Err(format!(
                     "{label} {:?}: parent {} is a symlink; refuse to bind \
                      (/var/run is a symlink to /run on systemd distros -- \
-                     use /run/acoustics_lab.sock instead)",
+                     use /run/acousticslab.sock instead)",
                     uds_path.display(),
                     parent.display(),
                 ));

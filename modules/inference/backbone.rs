@@ -983,7 +983,7 @@ mod tests {
     /// Missing backbone.mpk surfaces `BackboneError::Burn`, not a panic.
     #[test]
     fn burn_backbone_load_missing_file_returns_err() {
-        let path = std::path::Path::new("/nonexistent/.acoustics_lab/missing-backbone.mpk");
+        let path = std::path::Path::new("/nonexistent/.acousticslab/missing-backbone.mpk");
         let res = BurnBackbone::load(path);
         let err = res.unwrap_err();
         match err {
@@ -1007,10 +1007,10 @@ mod tests {
         unsafe {
             std::env::set_var(
                 "RKNN_LIB",
-                "/nonexistent/.acoustics_lab/missing-librknnrt.so",
+                "/nonexistent/.acousticslab/missing-librknnrt.so",
             );
         }
-        let bb = std::path::Path::new("/nonexistent/.acoustics_lab/missing-backbone.rknn");
+        let bb = std::path::Path::new("/nonexistent/.acousticslab/missing-backbone.rknn");
         let res = RknnBackbone::load(bb);
         unsafe {
             std::env::remove_var("RKNN_LIB");
@@ -1074,7 +1074,7 @@ mod tests {
         let cat = BackboneCatalogue {
             candidates: vec![BackboneRef {
                 kind: BackboneKind::Burn,
-                path: PathBuf::from("/nonexistent/.acoustics_lab/missing.mpk"),
+                path: PathBuf::from("/nonexistent/.acousticslab/missing.mpk"),
                 hash: None,
             }],
         };

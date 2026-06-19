@@ -97,10 +97,10 @@ async fn lifecycle_row7_sigkill_then_respawn_clean_boot() {
     };
     let phase2 = launch_check_mode(phase2_profile)
         .await
-        .expect("phase 2 acousticsd --check launch must succeed");
+        .expect("phase 2 acousticslabd --check launch must succeed");
     assert_eq!(
         phase2.exit_code, 0,
-        "phase 2 acousticsd must exit 0 (clean re-boot using phase-1 misc/ files); \
+        "phase 2 acousticslabd must exit 0 (clean re-boot using phase-1 misc/ files); \
          got exit={}\n\
          ===== STDOUT =====\n{}\n\
          ===== STDERR =====\n{}",

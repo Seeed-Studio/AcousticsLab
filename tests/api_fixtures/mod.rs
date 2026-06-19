@@ -14,16 +14,16 @@ use axum::http::{Method, Request, header};
 use axum::response::Response;
 use tower::ServiceExt;
 
-use acoustics_lab::api::AppState;
-use acoustics_lab::common::traits::head_store::HeadStore;
-use acoustics_lab::common::traits::lag_source::{BroadcastLagSnapshot, LagSource};
-use acoustics_lab::config::{
+use acousticslab::api::AppState;
+use acousticslab::common::traits::head_store::HeadStore;
+use acousticslab::common::traits::lag_source::{BroadcastLagSnapshot, LagSource};
+use acousticslab::config::{
     Config, ConfigCell, DefaultHeadRef, LaunchConfig, MicSettingsCell, MicSettingsHandle,
 };
-use acoustics_lab::file_mgr::{FsService, FsServiceImpl};
-use acoustics_lab::inference::{HeadInner, HotHead};
-use acoustics_lab::status::{StatusMonitor, StatusReporter};
-use acoustics_lab::training::{JobRegistry as TrainingJobRegistry, TrainingRegistry};
+use acousticslab::file_mgr::{FsService, FsServiceImpl};
+use acousticslab::inference::{HeadInner, HotHead};
+use acousticslab::status::{StatusMonitor, StatusReporter};
+use acousticslab::training::{JobRegistry as TrainingJobRegistry, TrainingRegistry};
 use arc_swap::ArcSwap;
 
 /// Drain `resp` and parse it as JSON into `T`. The 4 MiB cap exceeds any
@@ -119,14 +119,14 @@ pub fn fresh_app_state(dir: &Path) -> AppState {
     ));
     let inference_cfg = Arc::new(ArcSwap::from_pointee(cfg.inference));
     let head: Arc<dyn HeadStore> = Arc::new(HotHead::from_inner(HeadInner {
-        weight: vec![0.0; acoustics_lab::common::dims::BACKBONE_FEATURE_DIM * 2],
+        weight: vec![0.0; acousticslab::common::dims::BACKBONE_FEATURE_DIM * 2],
         bias: vec![0.0; 2],
         labels: vec!["a".into(), "b".into()],
-        head_id: acoustics_lab::common::ids::HeadId::new(),
+        head_id: acousticslab::common::ids::HeadId::new(),
         n_classes: 2,
     }));
-    let jobs = Arc::new(acoustics_lab::file_mgr::JobRegistry::new(
-        acoustics_lab::file_mgr::JobRegistryCfg::default(),
+    let jobs = Arc::new(acousticslab::file_mgr::JobRegistry::new(
+        acousticslab::file_mgr::JobRegistryCfg::default(),
     ));
     let active_mutex: Arc<parking_lot::Mutex<()>> = Arc::new(parking_lot::Mutex::new(()));
     let files: Arc<dyn FsService> = Arc::new(FsServiceImpl::with_admission_jobs_and_active_mutex(

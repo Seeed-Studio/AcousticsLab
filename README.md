@@ -27,10 +27,10 @@ The next generation of [AcousticsLab](https://github.com/ekarad1um/AcousticsLab/
 
 **Prerequisites:** Rust 1.94+ (edition 2024), `protoc` 3.21+, `cmake` 3.5+.
 
-1. Run the `acousticsd` daemon (host/dev build, uses a mock tone if no real mic is configured):
+1. Run the `acousticslabd` daemon (host/dev build, uses a mock tone if no real mic is configured):
 
   ```bash
-  cargo run --release --bin acousticsd -- --workspace misc/workspace --config misc/etc/launch.toml
+  cargo run --release --bin acousticslabd -- --workspace misc/workspace --config misc/etc/launch.toml
   ```
 
   The bundled `misc/etc/launch.toml` binds the HTTP/WebSocket API to `127.0.0.1:8787`.
@@ -48,12 +48,12 @@ The next generation of [AcousticsLab](https://github.com/ekarad1um/AcousticsLab/
 
 ## How it works
 
-The `acousticsd` is a single binary that owns the real-time audio path,  hybrid CPU/NPU pipeline and exposes the HTTP/SSE control plane, the browser SPA is a pure client.
+The `acousticslabd` is a single binary that owns the real-time audio path,  hybrid CPU/NPU pipeline and exposes the HTTP/SSE control plane, the browser SPA is a pure client.
 
 
 ```mermaid
 flowchart TB
-  daemon_note["<b>Backend (acousticsd)</b><br/>single binary · composition root<br/>tokio · DrainRegistry · common / proto"]
+  daemon_note["<b>Backend (acousticslabd)</b><br/>single binary · composition root<br/>tokio · DrainRegistry · common / proto"]
 
   subgraph g_inputs["Inputs · hardware · boot config"]
     mic(["<b>Microphone</b><br/>ALSA capture device"])

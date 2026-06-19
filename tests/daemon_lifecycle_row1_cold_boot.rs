@@ -22,11 +22,11 @@ use daemon_helpers::{CheckProfile, launch_check_mode};
 async fn lifecycle_row1_cold_boot_all_subsystems_healthy() {
     let run = launch_check_mode(CheckProfile::default())
         .await
-        .expect("acousticsd --check launch must succeed");
+        .expect("acousticslabd --check launch must succeed");
 
     if run.exit_code != 0 || run.snapshot.is_none() {
         panic!(
-            "acousticsd --check failed (exit={}, elapsed={:?})\n\
+            "acousticslabd --check failed (exit={}, elapsed={:?})\n\
              ===== STDOUT =====\n{}\n\
              ===== STDERR =====\n{}",
             run.exit_code, run.elapsed, run.stdout, run.stderr,
@@ -85,7 +85,7 @@ async fn lifecycle_row1_cold_boot_all_subsystems_healthy() {
     let total_budget = Duration::from_secs(10);
     assert!(
         run.elapsed < total_budget,
-        "acousticsd --check elapsed {:?} > {:?} budget; cold-boot regression?",
+        "acousticslabd --check elapsed {:?} > {:?} budget; cold-boot regression?",
         run.elapsed,
         total_budget,
     );

@@ -3,7 +3,7 @@
 //! `kill -9`s mid-operation and never restarts. Swept: `<root>/.tmp/`,
 //! `<root>/active/.tmp/<activation_id>/` (pre-publish active-head staging,
 //! atomic-renamed into `active/generations/` on success), and every
-//! `<workspace>/.tmp/`; JSONL job logs and `acousticsd.log.*` are pruned
+//! `<workspace>/.tmp/`; JSONL job logs and `acousticslabd.log.*` are pruned
 //! elsewhere.
 //!
 //! No `WorkspaceMgr` lock: the 24 h `tmp_age` default sits orders of magnitude

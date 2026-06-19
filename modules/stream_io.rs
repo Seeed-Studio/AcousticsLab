@@ -990,14 +990,13 @@ pub async fn bind_uds(path: &std::path::Path) -> Result<UnixListener, StreamErro
         .ok_or_else(|| StreamError::UdsParentInsecure {
             path: path.display().to_string(),
             parent: String::new(),
-            detail: "no parent directory; pick a full path (e.g. /run/acoustics_lab.sock)".into(),
+            detail: "no parent directory; pick a full path (e.g. /run/acousticslab.sock)".into(),
         })?;
     if parent.as_os_str().is_empty() {
         return Err(StreamError::UdsParentInsecure {
             path: path.display().to_string(),
             parent: String::new(),
-            detail: "empty parent directory; pick a full path (e.g. /run/acoustics_lab.sock)"
-                .into(),
+            detail: "empty parent directory; pick a full path (e.g. /run/acousticslab.sock)".into(),
         });
     }
     validate_parent_dir_confinement(path, parent)?;

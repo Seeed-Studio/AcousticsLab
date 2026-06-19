@@ -419,7 +419,7 @@ mod tests {
     #[test]
     fn head_load_mpk_missing_file_returns_err() {
         let device: burn::tensor::Device<TestB> = Default::default();
-        let bad = std::path::Path::new("/nonexistent/.acoustics_lab/missing-head.mpk");
+        let bad = std::path::Path::new("/nonexistent/.acousticslab/missing-head.mpk");
         let err = Head::<TestB>::load_mpk(bad, &device).expect_err("must fail");
         match err {
             Error::Load { path, .. } => {

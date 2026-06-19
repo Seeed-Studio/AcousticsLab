@@ -7,12 +7,12 @@
 
 use std::path::Path;
 
-use acoustics_lab::api::{AppState, router};
-use acoustics_lab::common::ids::{HeadId, WorkspaceId};
-use acoustics_lab::common::workspace::{
+use acousticslab::api::{AppState, router};
+use acousticslab::common::ids::{HeadId, WorkspaceId};
+use acousticslab::common::workspace::{
     HeadIndex, HeadManifest, HeadRecord, WorkspaceCore, WorkspaceRevision,
 };
-use acoustics_lab::config::DefaultHeadRef;
+use acousticslab::config::DefaultHeadRef;
 use axum::http::{Method, StatusCode};
 
 mod api_fixtures;
@@ -29,8 +29,8 @@ fn fresh_state(dir: &Path) -> AppState {
 /// Stage a real bundled-default `head.mpk` under `<dir>/bundled_default/` so
 /// runtime preload via `HotHead::load` succeeds.
 fn stage_bundled_default(dir: &Path) -> DefaultHeadRef {
-    use acoustics_lab::common::head_header::write_with_payload;
-    use acoustics_lab::model::Head;
+    use acousticslab::common::head_header::write_with_payload;
+    use acousticslab::model::Head;
     use burn::backend::NdArray;
     use burn::module::Module;
     use burn::record::{FullPrecisionSettings, NamedMpkFileRecorder, Recorder};
@@ -48,7 +48,7 @@ fn stage_bundled_default(dir: &Path) -> DefaultHeadRef {
     let mut composed = std::fs::File::create(bundled.join("head.mpk")).unwrap();
     write_with_payload(
         &mut composed,
-        acoustics_lab::common::dims::BackboneFeatureDim::USIZE as u32,
+        acousticslab::common::dims::BackboneFeatureDim::USIZE as u32,
         2,
         &payload,
     )
@@ -69,14 +69,14 @@ fn stage_bundled_default(dir: &Path) -> DefaultHeadRef {
 /// separate from FsService's internal map.
 fn publish_one_trained_head(
     state: &AppState,
-    workspace_id: acoustics_lab::common::ids::WorkspaceId,
+    workspace_id: acousticslab::common::ids::WorkspaceId,
 ) -> HeadId {
-    use acoustics_lab::common::head_header::write_with_payload;
-    use acoustics_lab::file_mgr::schema::{
+    use acousticslab::common::head_header::write_with_payload;
+    use acousticslab::file_mgr::schema::{
         head_artifact_path, head_manifest_path, heads_dir, workspace_dir_for, write_head_index,
         write_head_manifest, write_workspace_core,
     };
-    use acoustics_lab::model::Head;
+    use acousticslab::model::Head;
     use burn::backend::NdArray;
     use burn::module::Module;
     use burn::record::{FullPrecisionSettings, NamedMpkFileRecorder, Recorder};
@@ -103,7 +103,7 @@ fn publish_one_trained_head(
     let mut composed = std::fs::File::create(&mpk_path).unwrap();
     write_with_payload(
         &mut composed,
-        acoustics_lab::common::dims::BackboneFeatureDim::USIZE as u32,
+        acousticslab::common::dims::BackboneFeatureDim::USIZE as u32,
         3,
         &payload,
     )
@@ -183,7 +183,7 @@ async fn post_active_default_writes_bundled_generation() {
     assert_eq!(v["origin"], "default");
     assert_eq!(
         v["runtime_head_id"],
-        acoustics_lab::common::ids::DEFAULT_RUNTIME_HEAD_ID_STR,
+        acousticslab::common::ids::DEFAULT_RUNTIME_HEAD_ID_STR,
     );
     assert_eq!(v["n_classes"], 2);
     assert!(v["sha256"].as_str().unwrap().len() == 64);
@@ -256,7 +256,7 @@ async fn get_active_reports_source_workspace_alive_false_after_workspace_delete(
     let ws_id = WorkspaceId::parse("11111111-2222-4333-8444-555555555541").unwrap();
     let head_id = publish_one_trained_head(&state, ws_id);
     let workspace_dir =
-        acoustics_lab::file_mgr::schema::workspace_dir_for(state.files.root(), &ws_id);
+        acousticslab::file_mgr::schema::workspace_dir_for(state.files.root(), &ws_id);
     let r = router(state);
 
     let body = serde_json::json!({
@@ -303,7 +303,7 @@ async fn post_active_default_after_head_resets_runtime() {
     assert_eq!(v["origin"], "default");
     assert_eq!(
         v["runtime_head_id"],
-        acoustics_lab::common::ids::DEFAULT_RUNTIME_HEAD_ID_STR,
+        acousticslab::common::ids::DEFAULT_RUNTIME_HEAD_ID_STR,
     );
 }
 
@@ -537,7 +537,7 @@ async fn active_default_manifest_on_disk_carries_field_subset() {
     assert_eq!(obj["origin"].as_str(), Some("default"));
     assert_eq!(
         obj["runtime_head_id"].as_str(),
-        Some(acoustics_lab::common::ids::DEFAULT_RUNTIME_HEAD_ID_STR),
+        Some(acousticslab::common::ids::DEFAULT_RUNTIME_HEAD_ID_STR),
     );
 }
 
@@ -586,7 +586,7 @@ async fn active_response_carries_workspace_revision_field() {
 /// `workspace_revision` is absent, so serde reports the missing field.
 #[tokio::test]
 async fn legacy_active_manifest_shape_parse_fails_on_read() {
-    use acoustics_lab::file_mgr::schema::read_active_manifest;
+    use acousticslab::file_mgr::schema::read_active_manifest;
     let dir = tempfile::tempdir().unwrap();
     // Stage a legacy-shape manifest directly and feed it to the schema reader
     // shared by `GET /active` and boot recovery: both must fail closed.

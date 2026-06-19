@@ -16,10 +16,10 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use acoustics_lab::common::dims::{BackboneFeatureDim, NBins, NFrames};
-use acoustics_lab::inference::BurnBackbone;
-use acoustics_lab::preproc::Preproc;
-use acoustics_lab::preproc::wav_io::{self, ResamplerCache};
+use acousticslab::common::dims::{BackboneFeatureDim, NBins, NFrames};
+use acousticslab::inference::BurnBackbone;
+use acousticslab::preproc::Preproc;
+use acousticslab::preproc::wav_io::{self, ResamplerCache};
 
 fn main() -> ExitCode {
     match run() {

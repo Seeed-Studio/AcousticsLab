@@ -1,7 +1,7 @@
 //! Integration smoke test for the async `run` loop: subscriber-driven pause/resume, broadcast wiring, lag handling.
 
-use acoustics_lab::audio_buffer::AudioBuffer;
-use acoustics_lab::opus_stream::{IN_RATE_HZ, run};
+use acousticslab::audio_buffer::AudioBuffer;
+use acousticslab::opus_stream::{IN_RATE_HZ, run};
 use bytes::Bytes;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -9,7 +9,7 @@ use std::time::Duration;
 use tokio::sync::{broadcast, watch};
 use tokio_util::sync::CancellationToken;
 
-fn fill_writer(writer: &mut acoustics_lab::audio_buffer::Writer, seconds: f32) {
+fn fill_writer(writer: &mut acousticslab::audio_buffer::Writer, seconds: f32) {
     let n = (IN_RATE_HZ as f32 * seconds) as usize;
     let pcm: Vec<f32> = (0..n)
         .map(|i| {
@@ -148,11 +148,11 @@ async fn pause_resume_state_machine() {
 /// is the generous tolerance that covers the rounding).
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn timing_anchor_drives_capture_us_within_one_ms() {
-    use acoustics_lab::common::time::{
+    use acousticslab::common::time::{
         BufferTimingAnchor, CaptureTime, capture_us_for, shared_timing_anchor,
     };
-    use acoustics_lab::proto::envelope::Payload;
-    use acoustics_lab::proto::framing::decode_envelope;
+    use acousticslab::proto::envelope::Payload;
+    use acousticslab::proto::framing::decode_envelope;
 
     let buf = AudioBuffer::new(262_144);
     let mut writer = buf.take_writer();
