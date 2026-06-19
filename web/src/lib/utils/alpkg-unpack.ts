@@ -523,7 +523,7 @@ export function classifyAlpkgEntries(entries: readonly AlpkgEntry[]): Classified
       if (headId === null || half === null || !UUID_RE.test(headId)) {
         errors.push({
           path,
-          message: 'Head path must be "head/<head_id>.{mpk,json}" (UUID head id).'
+          message: 'Model path must be "head/<head_id>.{mpk,json}" (UUID head id).'
         });
         continue;
       }
@@ -532,7 +532,7 @@ export function classifyAlpkgEntries(entries: readonly AlpkgEntry[]): Classified
       else pair.json = entry.bytes;
       headHalves.set(headId, pair);
     } else {
-      errors.push({ path, message: 'Unrecognised entry; ignored.' });
+      errors.push({ path, message: 'Unrecognized entry; ignored.' });
     }
   }
 
@@ -550,14 +550,14 @@ export function classifyAlpkgEntries(entries: readonly AlpkgEntry[]): Classified
     if (pair.mpk === undefined) {
       errors.push({
         path: `head/${headId}.json`,
-        message: 'Head manifest is present but the ".mpk" weights file is missing.'
+        message: 'Model manifest is present but the ".mpk" weights file is missing.'
       });
       continue;
     }
     if (pair.json === undefined) {
       errors.push({
         path: `head/${headId}.mpk`,
-        message: 'Head weights are present but the ".json" manifest is missing.'
+        message: 'Model weights are present but the ".json" manifest is missing.'
       });
       continue;
     }

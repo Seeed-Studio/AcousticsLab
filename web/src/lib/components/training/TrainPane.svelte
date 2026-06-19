@@ -37,16 +37,9 @@
     trainingStore.active !== null && trainingStore.active.workspaceId !== workspaceId
   );
 
-  const currentHead = $derived.by(() => {
-    if (heads.length === 0) return null;
-    const matches = heads.filter((h) => h.workspace_revision.id === liveRevision);
-    if (matches.length === 0) return null;
-    // Returns 0 on equal `created_at` so sort stability keeps the pick from shuffling
-    // between renders when two heads share a timestamp (sub-second back-to-back trains).
-    return matches
-      .slice()
-      .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0))[0];
-  });
+  // Existence of a head at the live revision (drives idle_trained). Only the boolean is read, so no
+  // ordering is needed — HeadsTable owns the deterministic newest-at-liveRevision pick.
+  const currentHead = $derived(heads.find((h) => h.workspace_revision.id === liveRevision) ?? null);
 
   // Readiness gate mirrors the daemon (refuses < 2 non-empty categories) plus per-category
   // thresholds (20 bg / 10 fg) matching the dataset module's "Synced" badge bar.

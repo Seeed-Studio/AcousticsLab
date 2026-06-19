@@ -256,7 +256,7 @@ function parseManifestJson(bytes: Uint8Array): HeadManifest {
   try {
     return JSON.parse(text) as HeadManifest;
   } catch (e) {
-    throw new ExportError('validating', 'Head metadata is not valid JSON', { cause: e });
+    throw new ExportError('validating', 'Model metadata is not valid JSON', { cause: e });
   }
 }
 
@@ -264,18 +264,18 @@ function validateManifest(manifest: HeadManifest, expected: HeadRecord, workspac
   // The HeadManifest cast is unsound until each field is runtime-checked here, so tampering surfaces
   // as a typed ExportError, not an undefined-method throw deep in the packer.
   if (typeof manifest.head_id !== 'string' || manifest.head_id.length === 0) {
-    throw new ExportError('validating', 'Head metadata is missing the head id');
+    throw new ExportError('validating', 'Model metadata is missing the head id');
   }
   if (manifest.head_id !== expected.head_id) {
     throw new ExportError(
       'validating',
-      `Head metadata reports a different head id (${manifest.head_id} vs ${expected.head_id})`
+      `Model metadata reports a different head id (${manifest.head_id} vs ${expected.head_id})`
     );
   }
   if (typeof manifest.workspace_id !== 'string' || manifest.workspace_id !== workspaceId) {
     throw new ExportError(
       'validating',
-      `Head metadata's workspace id (${manifest.workspace_id}) does not match the requested workspace (${workspaceId})`
+      `Model metadata's workspace id (${manifest.workspace_id}) does not match the requested workspace (${workspaceId})`
     );
   }
   if (
@@ -283,21 +283,21 @@ function validateManifest(manifest: HeadManifest, expected: HeadRecord, workspac
     !Number.isInteger(manifest.n_classes) ||
     manifest.n_classes < 1
   ) {
-    throw new ExportError('validating', 'Head metadata has a non-positive class count');
+    throw new ExportError('validating', 'Model metadata has a non-positive class count');
   }
   if (typeof manifest.size_bytes !== 'number' || manifest.size_bytes < 0) {
-    throw new ExportError('validating', 'Head metadata has an invalid size');
+    throw new ExportError('validating', 'Model metadata has an invalid size');
   }
   if (typeof manifest.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(manifest.sha256)) {
-    throw new ExportError('validating', 'Head metadata has an invalid sha256');
+    throw new ExportError('validating', 'Model metadata has an invalid sha256');
   }
   if (!Array.isArray(manifest.labels)) {
-    throw new ExportError('validating', 'Head metadata is missing the labels array');
+    throw new ExportError('validating', 'Model metadata is missing the labels array');
   }
   if (manifest.labels.length !== manifest.n_classes) {
     throw new ExportError(
       'validating',
-      `Head metadata's label count (${String(manifest.labels.length)}) does not match n_classes (${String(manifest.n_classes)})`
+      `Model metadata's label count (${String(manifest.labels.length)}) does not match n_classes (${String(manifest.n_classes)})`
     );
   }
   for (let i = 0; i < manifest.labels.length; i++) {
@@ -305,7 +305,7 @@ function validateManifest(manifest: HeadManifest, expected: HeadRecord, workspac
     if (typeof lbl !== 'string' || lbl.length === 0) {
       throw new ExportError(
         'validating',
-        `Head metadata's label at index ${String(i)} is empty or not a string`
+        `Model metadata's label at index ${String(i)} is empty or not a string`
       );
     }
   }
@@ -314,19 +314,19 @@ function validateManifest(manifest: HeadManifest, expected: HeadRecord, workspac
   if (manifest.sha256 !== expected.sha256) {
     throw new ExportError(
       'validating',
-      `Head metadata sha256 does not match the workspace's index (${manifest.sha256} vs ${expected.sha256})`
+      `Model metadata sha256 does not match the workspace's index (${manifest.sha256} vs ${expected.sha256})`
     );
   }
   if (manifest.n_classes !== expected.n_classes) {
     throw new ExportError(
       'validating',
-      `Head metadata class count (${String(manifest.n_classes)}) does not match the workspace's index (${String(expected.n_classes)})`
+      `Model metadata class count (${String(manifest.n_classes)}) does not match the workspace's index (${String(expected.n_classes)})`
     );
   }
   if (manifest.size_bytes !== expected.size_bytes) {
     throw new ExportError(
       'validating',
-      `Head metadata size (${String(manifest.size_bytes)}) does not match the workspace's index (${String(expected.size_bytes)})`
+      `Model metadata size (${String(manifest.size_bytes)}) does not match the workspace's index (${String(expected.size_bytes)})`
     );
   }
   // A revision mismatch means another producer published between list and click. Cast through
@@ -334,13 +334,16 @@ function validateManifest(manifest: HeadManifest, expected: HeadRecord, workspac
   // typed ExportError, not a raw TypeError (the static type claims non-null, but JSON.parse doesn't).
   const rev = manifest.workspace_revision as unknown;
   if (rev === null || typeof rev !== 'object' || typeof (rev as { id?: unknown }).id !== 'number') {
-    throw new ExportError('validating', 'Head metadata workspace_revision is missing or malformed');
+    throw new ExportError(
+      'validating',
+      'Model metadata workspace_revision is missing or malformed'
+    );
   }
   const manifestRevId = (rev as { id: number }).id;
   if (manifestRevId !== expected.workspace_revision.id) {
     throw new ExportError(
       'validating',
-      `Head metadata workspace revision (${String(manifestRevId)}) does not match the workspace's index (${String(expected.workspace_revision.id)})`
+      `Model metadata workspace revision (${String(manifestRevId)}) does not match the workspace's index (${String(expected.workspace_revision.id)})`
     );
   }
 }
@@ -353,13 +356,13 @@ function validateWeightsAgainstManifest(
   if (bytes.byteLength !== manifest.size_bytes) {
     throw new ExportError(
       'validating',
-      `Head weight size (${String(bytes.byteLength)}) does not match the metadata's size (${String(manifest.size_bytes)})`
+      `Model weight size (${String(bytes.byteLength)}) does not match the metadata's size (${String(manifest.size_bytes)})`
     );
   }
   if (observedSha !== manifest.sha256) {
     throw new ExportError(
       'validating',
-      'Head weight hash does not match the metadata; the download is corrupted or the head changed mid-export.'
+      'Model weight hash does not match the metadata; the download is corrupted or the model changed mid-export.'
     );
   }
 }

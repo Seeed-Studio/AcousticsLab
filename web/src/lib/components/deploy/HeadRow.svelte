@@ -14,6 +14,8 @@
     head: HeadRecord;
     // Read only by the model-card popover's manifest fetch, not the row.
     workspaceId: Uuid;
+    // Sole freshness signal: this row is the single newest head at the live revision. Every other head
+    // (older same-revision run or older revision) is "not Latest" and intentionally shows no pill.
     isLatest: boolean;
     // This row's head is the runtime-active one; drives the Active pill and chrome tint.
     isDeployed: boolean;
@@ -69,10 +71,12 @@
     };
   });
 
-  // Freshness pills class-swap-hide so "id + Active" stays on one line; yield must span the WHOLE
-  // Active-slot occupancy (spinner + mounted pill + its out:fade) or a pill wraps beside it. Release
+  // The "Latest" pill class-swap-hides so "id + Active" stays on one line; yield must span the WHOLE
+  // Active-slot occupancy (spinner + mounted pill + its out:fade) or it wraps beside it. Release
   // exceeds the fade because the fade's WAAPI clock starts ~1 frame after this timer arms (Svelte primes
   // it in a zero-duration animation), so a bare-equal timer flashes the box back beside the still-fading one.
+  // Only the Latest pill reads freshnessYield (inert elsewhere); kept ungated so a Latest flip can't
+  // tear down an in-flight release timer.
   const FRESHNESS_RELEASE_MS = SPINNER_OUT_DURATION_MS + 60;
   // svelte-ignore state_referenced_locally
   let freshnessYield = $state(isDeployed);
@@ -179,22 +183,11 @@
             />
           </span>
         {/if}
-        {#if head.status === 'stale'}
-          <!-- Stale = trained on a since-superseded revision; mutually exclusive with Latest. -->
-          <span class={freshnessPillClass}>
-            <StatusBadge
-              size="xs"
-              label={m.deploy.head_row.pill_stale}
-              tone="warning"
-              title={m.deploy.head_row.pill_stale_title}
-            />
-          </span>
-        {/if}
-        {#if freshnessYield && (isLatest || head.status === 'stale')}
-          <!-- The hidden visual pill leaves the a11y tree; announce the state here, only below @[12rem],
+        {#if isLatest && freshnessYield}
+          <!-- The hidden visual pill leaves the a11y tree; announce it here, only below @[12rem],
                so it's heard exactly once. -->
           <span class="sr-only @[12rem]/headrow:hidden">
-            {isLatest ? m.deploy.head_row.pill_latest : m.deploy.head_row.pill_stale}
+            {m.deploy.head_row.pill_latest}
           </span>
         {/if}
         {#if (deploying || isDeploying) && !isDeployed}

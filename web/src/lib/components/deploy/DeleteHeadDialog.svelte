@@ -5,6 +5,7 @@
   import { heads as headsApi } from '$lib/api/endpoints';
   import { errorCopy } from '$lib/utils/error-copy';
   import { formatBytes } from '$lib/utils/format';
+  import { formatRelative } from '$lib/utils/time';
   import { m } from '$lib/i18n';
   import type { HeadRecord, Uuid } from '$lib/api/types';
 
@@ -46,19 +47,21 @@
 </script>
 
 <Modal {open} title={m.deploy.delete_dialog.title} {onclose} closeOnBackdrop={!submitting}>
-  <!-- Echoes the clicked row's identity (short id, full UUID on hover via `title`) so the confirmation reads as "yes, this row". -->
+  <!-- Full identity (matching the model-card popover) so the confirmation reads as "yes, exactly this
+       model"; `break-all` wraps the long UUID cleanly instead of overflowing a narrow modal. -->
   {#if head}
     <div
       class="rounded-md border border-line bg-surface-2 px-3 py-2 text-xs text-fg wrap-break-word"
     >
-      <p class="font-mono text-sm font-semibold text-fg" title={head.head_id}>
-        {head.head_id.slice(0, 8)}
+      <p class="font-mono text-sm font-semibold break-all text-fg">
+        {head.head_id}
       </p>
       <p class="mt-0.5 text-[11px] text-fg-muted">
-        {m.deploy.delete_dialog.meta_line(
+        {m.deploy.head_row.meta_line(
           formatBytes(head.size_bytes),
           head.n_classes,
-          head.workspace_revision.id
+          head.workspace_revision.id,
+          formatRelative(head.created_at)
         )}
       </p>
     </div>

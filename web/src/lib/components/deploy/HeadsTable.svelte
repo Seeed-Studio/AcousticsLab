@@ -38,14 +38,27 @@
   );
   const defaultDeployed = $derived(active?.origin === 'default');
 
-  // Newest-first; strict-weak comparator keeps order stable when two heads share `created_at`.
+  // Newest-first by `created_at`, then `head_id` as a stable tiebreak so heads sharing a timestamp
+  // (sub-second back-to-back trains) pick a deterministic "Latest" instead of flipping per render.
   const ordered = $derived(
     heads
       .slice()
-      .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0))
+      .sort((a, b) =>
+        a.created_at < b.created_at
+          ? 1
+          : a.created_at > b.created_at
+            ? -1
+            : a.head_id < b.head_id
+              ? 1
+              : a.head_id > b.head_id
+                ? -1
+                : 0
+      )
   );
 
-  // Newest head at the live workspace revision (drives the "Latest" pill).
+  // The "Latest" pill goes to the single freshest head at the live revision: the first in `ordered`
+  // (newest by created_at, head_id) whose revision equals `liveRevision`. This is the one freshness
+  // basis; every other head is "not Latest" and carries no pill.
   const latestHeadId = $derived.by<Uuid | null>(() => {
     for (const h of ordered) {
       if (h.workspace_revision.id === liveRevision) return h.head_id;

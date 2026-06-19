@@ -289,7 +289,8 @@
       <TrainPane workspaceId={detail.id} {liveRevision} heads={detail.heads} />
     </div>
 
-    <!-- liveRevision is the upload-receipt-promoted revision, so the freshest head wears the "Latest" pill without waiting for the poller. -->
+    <!-- liveRevision folds in the upload receipt, so a head trained at the new revision wins "Latest"
+         (and pre-upload heads lose it) immediately, without waiting for the poller to refetch detail. -->
     <DeployPane
       workspaceId={detail.id}
       workspaceName={detail.name}

@@ -66,6 +66,9 @@ interface HeadCore {
 }
 
 export interface HeadRecord extends HeadCore {
+  // Daemon-derived freshness (current/stale by revision id). Kept for the wire contract but NOT
+  // rendered: the deploy UI derives freshness from `liveRevision`, which leads the daemon's basis
+  // during the optimistic post-upload window. See HeadsTable.svelte.
   status: HeadStatus;
 }
 

@@ -6,7 +6,7 @@ export const en = {
   app: {
     name: 'AcousticsLab',
     description:
-      'AcousticsLab: a local acoustic classifier operator console for live spectrogram visualization, dataset slicing, head training, and hot-swap deployment.'
+      'AcousticsLab: a local acoustic classifier operator console for live spectrogram visualization, dataset slicing, model training, and hot-swap deployment.'
   },
   routes: {
     dashboard_title: (brand) => brand,
@@ -40,14 +40,14 @@ export const en = {
     configuration_controls: {
       daemon_unavailable_title: 'Daemon unavailable',
       daemon_unavailable_default:
-        'configuration will resume automatically when the daemon is reachable',
+        'Configuration will resume automatically when the daemon is reachable.',
       microphone_heading: 'Microphone',
       source_label: 'Source',
       auto_first_available: 'auto · first available',
       channel_label: 'Channel',
       auto_channel: 'auto',
       inference_cadence_heading: 'Inference cadence',
-      overlap_ratio_label: 'Overlap Ratio',
+      overlap_ratio_label: 'Overlap ratio',
       top_k_label: 'Top-K',
       loading: 'loading…',
       kind_alsa: 'ALSA',
@@ -60,14 +60,14 @@ export const en = {
       awaiting_first_frame: 'awaiting first inference frame…'
     },
     active_head_card: {
-      heading: 'Active head',
+      heading: 'Active model',
       pill_default: 'default',
       pill_workspace: 'workspace',
       pill_detached: 'detached',
-      pill_default_title: 'The daemon-bundled default head is running.',
-      pill_workspace_title: 'A trained workspace head is running.',
-      pill_detached_title: 'Source workspace was deleted after this head was activated.',
-      loading_active: 'loading active head…',
+      pill_default_title: 'The daemon-bundled default model is running.',
+      pill_workspace_title: 'A trained workspace model is running.',
+      pill_detached_title: 'Source workspace was deleted after this model was activated.',
+      loading_active: 'loading active model…',
       activated_label: 'activated',
       class_count_label: (count) => (count === 1 ? 'class' : 'classes'),
       workspace_dt: 'workspace',
@@ -213,7 +213,7 @@ export const en = {
       title: 'Rename category',
       name_label: 'Name',
       name_help:
-        'The name doubles as the on-disk directory and the trainer class label, so renaming changes the class label. Existing trained heads keep their old labels and are marked stale until you retrain.',
+        'The name doubles as the on-disk directory and the trainer class label, so renaming changes the class label. Existing trained models keep their old labels and are marked stale until you retrain.',
       submit: 'Save',
       error_mandatory: 'Background Noise is preserved and cannot be renamed.',
       error_busy: 'Finish or clear in-progress uploads and deletions before renaming this category.'
@@ -315,7 +315,7 @@ export const en = {
       tips_label: 'Input module tips',
       tip_stream_title: "Prefer the daemon's opus stream.",
       tip_stream_body:
-        "Your slices share the same DSP as inference, so the trained head doesn't see a distribution shift after fine-tune.",
+        "Your slices share the same DSP as inference, so the trained model doesn't see a distribution shift after fine-tune.",
       tip_environment_title: 'Record in the deployment environment.',
       tip_environment_body:
         'A clean studio capture undertrains noise rejection; the real background is half of what the model needs to learn.',
@@ -393,7 +393,8 @@ export const en = {
         'WAV buffer too small (need at least 44 bytes for the canonical header).',
       error_web_audio_unavailable: 'Web Audio API is unavailable in this browser.',
       auto_stopped_at_cap: 'Auto-stopped at the duration cap.',
-      silent_dropped_suffix: (count) => `${count} silent skipped`
+      silent_dropped_suffix: (count) =>
+        `${count} silent ${count === 1 ? 'slice' : 'slices'} skipped`
     },
     row: {
       badge_synced: 'Synced',
@@ -418,7 +419,7 @@ export const en = {
       actions_aria: (displayName) => `Actions for ${displayName}`,
       actions_title: 'Category actions',
       actions_title_preserved: 'Preserved — rename and delete disabled',
-      badge_deleting: 'deleting'
+      badge_deleting: 'Deleting'
     }
   },
   training: {
@@ -426,7 +427,7 @@ export const en = {
       heading: 'Train',
       subtitle_other_running: 'Another workspace is training; only one job runs at a time.',
       subtitle_default:
-        "Tune a head on this workspace's dataset, then activate it for live inference.",
+        "Tune a model on this workspace's dataset, then activate it for live inference.",
       readiness_loading: 'Loading dataset…',
       readiness_no_categories: 'Add a foreground class with uploaded slices to start training.',
       readiness_background_short: (need) =>
@@ -437,14 +438,14 @@ export const en = {
       button_cancel: 'Cancel',
       button_cancelling: 'Cancelling…',
       button_retrain: 'Re-train',
-      button_train: 'Train head',
+      button_train: 'Train model',
       button_title_loading: 'Loading dataset…',
       button_title_not_ready_default: 'Readiness reason',
       button_title_form_errors: 'Fix the highlighted hyperparameter fields to enable training.',
       button_title_idle_trained:
-        'A head already matches this revision -- re-train to try different hyperparameters or a different random seed. Activate any head from the Heads section below.',
+        'A model already matches this revision -- re-train to try different hyperparameters or a different random seed. Activate any model from the Models section below.',
       button_title_idle_busy: 'Another workspace is training; only one job runs at a time.',
-      button_title_idle_ready: 'Train a head on this workspace dataset.',
+      button_title_idle_ready: 'Train a model on this workspace dataset.',
       button_title_starting: 'Submitting the training request…',
       button_title_running: 'Cancel the running training job.',
       button_title_cancelling: 'Cancelling…',
@@ -493,9 +494,9 @@ export const en = {
       heading: 'History',
       keeps_last: (cap) => `keeps last ${cap} runs`,
       retention_title: (cap) =>
-        `The daemon keeps the ${cap} most recent training-log files per workspace; older JSONL traces are pruned when a new run opens. The published head record (in the Heads section below) is unaffected - only the JSONL trace is pruned.`,
+        `The daemon keeps the ${cap} most recent training-log files per workspace; older JSONL traces are pruned when a new run opens. The published model record (in the Models section below) is unaffected - only the JSONL trace is pruned.`,
       empty_state_prefix: 'No training runs yet for this workspace. Click ',
-      empty_state_button: 'Train head',
+      empty_state_button: 'Train model',
       empty_state_suffix: ' to start one.',
       hide_older_label: 'Hide older runs',
       show_older_label: (count) => `Show ${count} older ${count === 1 ? 'run' : 'runs'}`,
@@ -582,7 +583,7 @@ export const en = {
         return `Training loop done · ${epochsRun} ${epochsRun === 1 ? 'epoch' : 'epochs'} in ${elapsedSec}s${bestPart}`;
       },
       head_published: (headId, size, nClasses, rev) =>
-        `Head published · ${headId} · ${size} · ${nClasses} ${nClasses === 1 ? 'class' : 'classes'} · rev ${rev}`,
+        `Model published · ${headId} · ${size} · ${nClasses} ${nClasses === 1 ? 'class' : 'classes'} · rev ${rev}`,
       job_completed: (labelsList) =>
         labelsList.length > 0 ? `Job completed · ${labelsList}` : 'Job completed'
     }
@@ -590,83 +591,80 @@ export const en = {
   deploy: {
     pane: {
       heading: 'Deploy',
-      description: 'Hot-swap a trained head into live inference.',
+      description: 'Hot-swap a trained model into live inference.',
       pill_deployed: 'Deployed',
-      pill_deployed_title: 'A head trained in this workspace is the runtime head.',
+      pill_deployed_title: 'A model trained in this workspace is the runtime model.',
       pill_default: 'Default',
-      pill_default_title: 'The daemon-bundled default head is running.',
+      pill_default_title: 'The daemon-bundled default model is running.',
       pill_standby: 'Standby',
       pill_standby_title:
-        'A head from a different workspace is the runtime head. This workspace is on standby; deploying one here will replace it.',
+        'A model from a different workspace is the runtime model. This workspace is on standby; deploying one here will replace it.',
       pill_detached: 'Detached',
       pill_detached_title:
-        'The workspace that produced the runtime head was deleted; the head is still running.',
+        'The workspace that produced the runtime model was deleted; the model is still running.',
       config_disclosure_label: 'Input & Inference config',
       config_chip_freq: (hzLabel) => `freq ${hzLabel} Hz`,
       config_chip_top_k: (topK) => `top-k ${topK}`
     },
     heads_table: {
-      heading: 'Heads',
-      count_label: (count) => `${count} ${count === 1 ? 'head' : 'heads'}`,
+      heading: 'Models',
+      count_label: (count) => `${count} ${count === 1 ? 'model' : 'models'}`,
       // Rotation-cap suffix split off the bare count so it can collapse on a narrow card; carries
       // its own leading comma so it vanishes cleanly when hidden.
       count_retained: (retainedCap) => `, latest ${retainedCap} retained`,
       revert_to_default: 'Revert to default',
       revert_to_id: (shortId) => `Revert to ${shortId}`,
-      revert_title: 'Re-deploy the previously running head',
+      revert_title: 'Re-deploy the previously running model',
       default_row_headline: 'Default',
       default_row_description: 'Daemon-bundled fallback, always available.',
-      default_active_title: 'The daemon-bundled default head is currently deployed.',
-      default_aria_active: 'Default head is active',
-      default_aria_deploy: 'Deploy default head',
-      default_title_active: 'The default head is already deployed',
+      default_active_title: 'The daemon-bundled default model is currently deployed.',
+      default_aria_active: 'Default model is active',
+      default_aria_deploy: 'Deploy default model',
+      default_title_active: 'The default model is already deployed',
       default_title_deploying: 'Deploying…',
-      default_title_busy: 'Another head on this list is busy',
-      default_title_idle: 'Revert to the daemon-bundled default head',
+      default_title_busy: 'Another model on this list is busy',
+      default_title_idle: 'Revert to the daemon-bundled default model',
       menu_deploy: 'Deploy',
       menu_export: 'Export as .alpkg',
       menu_exporting: 'Exporting…',
       menu_delete: 'Delete',
       menu_hint_active: 'active',
       menu_hint_deployed: 'deployed',
-      error_deploy_head: 'Could not deploy head',
-      error_export_head: 'Could not export head',
-      error_deploy_default: 'Could not deploy default head'
+      error_deploy_head: 'Could not deploy model',
+      error_export_head: 'Could not export model',
+      error_deploy_default: 'Could not deploy default model'
     },
     head_row: {
       pill_latest: 'Latest',
-      pill_latest_title: "Most recent head trained on the workspace's current revision.",
+      pill_latest_title: "Most recent model trained on the workspace's current revision.",
       pill_active: 'Active',
-      pill_active_title: 'This head is currently deployed in the inference pipeline.',
-      pill_stale: 'Stale',
-      pill_stale_title:
-        'This head trained on an older workspace revision; retrain to capture the latest dataset changes.',
-      // Fixed-width single-string meta for the model-card popover (never degrades).
+      pill_active_title: 'This model is currently deployed in the inference pipeline.',
+      // Fixed-width single-string meta for the model-card popover and delete-confirm card (never degrades).
       meta_line: (size, classCount, rev, relative) =>
         `${size} · ${classCount} ${classCount === 1 ? 'class' : 'classes'} · rev ${rev} · ${relative}`,
       // Row meta renders segment-by-segment (size · classes · rev · age) so size/rev can drop as
       // the row narrows; only these two need a string (size/age come from formatBytes/formatRelative).
       meta_classes: (classCount) => `${classCount} ${classCount === 1 ? 'class' : 'classes'}`,
       meta_rev: (rev) => `rev ${rev}`,
-      row_aria_deployed: (shortId) => `Deployed head ${shortId}`,
-      row_aria_deploy: (shortId) => `Deploy head ${shortId}`,
-      row_title_deployed: 'This head is already deployed',
+      row_aria_deployed: (shortId) => `Deployed model ${shortId}`,
+      row_aria_deploy: (shortId) => `Deploy model ${shortId}`,
+      row_title_deployed: 'This model is already deployed',
       row_title_deploying: 'Deploying…',
       row_title_exporting: 'Exporting…',
-      row_title_busy: 'Another head on this list is busy',
-      row_title_idle: 'Click to hot-swap this head into the inference pipeline',
+      row_title_busy: 'Another model on this list is busy',
+      row_title_idle: 'Click to hot-swap this model into the inference pipeline',
       export_title_exporting: 'Exporting…',
-      export_title_idle: 'Export this head as a .alpkg archive',
-      export_aria_exporting: (shortId) => `Exporting head ${shortId}`,
-      export_aria_idle: (shortId) => `Export head ${shortId}`,
-      info_title: 'View the model card for this head',
-      info_aria: (shortId) => `View model card for head ${shortId}`
+      export_title_idle: 'Export this model as a .alpkg archive',
+      export_aria_exporting: (shortId) => `Exporting model ${shortId}`,
+      export_aria_idle: (shortId) => `Export model ${shortId}`,
+      info_title: 'View the model card',
+      info_aria: (shortId) => `View model card for ${shortId}`
     },
     inference_preview: {
       heading: 'Preview',
       off_title: 'Preview is off',
       off_description:
-        "Start the preview to watch the deployed head's spectrogram and top-k stream.",
+        "Start the preview to watch the deployed model's spectrogram and top-k stream.",
       start_button: 'Start preview'
     },
     info_dialog: {
@@ -678,10 +676,8 @@ export const en = {
       class_labels_aria: 'Trained class labels'
     },
     delete_dialog: {
-      title: 'Delete this head?',
-      body: "Removes the trained head bytes and its manifest. The dataset and any other heads stay. Can't be undone.",
-      meta_line: (size, classCount, rev) =>
-        `${size} · ${classCount} ${classCount === 1 ? 'class' : 'classes'} · rev ${rev}`,
+      title: 'Delete this model?',
+      body: "Removes the trained model bytes and its manifest. The dataset and any other models stay. Can't be undone.",
       submit: 'Delete'
     }
   },
@@ -690,12 +686,12 @@ export const en = {
       title: 'Workspaces',
       at_cap_subtitle: (max) =>
         `Reached the ${max} workspace limit. Delete one before creating another.`,
-      default_subtitle: 'Each workspace holds a labeled dataset and any heads trained from it.',
+      default_subtitle: 'Each workspace holds a labeled dataset and any models trained from it.',
       daemon_unavailable_title: 'Daemon unavailable',
       loading: 'loading workspaces…',
       empty_title: 'No workspaces yet',
       empty_description:
-        'Workspaces are where recordings, labeled samples, and trained heads live. Create one to get started.',
+        'Workspaces are where recordings, labeled samples, and trained models live. Create one to get started.',
       selected_count_aria: (count) => `${count} selected`,
       new_button_label: 'New workspace',
       new_button_aria: 'New workspace',
@@ -757,17 +753,17 @@ export const en = {
       title: 'Rename workspace',
       name_label: 'Name',
       name_help:
-        'Up to 128 characters. No slashes or control characters. Renaming does not advance the workspace revision - categories, slices, and heads stay as they are.',
+        'Up to 128 characters. No slashes or control characters. Renaming does not advance the workspace revision - categories, slices, and models stay as they are.',
       submit: 'Save'
     },
     delete_dialog: {
       title: 'Delete this workspace?',
-      body: "Removes the dataset, any trained heads, and logs. Can't be undone.",
+      body: "Removes the dataset, any trained models, and logs. Can't be undone.",
       submit: 'Delete'
     },
     bulk_delete_dialog: {
       title_count: (count) => `Delete ${count} workspace${count === 1 ? '' : 's'}?`,
-      body: "Removes each workspace's dataset, trained heads, and logs. Can't be undone.",
+      body: "Removes each workspace's dataset, trained models, and logs. Can't be undone.",
       submit_count: (count) => `Delete ${count}`
     },
     tool_island: {
@@ -775,9 +771,9 @@ export const en = {
       rename_aria: 'Rename workspace',
       rename_title: 'Rename workspace',
       export_aria: 'Export workspace',
-      export_title: 'Export workspace (datasets + heads)',
+      export_title: 'Export workspace (datasets + models)',
       import_aria: 'Import workspace',
-      import_title: 'Import workspace (datasets + heads)'
+      import_title: 'Import workspace (datasets + models)'
     },
     card: {
       created_label: (relative) => `created ${relative}`,
@@ -882,19 +878,19 @@ export const en = {
         rename_popover_aria: (sourceName) => `Rename target category for ${sourceName}`,
         rename_popover_heading: 'Renaming',
         rename_chips_heading: 'Or reuse existing',
-        heads_heading: 'Heads',
+        heads_heading: 'Models',
         heads_cap_tooltip: (cap) =>
-          `Up to ${cap} heads per workspace. Older non-active heads roll off when new ones land.`,
+          `Up to ${cap} models per workspace. Older non-active models roll off when new ones land.`,
         heads_counter: (selected, existingInTarget, cap, activeInTarget) => {
           const active = activeInTarget > 0 ? ` · active ${activeInTarget} pinned` : '';
           return `selected ${selected} · target ${existingInTarget} / ${cap}${active}`;
         },
-        checking_heads: 'Checking target heads…',
+        checking_heads: 'Checking target models…',
         displacement_warning: (displaced, cap) =>
-          `Importing will displace ${displaced} oldest non-active head${displaced === 1 ? '' : 's'} to fit the ${cap}-head cap.`,
-        head_exists_badge_title: 'A head with this id already lives in the target workspace.',
-        head_exists_badge: 'Exist',
-        head_show_details_aria: 'Show head details',
+          `Importing will displace ${displaced} oldest non-active model${displaced === 1 ? '' : 's'} to fit the ${cap}-model cap.`,
+        head_exists_badge_title: 'A model with this id already lives in the target workspace.',
+        head_exists_badge: 'Exists',
+        head_show_details_aria: 'Show model details',
         head_class_count: (count) => `${count} ${count === 1 ? 'class' : 'classes'}`,
         head_info_metadata: (size, classes, revisionId, createdAbsolute, createdRelative) => {
           const classesPart =
@@ -908,14 +904,15 @@ export const en = {
         },
         head_classes_heading: 'Classes',
         head_class_labels_aria: 'Trained class labels',
-        archive_errors_summary: (count) => `Skipped ${count} archive entries`,
+        archive_errors_summary: (count) =>
+          `Skipped ${count} archive ${count === 1 ? 'entry' : 'entries'}`,
         tfjs_ignored_unknown: (count, fileList) =>
-          `Ignored ${count} unrecognised file${count === 1 ? '' : 's'}: ${fileList}`,
+          `Ignored ${count} unrecognized file${count === 1 ? '' : 's'}: ${fileList}`,
         tfjs_classes_popover_heading: (count) => `Classes (${count})`,
         tfjs_classes_popover_aria: 'Class labels',
         head_disabled_reasons: {
-          loading: 'Loading target heads…',
-          exists: 'Already exists in the target. Pick a different head.',
+          loading: 'Loading target models…',
+          exists: 'Already exists in the target. Pick a different model.',
           ceiling: 'Selection limit reached. Untick another row first.'
         }
       },
@@ -955,7 +952,7 @@ export const en = {
         },
         progress_importing_heads: (index1, total, subPhase) => {
           const sub = subPhase !== null ? ` (${subPhase})` : '';
-          return `Importing head ${index1} / ${total}${sub}`;
+          return `Importing model ${index1} / ${total}${sub}`;
         },
         progress_uploading_tfjs: (done, total) => `Uploading TFJS files · ${done} / ${total}`,
         progress_converting_tfjs: 'Converting TFJS bundle…',
@@ -969,9 +966,9 @@ export const en = {
           `${failed} slice${failed === 1 ? '' : 's'} failed to upload`,
         head_queued: 'Queued',
         head_skipped_badge_title:
-          'The head id already exists on disk and the orchestrator skipped it (idempotent re-import).',
+          'The model id already exists on disk and the orchestrator skipped it (idempotent re-import).',
         head_per_log_not_started:
-          "Not started yet - log lines will appear once this head's import begins.",
+          "Not started yet - log lines will appear once this model's import begins.",
         head_per_log_no_events: 'No events recorded.',
         log_count: (count) => `${count} ${count === 1 ? 'log' : 'logs'}`
       },
@@ -1000,8 +997,8 @@ export const en = {
         stage_shards: 'Staging shards',
         extract_weights: 'Extracting weights',
         read_labels: 'Reading labels',
-        stage_head_mpk: 'Staging head MPK',
-        publish_head: 'Publishing head'
+        stage_head_mpk: 'Staging model MPK',
+        publish_head: 'Publishing model'
       },
       convert_event: {
         job_submitted: (converter) => `Job submitted via ${converter}`,
@@ -1013,13 +1010,13 @@ export const en = {
           `Weights extracted · ${classes} classes · ${inDim} in_dim`,
         labels_loaded: (labels) => `Labels loaded · ${labels} labels`,
         head_published: (idempotentSkip) =>
-          `Head published${idempotentSkip ? ' (already on disk, skipped)' : ''}`,
+          `Model published${idempotentSkip ? ' (already on disk, skipped)' : ''}`,
         job_completed: (classes) => `Job completed · ${classes} classes`,
         job_failed: (category, error) => `Job failed · ${category} · ${error}`
       },
       done: {
         conflict_detail: (storedSha8, incomingSha8) =>
-          `Target already holds a head with this id but a different sha256 (${storedSha8} vs incoming ${incomingSha8}).`,
+          `Target already holds a model with this id but a different sha256 (${storedSha8} vs incoming ${incomingSha8}).`,
         retry_button: 'Replace existing & retry'
       },
       footer: {
@@ -1036,9 +1033,9 @@ export const en = {
       title: (workspaceName) => `Export workspace · ${workspaceName}`,
       load_error_title: "Couldn't load this workspace",
       loading: 'Loading workspace…',
-      nothing_to_export: 'This workspace has no categories and no heads yet - nothing to export.',
+      nothing_to_export: 'This workspace has no categories and no models yet - nothing to export.',
       datasets_heading: 'Datasets',
-      heads_heading: 'Heads',
+      heads_heading: 'Models',
       select_all: 'Select all',
       deselect_all: 'Deselect all',
       row_empty: 'empty',
@@ -1052,13 +1049,13 @@ export const en = {
       progress_fetching_slices: 'Fetching slices…',
       progress_listing_slices: 'Listing slices…',
       progress_fetched_slices: (done, total) => `Fetched ${done} / ${total} slices…`,
-      progress_validating_heads: 'Validating heads…',
-      progress_validated_heads: (done, total) => `Validated ${done} / ${total} heads…`,
+      progress_validating_heads: 'Validating models…',
+      progress_validated_heads: (done, total) => `Validated ${done} / ${total} models…`,
       progress_packing: 'Packing archive…',
       progress_downloading: 'Starting download…',
       error_default: 'Export failed',
       error_in_category: (categoryDisplay) => `Export failed in "${categoryDisplay}"`,
-      error_for_head: (shortId) => `Export failed for head ${shortId}`,
+      error_for_head: (shortId) => `Export failed for model ${shortId}`,
       exporting: 'Exporting…',
       export_aria: 'Export selected items',
       export_button: 'Export'

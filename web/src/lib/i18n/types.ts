@@ -595,7 +595,7 @@ export interface Messages {
     };
   };
 
-  /** Status badges (`Active`/`Latest`/`Stale`/`Default`) stay per-surface, not a shared namespace, to preserve each badge's operator context. */
+  /** Status badges (`Active`/`Latest`/`Default`) stay per-surface, not a shared namespace, to preserve each badge's operator context. */
   deploy: {
     /** Status pills are paired label + tooltip (`pill_*` / `pill_*_title`) so each state translates as a coherent unit. */
     pane: {
@@ -644,8 +644,6 @@ export interface Messages {
       pill_latest_title: string;
       pill_active: string;
       pill_active_title: string;
-      pill_stale: string;
-      pill_stale_title: string;
       meta_line: (size: string, classCount: number, rev: number, relative: string) => string;
       meta_classes: (classCount: number) => string;
       meta_rev: (rev: number) => string;
@@ -669,7 +667,7 @@ export interface Messages {
       off_description: string;
       start_button: string;
     };
-    /** Shows only the trained class labels; status pills (incl. stale) live on the row header. */
+    /** Shows only the trained class labels; status pills (Active/Latest) live on the row header. */
     info_dialog: {
       title_with_id: (shortId: string) => string;
       loading: string;
@@ -681,7 +679,6 @@ export interface Messages {
     delete_dialog: {
       title: string;
       body: string;
-      meta_line: (size: string, classCount: number, rev: number) => string;
       submit: string;
     };
   };

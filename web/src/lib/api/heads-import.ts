@@ -113,9 +113,9 @@ export async function validateAlpkgFile(file: File): Promise<AlpkgValidated> {
   }
 
   // Import side has no HeadRecord to cross-check against, so validate the manifest standalone.
-  const manifestText = decodeUtf8OrThrow(manifestEntry.bytes, 'head manifest');
+  const manifestText = decodeUtf8OrThrow(manifestEntry.bytes, 'model manifest');
   // Cast is unsound until validateManifestStructure makes it true at runtime, below.
-  const manifest = parseJsonOrThrow(manifestText, 'head manifest') as unknown as HeadManifest;
+  const manifest = parseJsonOrThrow(manifestText, 'model manifest') as unknown as HeadManifest;
   validateManifestStructure(manifest);
 
   // Filenames must agree with the manifest's head_id; a mismatch points at a tampered archive.
@@ -124,13 +124,13 @@ export async function validateAlpkgFile(file: File): Promise<AlpkgValidated> {
   if (headEntry.path !== expectedMpkName) {
     throw new ImportError(
       'preparing',
-      `Head weight filename mismatch (expected ${expectedMpkName}, got ${headEntry.path})`
+      `Model weight filename mismatch (expected ${expectedMpkName}, got ${headEntry.path})`
     );
   }
   if (manifestEntry.path !== expectedManifestName) {
     throw new ImportError(
       'preparing',
-      `Head manifest filename mismatch (expected ${expectedManifestName}, got ${manifestEntry.path})`
+      `Model manifest filename mismatch (expected ${expectedManifestName}, got ${manifestEntry.path})`
     );
   }
 
@@ -139,14 +139,14 @@ export async function validateAlpkgFile(file: File): Promise<AlpkgValidated> {
   if (mpkBytes.byteLength !== manifest.size_bytes) {
     throw new ImportError(
       'preparing',
-      `Head weight size mismatch (manifest declares ${String(manifest.size_bytes)} bytes, archive holds ${String(mpkBytes.byteLength)})`
+      `Model weight size mismatch (manifest declares ${String(manifest.size_bytes)} bytes, archive holds ${String(mpkBytes.byteLength)})`
     );
   }
   const observedSha = await sha256Hex(mpkBytes);
   if (observedSha !== manifest.sha256) {
     throw new ImportError(
       'preparing',
-      'Head weight hash does not match the embedded manifest -- archive may be corrupt'
+      'Model weight hash does not match the embedded manifest -- archive may be corrupt'
     );
   }
 
@@ -472,31 +472,31 @@ function fireAndForgetCleanup(workspaceId: Uuid, subPath: string): void {
 
 function validateManifestStructure(manifest: HeadManifest): void {
   if (typeof manifest.head_id !== 'string' || manifest.head_id.length === 0) {
-    throw new ImportError('preparing', 'Head manifest is missing the head id');
+    throw new ImportError('preparing', 'Model manifest is missing the head id');
   }
   if (typeof manifest.workspace_id !== 'string' || manifest.workspace_id.length === 0) {
-    throw new ImportError('preparing', 'Head manifest is missing the workspace id');
+    throw new ImportError('preparing', 'Model manifest is missing the workspace id');
   }
   if (
     typeof manifest.n_classes !== 'number' ||
     !Number.isInteger(manifest.n_classes) ||
     manifest.n_classes < 1
   ) {
-    throw new ImportError('preparing', 'Head manifest has a non-positive class count');
+    throw new ImportError('preparing', 'Model manifest has a non-positive class count');
   }
   if (typeof manifest.size_bytes !== 'number' || manifest.size_bytes < 0) {
-    throw new ImportError('preparing', 'Head manifest has an invalid size');
+    throw new ImportError('preparing', 'Model manifest has an invalid size');
   }
   if (typeof manifest.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(manifest.sha256)) {
-    throw new ImportError('preparing', 'Head manifest has an invalid sha256');
+    throw new ImportError('preparing', 'Model manifest has an invalid sha256');
   }
   if (!Array.isArray(manifest.labels)) {
-    throw new ImportError('preparing', 'Head manifest is missing the labels array');
+    throw new ImportError('preparing', 'Model manifest is missing the labels array');
   }
   if (manifest.labels.length !== manifest.n_classes) {
     throw new ImportError(
       'preparing',
-      `Head manifest's label count (${String(manifest.labels.length)}) does not match n_classes (${String(manifest.n_classes)})`
+      `Model manifest's label count (${String(manifest.labels.length)}) does not match n_classes (${String(manifest.n_classes)})`
     );
   }
   for (let i = 0; i < manifest.labels.length; i++) {
@@ -504,14 +504,14 @@ function validateManifestStructure(manifest: HeadManifest): void {
     if (typeof lbl !== 'string' || lbl.length === 0) {
       throw new ImportError(
         'preparing',
-        `Head manifest's label at index ${String(i)} is empty or not a string`
+        `Model manifest's label at index ${String(i)} is empty or not a string`
       );
     }
   }
   // Guard the nested deref: a tampered manifest could omit workspace_revision.id.
   const rev = manifest.workspace_revision as unknown;
   if (rev === null || typeof rev !== 'object' || typeof (rev as { id?: unknown }).id !== 'number') {
-    throw new ImportError('preparing', 'Head manifest workspace_revision is missing or malformed');
+    throw new ImportError('preparing', 'Model manifest workspace_revision is missing or malformed');
   }
 }
 
@@ -608,8 +608,8 @@ function describeConvertEventMessage(message: string): string | null {
       return `Labels loaded (n_labels=${parsed.n_labels})`;
     case 'head_published':
       return parsed.idempotent_skip
-        ? `Head already present (idempotent skip)`
-        : `Head published (n_classes=${parsed.n_classes})`;
+        ? `Model already present (idempotent skip)`
+        : `Model published (n_classes=${parsed.n_classes})`;
     case 'job_completed':
       return `Convert completed`;
     case 'job_failed':
