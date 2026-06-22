@@ -13,9 +13,10 @@ STUB_DIR="${REPO_ROOT}/target/cross-stub/aarch64-linux-gnu"
     "${REPO_ROOT}/scripts/prepare-aarch64-linux-gnu-alsa-static.sh"
 }
 
-# Skip audiopus_sys's opus pkg-config probe (wrong-arch host opus); use its
-# vendored CMake build.
+# Build the deploy artifact self-contained: compile audiopus_sys's vendored,
+# version-pinned opus and link it statically.
 export LIBOPUS_NO_PKG=1
+export LIBOPUS_STATIC=1
 # cc-rs -> zig wrappers (translate the Rust target triple zig rejects).
 export CC_aarch64_unknown_linux_gnu="${REPO_ROOT}/scripts/zig-cc-aarch64-linux-gnu.sh"
 export CXX_aarch64_unknown_linux_gnu="${REPO_ROOT}/scripts/zig-cxx-aarch64-linux-gnu.sh"

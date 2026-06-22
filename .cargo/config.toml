@@ -1,14 +1,7 @@
 [env]
-# Lets audiopus_sys's vendored libopus (CMake) configure under CMake >= 4,
-# which dropped compatibility with its `cmake_minimum_required(VERSION <3.5)`.
+# Lets audiopus_sys's vendored libopus (CMake) configure under CMake >= 4, which
+# dropped compatibility with its `cmake_minimum_required(VERSION <3.5)`. Needed
+# whenever the vendored opus is CMake-built: the aarch64 deploy build (see
+# scripts/cross-build-aarch64-linux-gnu.sh) and any native build that falls back
+# to the vendored source because no system libopus is installed.
 CMAKE_POLICY_VERSION_MINIMUM = "3.5"
-# Statically link libopus on every target so the deployed binary carries no
-# `libopus.so` runtime dependency. audiopus_sys links DYNAMICALLY by default on
-# linux-gnu (our aarch64 Rockchip target); OPUS_STATIC forces a static link.
-# OPUS_NO_PKG bypasses pkg-config so the build always compiles audiopus_sys's
-# vendored, version-pinned opus source (the CMake build enabled above) instead
-# of linking whatever libopus is in the build host / cross-sysroot -- a
-# self-contained, reproducible artifact. The `opus = "=0.3.1"` crate exposes no
-# feature to forward, so these env knobs are the linking control surface.
-OPUS_STATIC = "1"
-OPUS_NO_PKG = "1"
