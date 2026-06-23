@@ -2,11 +2,22 @@ import type { Messages } from '../types';
 
 // Canonical catalog every other locale's `satisfies Messages` shape is anchored against.
 // Wording convention: sentence case; terminal period on full sentences, none on fragment labels.
+// House style:
+//  - Em dash ' — ' (U+2014, space-padded) is the only inline break/parenthetical dash; never a spaced ASCII hyphen ' - '.
+//  - No comma splices: split independent clauses into two sentences (period); em dash only for a tight diagnosis→consequence pair.
+//  - Exactly one space after a sentence-terminal period.
+//  - Inline separator is ' · ' (U+00B7); in-progress marker is '…' (U+2026). Never ' / ' (except compact key hints), ' | ', or literal '...'.
+//  - Archive token is always '.alpkg' (lowercase, leading dot); format names stay uppercase (TFJS, WAV, ALSA). Codec 'opus' is lowercase.
+//  - 'Top-K' for standalone control/field labels; 'top-k', 'cpu', 'rss', 'val acc' etc. inside the dense lowercase readout set.
+//  - Hyphenate re- + verb consistently (re-train, re-export, re-deploy, re-drop, re-import).
+//  - Pipeline/runtime status pills are Title-Case across all surfaces (Deployed / Default / Standby / Detached / Workspace).
+//  - Straight quotes and apostrophes only — no curly typography (must round-trip through every locale file).
+//  - Lower bounds read 'N or greater'; never hardcode a plural against an interpolated count (use the `${n === 1 ? '' : 's'}` idiom).
 export const en = {
   app: {
     name: 'AcousticsLab',
     description:
-      'AcousticsLab: a local acoustic classifier operator console for live spectrogram visualization, dataset slicing, model training, and hot-swap deployment.'
+      'A private, multi-backend, fully-local AI/ML toolkit for developing and deploying real-time sound event detection.'
   },
   routes: {
     dashboard_title: (brand) => brand,
@@ -61,12 +72,12 @@ export const en = {
     },
     active_head_card: {
       heading: 'Active model',
-      pill_default: 'default',
-      pill_workspace: 'workspace',
-      pill_detached: 'detached',
+      pill_default: 'Default',
+      pill_workspace: 'Workspace',
+      pill_detached: 'Detached',
       pill_default_title: 'The daemon-bundled default model is running.',
       pill_workspace_title: 'A trained workspace model is running.',
-      pill_detached_title: 'Source workspace was deleted after this model was activated.',
+      pill_detached_title: 'The source workspace was deleted after this model was activated.',
       loading_active: 'loading active model…',
       activated_label: 'activated',
       class_count_label: (count) => (count === 1 ? 'class' : 'classes'),
@@ -157,7 +168,7 @@ export const en = {
       lr_greater_than_zero: 'Learning rate must be greater than 0.',
       lr_max: (max) => `Learning rate must be at most ${max}.`,
       seed_whole: 'Seed must be a whole number.',
-      seed_non_negative: 'Seed must be 0 or positive.',
+      seed_non_negative: 'Seed must be 0 or greater.',
       seed_too_large: 'Seed is too large.',
       split_finite: 'Validation split must be a finite number.',
       split_min: 'Validation split must be 0 or greater.',
@@ -175,16 +186,16 @@ export const en = {
   recorder: {
     mic_error_denied:
       'Microphone access was denied. Allow microphone access in the browser settings and try again.',
-    mic_error_not_found: 'No microphone was found on this device.',
+    mic_error_not_found: 'No microphone was found on this device. Connect one and try again.',
     mic_error_in_use: 'The microphone is in use by another application. Close it and try again.',
     mic_error_interrupted: 'Microphone capture was interrupted. Try again.',
-    mic_error_generic: 'Could not start the microphone.'
+    mic_error_generic: 'Could not start the microphone. Try again.'
   },
   category: {
     list: {
       heading: 'Dataset',
       description:
-        'Each category becomes a class label the trainer learns - Background Noise is required.',
+        'Each category becomes a class label the trainer learns — Background Noise is required.',
       add_button: 'Add category',
       add_button_aria: 'Add category',
       loading: 'loading categories…',
@@ -204,7 +215,6 @@ export const en = {
       name_help_code_example: 'datasets/cat/',
       name_help_suffix: ') and as the class label the trainer uses.',
       submit: 'Add',
-      error_mandatory_default: 'Background Noise is the mandatory default; no need to add it.',
       error_exact_duplicate: 'A category with this name already exists.',
       error_case_insensitive_duplicate: (existingName) =>
         `Conflicts with existing "${existingName}" (names are case-insensitive on most filesystems).`
@@ -213,7 +223,7 @@ export const en = {
       title: 'Rename category',
       name_label: 'Name',
       name_help:
-        'The name doubles as the on-disk directory and the trainer class label, so renaming changes the class label. Existing trained models keep their old labels and are marked stale until you retrain.',
+        'The name doubles as the on-disk directory and the trainer class label, so renaming changes the class label. Existing trained models keep their old labels and are marked stale until you re-train.',
       submit: 'Save',
       error_mandatory: 'Background Noise is preserved and cannot be renamed.',
       error_busy: 'Finish or clear in-progress uploads and deletions before renaming this category.'
@@ -232,18 +242,18 @@ export const en = {
       aria_select: (filename) => `Select slice ${filename}`,
       aria_deselect: (filename) => `Deselect slice ${filename}`,
       aria_play: (filename) => `Play slice ${filename}`,
-      title_failed: (errorOrUnknown) => `Upload failed: ${errorOrUnknown}.  Right-click to retry.`,
+      title_failed: (errorOrUnknown) => `Upload failed: ${errorOrUnknown}. Right-click to retry.`,
       title_uploading: (progressPct) => `Uploading… ${progressPct}%`,
-      title_local: 'Local -- awaiting upload',
+      title_local: 'Local — awaiting upload',
       title_multi_click_deselect: 'Click to deselect (Esc exits selection)',
       title_multi_click_select: 'Click to add to selection (Esc exits selection)',
-      title_playing: 'Playing -- click to restart',
+      title_playing: 'Playing — click to restart',
       title_idle: 'Click to play (Ctrl/Cmd-click to select)',
       sr_deleting: (filename) => `Deleting slice ${filename}`,
       sr_uploading: (progressPct) => `Uploading ${progressPct}%`,
       retry_aria: (filename) => `Retry upload for slice ${filename}`,
-      retry_title_with_error: (errorMessage) => `Upload failed: ${errorMessage}.  Click to retry.`,
-      retry_title_no_error: 'Upload failed.  Click to retry.',
+      retry_title_with_error: (errorMessage) => `Upload failed: ${errorMessage}. Click to retry.`,
+      retry_title_no_error: 'Upload failed. Click to retry.',
       retry_label: 'retry',
       select_title: 'Select',
       deselect_title: 'Deselect',
@@ -254,10 +264,10 @@ export const en = {
       unknown_error: 'unknown error'
     },
     trim_waveform: {
-      handles_aria: 'Trim handles -- drag to set the start and end of the slice range',
+      handles_aria: 'Trim handles, drag to set the start and end of the slice range',
       handle_start_aria: 'Trim start',
       handle_end_aria: 'Trim end',
-      selection_aria: 'Slide selection window -- drag to move both trim edges together',
+      selection_aria: 'Slide selection window, drag to move both trim edges together',
       playback_position_aria: 'Playback position',
       value_seconds: (sec) => `${sec} seconds`,
       value_seconds_range: (startSec, endSec) => `${startSec} to ${endSec} seconds`
@@ -267,13 +277,13 @@ export const en = {
       tips_label: 'Slice module tips',
       tip_audition_title: 'Audition every slice before training.',
       tip_audition_body:
-        'A mislabeled row biases the whole class -- click cards to play, discard liberally.',
+        'A mislabeled row biases the whole class — click cards to play, discard liberally.',
       tip_diversity_title: 'Diversity beats quantity.',
       tip_diversity_body:
-        'Ten varied takes (distance, angle, background) train better than thirty near-identical copies.',
+        '10 varied takes (distance, angle, background) train better than 30 near-identical copies.',
       quota_above_title: (threshold) => `Above the ${threshold}-slice minimum for training.`,
       quota_below_title: (threshold) =>
-        `Below the ${threshold}-slice minimum for training.  Slice more to satisfy the quota.`,
+        `Below the ${threshold}-slice minimum for training. Slice more to satisfy the quota.`,
       loading: 'loading slices…',
       load_error: (error) => `Couldn't load slices. ${error}`,
       empty_state_prefix: 'No slices yet. Trim the clip in the Input pane and click ',
@@ -318,7 +328,7 @@ export const en = {
         "Your slices share the same DSP as inference, so the trained model doesn't see a distribution shift after fine-tune.",
       tip_environment_title: 'Record in the deployment environment.',
       tip_environment_body:
-        'A clean studio capture undertrains noise rejection; the real background is half of what the model needs to learn.',
+        'A clean studio capture undertrains noise rejection. The real background is half of what the model needs to learn.',
       tip_meter_title: 'Stay green-to-amber on the meter.',
       tip_meter_body: "Rose means clipping, which erases information the trainer can't recover.",
       pane_aria: (categoryDisplay) => `Input module for category ${categoryDisplay}`,
@@ -341,10 +351,10 @@ export const en = {
       record_label: 'Record',
       record_title_stream_open: (max) => `Capture the live opus stream (auto-stops at ${max}).`,
       record_title_stream_connecting:
-        'Daemon opus stream is connecting; recording will be available once it opens.',
-      record_title_stream_closed: 'Daemon opus stream is unreachable; check the daemon is running.',
+        'Daemon opus stream is connecting. Recording will be available once it opens.',
+      record_title_stream_closed: 'Daemon opus stream is unreachable. Check the daemon is running.',
       record_title_stream_unsupported:
-        "This browser can't decode the live opus stream here - it needs WebCodecs over a secure (HTTPS) context. Open this page through the secure gateway, or drop / browse for a WAV file instead.",
+        "This browser can't decode the live opus stream here — it needs WebCodecs over a secure (HTTPS) context. Open this page through the secure gateway, or drop or browse for a WAV file instead.",
       capture_stop_aria_stream: 'Stop stream capture',
       capture_stop_aria_mic: 'Stop recording',
       capture_stop_label: 'Stop',
@@ -372,11 +382,11 @@ export const en = {
       export_aria: 'Download as WAV',
       export_title: 'Download as WAV',
       error_file_too_large: (size, cap) =>
-        `File is ${size}; the import cap is ${cap}. Trim it shorter and re-export, then drop again.`,
+        `File is ${size} — the import cap is ${cap}. Trim it shorter and re-export, then drop again.`,
       error_clip_too_short: (clipSecs) =>
-        `Clip is only ${clipSecs} s; training needs at least 1 s per clip, so a shorter clip is excluded entirely. Import or record a clip of 1 s or longer.`,
+        `Clip is only ${clipSecs} s, training needs at least 1 s per clip, so a shorter clip is excluded entirely. Import or record a clip of 1 s or longer.`,
       error_only_one_file:
-        'Only one file at a time - the Input slot holds the most recent clip only. Drop a single WAV.',
+        'Only one file at a time — the Input slot holds the most recent clip only. Drop a single WAV.',
       error_only_wav: 'Only WAV files are supported.',
       error_could_not_import: 'Could not import the file.',
       error_could_not_discard: 'Could not discard the clip.',
@@ -403,19 +413,19 @@ export const en = {
       badge_failed: 'Failed',
       badge_not_enough: 'Not enough samples',
       badge_not_enough_with_state: (statusLabel) => `Not enough samples · ${statusLabel}`,
-      title_synced: (tally) => `${tally} slices uploaded to the daemon -- training-ready.`,
-      title_uploading: (tally) => `${tally} slices; some are still uploading to the daemon.`,
+      title_synced: (tally) => `${tally} slices uploaded to the daemon — training-ready.`,
+      title_uploading: (tally) => `${tally} slices, some are still uploading to the daemon.`,
       title_pending: (tally) => `${tally} slices ready but not yet uploaded to the daemon.`,
       title_failed: (tally) =>
-        `${tally} slices; at least one upload failed. Retry from the slice card or discard the failed rows.`,
+        `${tally} slices, at least one upload failed. Retry from the slice card or discard the failed rows.`,
       title_not_enough_empty: (missing, tally) =>
         `Add ${missing} more slices to satisfy the per-category quota (${tally}).`,
       title_not_enough_synced: (tally, missing) =>
-        `${tally} slices uploaded; add ${missing} more to satisfy the per-category quota.`,
+        `${tally} slices uploaded, add ${missing} more to satisfy the per-category quota.`,
       title_not_enough_uploading: (tally, missing) =>
-        `${tally} slices; some are still uploading. Need ${missing} more once they finish.`,
+        `${tally} slices, some are still uploading. Need ${missing} more once they finish.`,
       title_not_enough_pending: (tally, missing) =>
-        `${tally} slices queued locally; need ${missing} more.`,
+        `${tally} slices queued locally, need ${missing} more.`,
       actions_aria: (displayName) => `Actions for ${displayName}`,
       actions_title: 'Category actions',
       actions_title_preserved: 'Preserved — rename and delete disabled',
@@ -425,9 +435,9 @@ export const en = {
   training: {
     pane: {
       heading: 'Train',
-      subtitle_other_running: 'Another workspace is training; only one job runs at a time.',
+      subtitle_other_running: 'Another workspace is training, only one job runs at a time.',
       subtitle_default:
-        "Tune a model on this workspace's dataset, then activate it for live inference.",
+        "Tune a model on this workspace's dataset, old model automatically discarded when new one lands.",
       readiness_loading: 'Loading dataset…',
       readiness_no_categories: 'Add a foreground class with uploaded slices to start training.',
       readiness_background_short: (need) =>
@@ -443,8 +453,8 @@ export const en = {
       button_title_not_ready_default: 'Readiness reason',
       button_title_form_errors: 'Fix the highlighted hyperparameter fields to enable training.',
       button_title_idle_trained:
-        'A model already matches this revision -- re-train to try different hyperparameters or a different random seed. Activate any model from the Models section below.',
-      button_title_idle_busy: 'Another workspace is training; only one job runs at a time.',
+        'A model already matches this revision — re-train to try different hyperparameters or a different random seed. Activate any model from the Models section below.',
+      button_title_idle_busy: 'Another workspace is training, only one job runs at a time.',
       button_title_idle_ready: 'Train a model on this workspace dataset.',
       button_title_starting: 'Submitting the training request…',
       button_title_running: 'Cancel the running training job.',
@@ -472,7 +482,7 @@ export const en = {
       train_acc_label: 'train acc',
       val_acc_label: 'val acc',
       val_acc_disabled_label: 'val acc · disabled',
-      em_dash: '-'
+      em_dash: ' — '
     },
     logs: {
       heading: 'Logs',
@@ -494,7 +504,7 @@ export const en = {
       heading: 'History',
       keeps_last: (cap) => `keeps last ${cap} runs`,
       retention_title: (cap) =>
-        `The daemon keeps the ${cap} most recent training-log files per workspace; older JSONL traces are pruned when a new run opens. The published model record (in the Models section below) is unaffected - only the JSONL trace is pruned.`,
+        `The daemon keeps the ${cap} most recent training-log files per workspace; older JSONL traces are pruned when a new run opens. The published model record (in the Models section below) is unaffected — only the JSONL trace is pruned.`,
       empty_state_prefix: 'No training runs yet for this workspace. Click ',
       empty_state_button: 'Train model',
       empty_state_suffix: ' to start one.',
@@ -556,7 +566,7 @@ export const en = {
     },
     state_submitting: 'submitting',
     store_log: {
-      seed_submitted: 'Submitted; waiting for daemon to start emitting events…',
+      seed_submitted: 'Submitted, waiting for the daemon to start emitting events…',
       seed_recovered: 'Recovered an in-flight training job from the daemon.',
       job_submitted: (backbone) => `Job submitted · backbone ${backbone}`,
       job_running: 'Job running',
@@ -591,17 +601,17 @@ export const en = {
   deploy: {
     pane: {
       heading: 'Deploy',
-      description: 'Hot-swap a trained model into live inference.',
+      description: 'Select a trained model and hot-swap it into live inference seamlessly with zero downtime.',
       pill_deployed: 'Deployed',
       pill_deployed_title: 'A model trained in this workspace is the runtime model.',
       pill_default: 'Default',
       pill_default_title: 'The daemon-bundled default model is running.',
       pill_standby: 'Standby',
       pill_standby_title:
-        'A model from a different workspace is the runtime model. This workspace is on standby; deploying one here will replace it.',
+        'A model from a different workspace is the runtime model. This workspace is on standby. Deploying one here will replace it.',
       pill_detached: 'Detached',
       pill_detached_title:
-        'The workspace that produced the runtime model was deleted; the model is still running.',
+        'The workspace that produced the runtime model was deleted. The model is still running.',
       config_disclosure_label: 'Input & Inference config',
       config_chip_freq: (hzLabel) => `freq ${hzLabel} Hz`,
       config_chip_top_k: (topK) => `top-k ${topK}`
@@ -706,7 +716,7 @@ export const en = {
       deselect_all_label: 'Deselect all',
       bulk_delete_label_count: (count) => `Delete ${count}`,
       bulk_delete_label_bare: 'Delete',
-      bulk_delete_aria_count: (count) => `Delete ${count} workspaces`,
+      bulk_delete_aria_count: (count) => `Delete ${count} workspace${count === 1 ? '' : 's'}`,
       bulk_delete_aria_fallback: 'Delete selected workspaces',
       menu_open: 'Open',
       menu_rename: 'Rename',
@@ -733,7 +743,7 @@ export const en = {
       created_label: (relative) => `created ${relative}`,
       rev_label: (rev) => `rev ${rev}`,
       modified_label: (relative) => `modified ${relative}`,
-      live_pill_title: 'Advanced by recent upload(s); reload to refresh modified timestamp.',
+      live_pill_title: 'Advanced by a recent upload. Reload to refresh the modified timestamp.',
       live_pill: 'live',
       menu_rename: 'Rename',
       menu_export: 'Export',
@@ -753,7 +763,7 @@ export const en = {
       title: 'Rename workspace',
       name_label: 'Name',
       name_help:
-        'Up to 128 characters. No slashes or control characters. Renaming does not advance the workspace revision - categories, slices, and models stay as they are.',
+        'Up to 128 characters. No slashes or control characters. Renaming does not advance the workspace revision — categories, slices, and models stay as they are.',
       submit: 'Save'
     },
     delete_dialog: {
@@ -777,7 +787,7 @@ export const en = {
     },
     card: {
       created_label: (relative) => `created ${relative}`,
-      select_aria: (name) => `Select ${name}`,
+      select_aria: (name) => `Select workspace ${name}`,
       rename_aria: (name) => `Rename workspace ${name}`,
       deleting: 'deleting'
     },
@@ -786,27 +796,27 @@ export const en = {
       title_fallback: 'Import',
       step_indicator: (current, total) => `Step ${current} of ${total}`,
       pipeline_error_title: 'Import failed',
-      error_invalid_state: 'Inconsistent dialog state -- no archive to import.',
+      error_invalid_state: 'Inconsistent dialog state — no archive to import.',
       pick_file: {
-        drop_zone_title_attr: 'Drop an ALPKG archive or a TFJS bundle here, or click to browse',
+        drop_zone_title_attr: 'Drop an .alpkg archive or a TFJS bundle here, or click to browse',
         reading: 'Reading…',
         drop_zone_tfjs_staging: 'Drop more files to complete the TFJS bundle',
-        drop_zone_idle: 'Drag & drop an ALPKG archive or a TFJS bundle here',
+        drop_zone_idle: 'Drag & drop an .alpkg archive or a TFJS bundle here',
         browse_button: 'Browse files',
-        error_empty_drop: 'Drop an ALPKG archive or a TFJS bundle.',
-        error_multi_alpkg: (count) => `Pick one ALPKG archive at a time - you picked ${count}.`,
+        error_empty_drop: 'Drop an .alpkg archive or a TFJS bundle.',
+        error_multi_alpkg: (count) => `Pick one .alpkg archive at a time — you picked ${count}.`,
         error_mixed_archive:
-          'An ALPKG archive must be picked on its own, not mixed with other files.',
+          'An .alpkg archive must be picked on its own, not mixed with other files.',
         error_file_count_cap: (max, picked) =>
-          `Drop or pick at most ${max} files at once - you picked ${picked}.`,
+          `Drop or pick at most ${max} files at once — you picked ${picked}.`,
         error_single_too_large: (name, size, cap) =>
-          `"${name}" is ${size} - the per-file cap is ${cap}.`,
+          `"${name}" is ${size} — the per-file cap is ${cap}.`,
         error_total_too_large: (total, cap) =>
-          `Selection totals ${total} - the per-drop cap is ${cap}.`,
+          `Selection totals ${total} — the per-drop cap is ${cap}.`,
         error_tfjs_merged_file_count: (mergedCount, cap) =>
-          `Staged set would total ${mergedCount} files - the cap is ${cap}. Clear and re-drop a smaller bundle.`,
+          `Staged set would total ${mergedCount} files — the cap is ${cap}. Clear and re-drop a smaller bundle.`,
         error_tfjs_merged_bytes: (mergedBytes, cap) =>
-          `Staged set would total ${mergedBytes} - the cap is ${cap}. Clear and re-drop a smaller bundle.`,
+          `Staged set would total ${mergedBytes} — the cap is ${cap}. Clear and re-drop a smaller bundle.`,
         staged_files_heading: 'Staged files',
         staged_files_count: (count) => `${count} ${count === 1 ? 'file' : 'files'}`,
         clear_button: 'Clear',
@@ -819,11 +829,11 @@ export const en = {
         tfjs_diag_ambiguous_model_json: (count) =>
           `Ambiguous bundle: ${count} files named "model.json".`,
         tfjs_diag_multiple_labels_txt:
-          'Multiple "labels.txt" files in the drop; include exactly one.',
+          'Multiple "labels.txt" files in the drop. Include exactly one.',
         tfjs_diag_multiple_metadata_json:
-          'Multiple "metadata.json" files in the drop; include exactly one.',
+          'Multiple "metadata.json" files in the drop. Include exactly one.',
         tfjs_diag_both_labels:
-          'Both "labels.txt" and "metadata.json" provided; include only one labels source.',
+          'Both "labels.txt" and "metadata.json" provided. Include only one labels source.',
         tfjs_diag_no_labels: 'No labels file provided. Include "labels.txt" or "metadata.json".',
         tfjs_diag_shard_collision_one: (quotedName) =>
           `Two staged files share the shard name ${quotedName}. Clear staging and drop only the intended copy.`,
@@ -843,7 +853,7 @@ export const en = {
         mode_radio_aria: 'Target workspace mode',
         mode_use_existing: 'Use existing',
         mode_create_new: 'Create new',
-        no_workspaces_prefix: 'No workspaces yet - switch to ',
+        no_workspaces_prefix: 'No workspaces yet — switch to ',
         no_workspaces_link_label: 'Create new',
         no_workspaces_suffix: ' to make one.',
         workspace_list_aria: 'Pick a target workspace',
@@ -880,15 +890,15 @@ export const en = {
         rename_chips_heading: 'Or reuse existing',
         heads_heading: 'Models',
         heads_cap_tooltip: (cap) =>
-          `Up to ${cap} models per workspace. Older non-active models roll off when new ones land.`,
+          `Up to ${cap} models per workspace. Older non-active models roll off when new ones land — from a re-train or an import.`,
         heads_counter: (selected, existingInTarget, cap, activeInTarget) => {
           const active = activeInTarget > 0 ? ` · active ${activeInTarget} pinned` : '';
           return `selected ${selected} · target ${existingInTarget} / ${cap}${active}`;
         },
         checking_heads: 'Checking target models…',
         displacement_warning: (displaced, cap) =>
-          `Importing will displace ${displaced} oldest non-active model${displaced === 1 ? '' : 's'} to fit the ${cap}-model cap.`,
-        head_exists_badge_title: 'A model with this id already lives in the target workspace.',
+          `Importing will displace the ${displaced} oldest non-active model${displaced === 1 ? '' : 's'} to fit the ${cap}-model cap.`,
+        head_exists_badge_title: 'A model with this id already exists in the target workspace.',
         head_exists_badge: 'Exists',
         head_show_details_aria: 'Show model details',
         head_class_count: (count) => `${count} ${count === 1 ? 'class' : 'classes'}`,
@@ -925,7 +935,7 @@ export const en = {
       mode_tooltips: {
         new: "Create the category from scratch with the archive's slices.",
         merge:
-          'Upload archive slices on top of the existing category. Same-sha256 slices overwrite themselves; new ones add to the set.',
+          'Upload archive slices on top of the existing category. Same-sha256 slices overwrite themselves, new ones add to the set.',
         replace:
           'Delete the existing category (and every slice it holds), then upload from the archive.',
         skip: 'Do not import this category.'
@@ -968,7 +978,7 @@ export const en = {
         head_skipped_badge_title:
           'The model id already exists on disk and the orchestrator skipped it (idempotent re-import).',
         head_per_log_not_started:
-          "Not started yet - log lines will appear once this model's import begins.",
+          "Not started yet — log lines will appear once this model's import begins.",
         head_per_log_no_events: 'No events recorded.',
         log_count: (count) => `${count} ${count === 1 ? 'log' : 'logs'}`
       },
@@ -1033,7 +1043,7 @@ export const en = {
       title: (workspaceName) => `Export workspace · ${workspaceName}`,
       load_error_title: "Couldn't load this workspace",
       loading: 'Loading workspace…',
-      nothing_to_export: 'This workspace has no categories and no models yet - nothing to export.',
+      nothing_to_export: 'This workspace has no categories and no models yet — nothing to export.',
       datasets_heading: 'Datasets',
       heads_heading: 'Models',
       select_all: 'Select all',
@@ -1044,7 +1054,7 @@ export const en = {
         `${size} · ${classCount} ${classCount === 1 ? 'class' : 'classes'}`,
       head_meta_classes: (count) => `${count} ${count === 1 ? 'class' : 'classes'}`,
       pending_warning:
-        'Slices still uploading or pending in the selection will be excluded - only on-disk slices ship.',
+        'Slices still uploading or pending in the selection will be excluded — only on-disk slices ship.',
       progress_preparing_workspace: 'Reading workspace metadata…',
       progress_fetching_slices: 'Fetching slices…',
       progress_listing_slices: 'Listing slices…',

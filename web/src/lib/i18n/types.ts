@@ -215,7 +215,6 @@ export interface Messages {
       name_help_code_example: string;
       name_help_suffix: string;
       submit: string;
-      error_mandatory_default: string;
       error_exact_duplicate: string;
       error_case_insensitive_duplicate: (existingName: string) => string;
     };
