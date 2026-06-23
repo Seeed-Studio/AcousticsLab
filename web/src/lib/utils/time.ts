@@ -32,6 +32,14 @@ function abs(locale: string): Intl.DateTimeFormat {
   return f;
 }
 
+// Space a digit from a following Han glyph so Intl's glued CJK count ("2小时前") matches the catalog's
+// "${n} 秒" spacing, reading "开始于 2 小时前"; a no-op for Latin ("2 hours ago"). Relative branch only:
+// the absolute format binds digits to date units ("2026年6月23日"), where a space would be wrong.
+const CJK_COUNT_RE = /(\d)(\p{Script=Han})/gu;
+function spaceCjkCount(formatted: string): string {
+  return formatted.replace(CJK_COUNT_RE, '$1 $2');
+}
+
 // Relative within 24 h, absolute beyond; returns the raw input on parse failure to avoid `Invalid Date`.
 export function formatRelative(
   rfc3339: string,
@@ -49,9 +57,9 @@ export function formatRelative(
   const sec = deltaMs / 1000;
   const min = sec / 60;
   const hr = min / 60;
-  if (Math.abs(hr) >= 1) return rtf(loc).format(Math.round(hr), 'hour');
-  if (Math.abs(min) >= 1) return rtf(loc).format(Math.round(min), 'minute');
-  return rtf(loc).format(Math.round(sec), 'second');
+  if (Math.abs(hr) >= 1) return spaceCjkCount(rtf(loc).format(Math.round(hr), 'hour'));
+  if (Math.abs(min) >= 1) return spaceCjkCount(rtf(loc).format(Math.round(min), 'minute'));
+  return spaceCjkCount(rtf(loc).format(Math.round(sec), 'second'));
 }
 
 export function formatAbsolute(rfc3339: string, localeOverride?: string): string {

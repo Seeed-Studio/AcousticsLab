@@ -3,7 +3,7 @@
   import { stageLabel } from './labels';
   import { m } from '$lib/i18n';
   import { locale } from '$lib/stores/locale.svelte';
-  import type { TrainingLogLine } from '$lib/stores/training.svelte';
+  import { renderLogMessage, type TrainingLogLine } from '$lib/stores/training.svelte';
 
   // Plain `Map` (not `SvelteMap`): `.set` runs from a template expr ({fmtTime}) on a cold locale, where Svelte 5's `state_unsafe_mutation` guard would turn `SvelteMap.set` into a mount-killing throw.
   // eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -91,6 +91,8 @@
       <!-- Key by `line.seq` so a cap-driven shift recycles rows in place; daemon seq is per-job monotonic and the seed uses seq=-1, so keys never collide. `min-w-max` sizes the list to its widest line so messages scroll sideways instead of wrapping. -->
       <ol class="flex min-w-max flex-col gap-0.5 font-mono leading-snug">
         {#each lines as line (line.seq)}
+          <!-- Rendered here (not stored) so it re-translates on a locale switch; reused for body + title. -->
+          {@const message = renderLogMessage(line)}
           <li class="flex gap-2 text-fg-secondary">
             <span
               class="shrink-0 text-fg-subtle tabular-nums"
@@ -99,8 +101,7 @@
               {fmtTime(line.at)}
             </span>
             <!-- `whitespace-pre` keeps each message one line; clipped tail recoverable via `title` hover or focus. -->
-            <span class="whitespace-pre text-fg-secondary" title={line.message}>{line.message}</span
-            >
+            <span class="whitespace-pre text-fg-secondary" title={message}>{message}</span>
           </li>
         {/each}
       </ol>

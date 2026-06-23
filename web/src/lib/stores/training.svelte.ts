@@ -27,14 +27,17 @@ import type {
   Uuid
 } from '$lib/api/types';
 
+// Text is rendered on demand by `renderLogMessage` (not stored) so it re-translates on a locale
+// switch. Each line carries exactly one source: a daemon/replayed `event`, or a `seed` tag.
 export interface TrainingLogLine {
   at: Rfc3339;
   phase: TrainingJobView['progress']['phase'];
-  message: string;
   // Monotonic daemon seq; dedups a replayed tail.
   seq: number;
-  // Absent on synthetic seed lines.
+  // Daemon-sourced (live SSE or replayed JSONL); rendered via `renderEvent`.
   event?: TrainLogLine;
+  // One of the two synthetic seed lines (submit / recover) with no backing event.
+  seed?: 'submitted' | 'recovered';
 }
 
 // Bounds re-render cost on a worst-case 1000-epoch run.
@@ -172,7 +175,7 @@ class TrainingStore {
             seq: -1,
             at: new Date().toISOString(),
             phase: 'prepare',
-            message: m.training.store_log.seed_submitted
+            seed: 'submitted'
           }
         ],
         cancelling: false
@@ -233,7 +236,7 @@ class TrainingStore {
           seq: -1,
           at: new Date().toISOString(),
           phase: 'prepare',
-          message: m.training.store_log.seed_recovered
+          seed: 'recovered'
         }
       ],
       cancelling: false
@@ -738,7 +741,6 @@ class TrainingStore {
               seq: event.seq,
               at: event.at,
               phase: rendered.phase,
-              message: rendered.message,
               event
             }
           ]);
@@ -1115,6 +1117,15 @@ function renderEvent(event: TrainLogLine): { phase: Stage; message: string } | n
   }
 }
 
+// Render a line's text against the current catalog. Event lines re-run `renderEvent` (non-null for
+// any stored line, so `?? ''` is defensive); seed lines map to their catalog strings.
+export function renderLogMessage(line: TrainingLogLine): string {
+  if (line.event) return renderEvent(line.event)?.message ?? '';
+  if (line.seed === 'submitted') return m.training.store_log.seed_submitted;
+  if (line.seed === 'recovered') return m.training.store_log.seed_recovered;
+  return '';
+}
+
 // Synthesise a `TrackedTrainingJob` from a JSONL page via the same helpers as the live SSE path (so
 // a hydrated card is indistinguishable from a session terminal). Returns `null` on empty `events`,
 // no view, or a still-`running` final state (an abandoned run, omitted). Caller filters nulls.
@@ -1147,7 +1158,6 @@ function replayJsonl(
         seq: event.seq,
         at: event.at,
         phase: rendered.phase,
-        message: rendered.message,
         event
       });
     }
