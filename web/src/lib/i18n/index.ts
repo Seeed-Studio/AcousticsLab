@@ -1,6 +1,5 @@
-// Read full key paths inline (`{m.workspace.delete_title}`): the Proxy intercepts only top-level
-// namespace gets, so aliasing (`const { workspace } = m`) snapshots the subtree at script-init and
-// breaks reactivity (sub-key access then bypasses the reactive `locale.resolved` read).
+// Read full key paths inline (`{m.x.y}`): the Proxy only intercepts top-level gets, so aliasing a
+// subtree (`const { x } = m`) snapshots it at init and breaks reactivity.
 
 import { locale } from '$lib/stores/locale.svelte';
 import { type LocaleCode } from './locales';
@@ -13,8 +12,7 @@ const CATALOGS: Readonly<Record<LocaleCode, Messages>> = {
   'zh-CN': zh
 };
 
-// Reads `locale.resolved` so callers re-evaluate on locale switch. No fallback by design: the
-// store's `isLocaleCode` guard keeps the key in-set; an out-of-set code fails fast as `undefined`.
+// Reads `locale.resolved` so callers re-render on switch; no fallback (the store's guard keeps the key in-set).
 function current(): Messages {
   return CATALOGS[locale.resolved];
 }

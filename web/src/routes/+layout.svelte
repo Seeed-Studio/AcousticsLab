@@ -3,6 +3,7 @@
   import { onDestroy, type Snippet } from 'svelte';
   import { page } from '$app/state';
   import { resolve } from '$app/paths';
+  import { BASE_PATH } from '$lib/api/base';
   import { health } from '$lib/stores/health.svelte';
   import { config } from '$lib/stores/config.svelte';
   import { theme } from '$lib/stores/theme.svelte';
@@ -16,6 +17,16 @@
     children?: Snippet;
   }
   let { children }: Props = $props();
+
+  // Resolve VITE_FAVICON_URL for <link rel="icon">: scheme or leading slash (`/x`, `//x`) is origin-relative
+  // => verbatim; a bare path is rooted under BASE_PATH (not page-relative, which would drift across routes).
+  function resolveFavicon(raw: string | undefined): string {
+    const url = (raw ?? '').trim();
+    if (!url) return '';
+    if (/^([a-z][a-z0-9+.-]*:|\/)/i.test(url)) return url;
+    return BASE_PATH + '/' + url.replace(/^\.\//, '');
+  }
+  const faviconHref = resolveFavicon(import.meta.env.VITE_FAVICON_URL);
 
   // `$derived` (not const) so labels reconstitute on locale switch; a const would capture stale `m.*` at script-init.
   const TABS = $derived([
@@ -122,6 +133,12 @@
     }, RETRY_THROTTLE_MS);
   });
 </script>
+
+<svelte:head>
+  {#if faviconHref}
+    <link rel="icon" href={faviconHref} />
+  {/if}
+</svelte:head>
 
 <div class="flex min-h-screen flex-col">
   <!-- Contextual "current tab" dropdown below sm (not a generic hamburger) so the operator always sees where they are. -->

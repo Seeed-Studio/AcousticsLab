@@ -1,5 +1,4 @@
-// Category set is locale-dependent (en: one|other; ar: all six; zh: other only). Cached per
-// locale because `Intl.PluralRules` construction is costly and the same locale repeats per session.
+// Cached per locale: `Intl.PluralRules` construction is costly and the same locale repeats per session.
 const CACHE = new Map<string, Intl.PluralRules>();
 
 function rules(locale: string): Intl.PluralRules {

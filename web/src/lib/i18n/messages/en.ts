@@ -1,18 +1,9 @@
 import type { Messages } from '../types';
 
-// Canonical catalog every other locale's `satisfies Messages` shape is anchored against.
-// Wording convention: sentence case; terminal period on full sentences, none on fragment labels.
-// House style:
-//  - Em dash ' — ' (U+2014, space-padded) is the only inline break/parenthetical dash; never a spaced ASCII hyphen ' - '.
-//  - No comma splices: split independent clauses into two sentences (period); em dash only for a tight diagnosis→consequence pair.
-//  - Exactly one space after a sentence-terminal period.
-//  - Inline separator is ' · ' (U+00B7); in-progress marker is '…' (U+2026). Never ' / ' (except compact key hints), ' | ', or literal '...'.
-//  - Archive token is always '.alpkg' (lowercase, leading dot); format names stay uppercase (TFJS, WAV, ALSA). Codec 'opus' is lowercase.
-//  - 'Top-K' for standalone control/field labels; 'top-k', 'cpu', 'rss', 'val acc' etc. inside the dense lowercase readout set.
-//  - Hyphenate re- + verb consistently (re-train, re-export, re-deploy, re-drop, re-import).
-//  - Pipeline/runtime status pills are Title-Case across all surfaces (Deployed / Default / Standby / Detached / Workspace).
-//  - Straight quotes and apostrophes only — no curly typography (must round-trip through every locale file).
-//  - Lower bounds read 'N or greater'; never hardcode a plural against an interpolated count (use the `${n === 1 ? '' : 's'}` idiom).
+// Canonical catalog; every other locale's `satisfies Messages` shape anchors to this. House style:
+// sentence case; period on full sentences, none on fragments; no comma splices; spaced em dash ' — '
+// for breaks; ' · ' separator and '…' for in-progress; straight quotes only; tokens, units, '.alpkg',
+// 'Top-K', and Title-Case status pills kept verbatim; never hardcode a plural against an interpolation.
 export const en = {
   app: {
     name: 'AcousticsLab',
@@ -35,8 +26,7 @@ export const en = {
     limited_support_title: 'Limited browser support',
     visualization_panel: {
       heading: 'Visualization',
-      // Split into dot-separated segments so codec/channels can drop on a narrow header while
-      // sample rate and window always stay.
+      // Dot-separated segments so codec/channels can drop on a narrow header; rate and window always stay.
       audio_sample_rate: '48 kHz',
       audio_channels: 'mono',
       audio_codec: 'opus',
@@ -102,8 +92,7 @@ export const en = {
   },
   locale: {
     label: 'Language',
-    label_with_current: (currentChip) => `Language: ${currentChip}`,
-    auto_label: 'Auto'
+    label_with_current: (currentChip) => `Language: ${currentChip}`
   },
   health: {
     aria_label: 'System health',
@@ -621,8 +610,7 @@ export const en = {
     heads_table: {
       heading: 'Models',
       count_label: (count) => `${count} ${count === 1 ? 'model' : 'models'}`,
-      // Rotation-cap suffix split off the bare count so it can collapse on a narrow card; carries
-      // its own leading comma so it vanishes cleanly when hidden.
+      // Split off the bare count so it can collapse on a narrow card; carries its own leading comma.
       count_retained: (retainedCap) => `, latest ${retainedCap} retained`,
       revert_to_default: 'Revert to default',
       revert_to_id: (shortId) => `Revert to ${shortId}`,
@@ -651,11 +639,11 @@ export const en = {
       pill_latest_title: "Most recent model trained on the workspace's current revision.",
       pill_active: 'Active',
       pill_active_title: 'This model is currently deployed in the inference pipeline.',
-      // Fixed-width single-string meta for the model-card popover and delete-confirm card (never degrades).
+      // Fixed-width single-string meta for the model-card popover and delete-confirm card.
       meta_line: (size, classCount, rev, relative) =>
         `${size} · ${classCount} ${classCount === 1 ? 'class' : 'classes'} · rev ${rev} · ${relative}`,
-      // Row meta renders segment-by-segment (size · classes · rev · age) so size/rev can drop as
-      // the row narrows; only these two need a string (size/age come from formatBytes/formatRelative).
+      // Row meta renders segment-by-segment so size/rev can drop as the row narrows (size/age come
+      // from format utils, not the catalog).
       meta_classes: (classCount) => `${classCount} ${classCount === 1 ? 'class' : 'classes'}`,
       meta_rev: (rev) => `rev ${rev}`,
       row_aria_deployed: (shortId) => `Deployed model ${shortId}`,

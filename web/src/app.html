@@ -12,7 +12,7 @@
     <script>
       (function () {
         try {
-          var m = localStorage.getItem('acoustics-theme');
+          var m = localStorage.getItem('acousticslab-theme');
           var auto = m !== 'light' && m !== 'dark';
           var dark = m === 'dark' || (auto && matchMedia('(prefers-color-scheme: dark)').matches);
           var root = document.documentElement;
@@ -25,7 +25,7 @@
       (function () {
         try {
           var supported = ['en', 'zh-CN'];
-          var m = localStorage.getItem('acoustics-locale');
+          var m = localStorage.getItem('acousticslab-locale');
           if (m && supported.indexOf(m) >= 0) {
             document.documentElement.lang = m;
             return;

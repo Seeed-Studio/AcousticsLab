@@ -1,9 +1,8 @@
 import type { Messages } from '../types';
 
-// 简体中文 (zh-CN). Mirrors en.ts structure 1:1 — same keys, params, ${...} interpolations, and // comments.
-// See en.ts for the canonical wording conventions. zh house style: full-width punctuation (，。：；) in prose;
-// keep ' · ', '…', numbers, units, code tokens, and ${...} in ASCII; inline break dash is '——';
-// 'Background Noise' stays literal (it names an on-disk category/class label).
+// 简体中文 (zh-CN). Mirrors en.ts 1:1 (keys, params, ${...}, comments); see en.ts for conventions. zh
+// style: full-width punctuation; keep ' · ', '…', numbers, units, tokens, ${...} ASCII; break dash
+// '——'; 'Background Noise' stays literal.
 export const zh = {
   app: {
     name: 'AcousticsLab',
@@ -25,8 +24,7 @@ export const zh = {
     limited_support_title: '浏览器支持有限',
     visualization_panel: {
       heading: '可视化',
-      // Split into dot-separated segments so codec/channels can drop on a narrow header while
-      // sample rate and window always stay.
+      // Dot-separated segments so codec/channels can drop on a narrow header; rate and window always stay.
       audio_sample_rate: '48 kHz',
       audio_channels: '单声道',
       audio_codec: 'opus',
@@ -69,7 +67,7 @@ export const zh = {
       pill_detached_title: '该模型激活后，其来源工作区已删除。',
       loading_active: '正在加载活动模型…',
       activated_label: '激活时间',
-      class_count_label: (count) => '类别',
+      class_count_label: () => '类别',
       workspace_dt: '工作区',
       revision_dt: '修订',
       rev_value: (rev) => `rev ${rev}`,
@@ -91,8 +89,7 @@ export const zh = {
   },
   locale: {
     label: '语言',
-    label_with_current: (currentChip) => `语言：${currentChip}`,
-    auto_label: '自动'
+    label_with_current: (currentChip) => `语言：${currentChip}`
   },
   health: {
     aria_label: '系统健康',
@@ -590,8 +587,7 @@ export const zh = {
     heads_table: {
       heading: '模型',
       count_label: (count) => `${count} 个模型`,
-      // Rotation-cap suffix split off the bare count so it can collapse on a narrow card; carries
-      // its own leading comma so it vanishes cleanly when hidden.
+      // Split off the bare count so it can collapse on a narrow card; carries its own leading comma.
       count_retained: (retainedCap) => `，保留最新 ${retainedCap} 个`,
       revert_to_default: '还原为默认',
       revert_to_id: (shortId) => `还原为 ${shortId}`,
@@ -620,11 +616,11 @@ export const zh = {
       pill_latest_title: '在工作区当前修订上训练的最新模型。',
       pill_active: '活动',
       pill_active_title: '此模型当前已部署在推理管线中。',
-      // Fixed-width single-string meta for the model-card popover and delete-confirm card (never degrades).
+      // Fixed-width single-string meta for the model-card popover and delete-confirm card.
       meta_line: (size, classCount, rev, relative) =>
         `${size} · ${classCount} 个类别 · rev ${rev} · ${relative}`,
-      // Row meta renders segment-by-segment (size · classes · rev · age) so size/rev can drop as
-      // the row narrows; only these two need a string (size/age come from formatBytes/formatRelative).
+      // Row meta renders segment-by-segment so size/rev can drop as the row narrows (size/age come
+      // from format utils, not the catalog).
       meta_classes: (classCount) => `${classCount} 个类别`,
       meta_rev: (rev) => `rev ${rev}`,
       row_aria_deployed: (shortId) => `已部署模型 ${shortId}`,

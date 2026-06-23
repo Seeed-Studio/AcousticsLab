@@ -12,7 +12,7 @@ import {
 
 export type LocaleMode = 'auto' | LocaleCode;
 
-const STORAGE_KEY = 'acoustics-locale';
+const STORAGE_KEY = 'acousticslab-locale';
 
 // 'auto' for anything but a strictly-supported stored tag (incl. a localStorage throw in Safari
 // private browsing), so the detected value takes over.

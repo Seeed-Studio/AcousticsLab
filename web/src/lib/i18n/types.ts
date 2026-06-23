@@ -96,7 +96,6 @@ export interface Messages {
   locale: {
     label: string;
     label_with_current: (currentChip: string) => string;
-    auto_label: string;
   };
 
   health: {
@@ -121,7 +120,7 @@ export interface Messages {
     };
   };
 
-  /** Keyed by the daemon `{error, code}` envelope. Fallback chain: unmapped codes use the daemon prose verbatim; `something_went_wrong` covers empty messages; `request_failed` is the last-resort code-only form. */
+  /** Keyed by the daemon `{error, code}` envelope; unmapped codes use the daemon prose, `something_went_wrong` covers empty messages, `request_failed` is the code-only fallback. */
   error: {
     another_train_running: string;
     another_convert_running: string;
@@ -581,7 +580,7 @@ export interface Messages {
         trainAccLabel: string,
         valAccLabel: string | null
       ) => string;
-      /** `bestValAccLabel` / `bestEpoch` are both `null` when there was no holdout or the value is non-finite, hiding the best-val suffix; typed args (not a pre-composed string) let locales reorder it without caller churn. */
+      /** `bestValAccLabel`/`bestEpoch` are `null` with no holdout or a non-finite value (best-val suffix hidden); typed args let locales reorder without caller churn. */
       train_loop_done: (
         epochsRun: number,
         elapsedSec: string,
@@ -780,7 +779,7 @@ export interface Messages {
       rename_aria: (name: string) => string;
       deleting: string;
     };
-    /** Step machine pick-file -> (pick-target?) -> summary -> running -> done; `into-current`/`pick-target` modes share every step but the target picker, and the alpkg/tfjs archive branches share chrome but differ in per-step copy. */
+    /** Step machine pick-file -> (pick-target?) -> summary -> running -> done; the two modes differ only in the target picker, and the alpkg/tfjs branches share chrome but differ in per-step copy. */
     import_dialog: {
       title_into: (workspaceName: string) => string;
       title_fallback: string;
@@ -810,7 +809,7 @@ export interface Messages {
         error_could_not_read_file: string;
         error_could_not_read_picked_files: string;
         error_could_not_read_model_json: string;
-        /** TFJS-bundle classification diagnostics; `*_one`/`*_many` pairs handle singular vs. plural shard wording, `quotedNames` is the pre-joined pre-quoted (≤3) filename list, and `overflow` true drives the trailing ellipsis. */
+        /** TFJS classification diagnostics; `*_one`/`*_many` handle singular/plural shard wording, `quotedNames` is the pre-quoted (≤3) filename list, `overflow` drives the trailing ellipsis. */
         tfjs_diag_empty_drop: string;
         tfjs_diag_no_model_json: string;
         tfjs_diag_ambiguous_model_json: (count: number) => string;

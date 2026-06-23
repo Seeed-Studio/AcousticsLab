@@ -4,7 +4,7 @@
 export type ThemeMode = 'auto' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
 
-const STORAGE_KEY = 'acoustics-theme';
+const STORAGE_KEY = 'acousticslab-theme';
 
 // Anything but strict 'light'/'dark' (unset, stale, or Safari-private throw) -> 'auto' (OS-driven).
 function readInitialMode(): ThemeMode {
