@@ -2,7 +2,7 @@ import type { Messages } from '../types';
 
 // 简体中文 (zh-CN). Mirrors en.ts 1:1 (keys, params, ${...}, comments); see en.ts for conventions. zh
 // style: full-width punctuation; keep ' · ', '…', numbers, units, tokens, ${...} ASCII; break dash
-// '——'; 'Background Noise' stays literal.
+// ' —— '; 'Background Noise' stays literal.
 export const zh = {
   app: {
     name: 'AcousticsLab',
@@ -41,7 +41,7 @@ export const zh = {
       daemon_unavailable_default: '当设备可达时，配置将自动恢复。',
       microphone_heading: '麦克风',
       source_label: '输入源',
-      auto_first_available: '自动 · 第一个可用',
+      auto_first_available: '自动 · 首个可用',
       channel_label: '声道',
       auto_channel: '自动',
       inference_cadence_heading: '推理节奏',
@@ -176,7 +176,7 @@ export const zh = {
   category: {
     list: {
       heading: '数据集',
-      description: '每个类别都会成为训练器学习的类别标签——Background Noise 为必需项。',
+      description: '每个类别都会成为训练器学习的类别标签 —— Background Noise 为必需项。',
       add_button: '添加类别',
       add_button_aria: '添加类别',
       loading: '正在加载类别…',
@@ -223,10 +223,10 @@ export const zh = {
       aria_play: (filename) => `播放切片 ${filename}`,
       title_failed: (errorOrUnknown) => `上传失败：${errorOrUnknown}。右键单击以重试。`,
       title_uploading: (progressPct) => `上传中… ${progressPct}%`,
-      title_local: '本地——等待上传',
+      title_local: '本地 —— 等待上传',
       title_multi_click_deselect: '单击以取消选择（Esc 退出选择）',
       title_multi_click_select: '单击以添加到选区（Esc 退出选择）',
-      title_playing: '播放中——单击以重新播放',
+      title_playing: '播放中 —— 单击以重新播放',
       title_idle: '单击以播放（Ctrl/Cmd 单击以选择）',
       sr_deleting: (filename) => `正在删除切片 ${filename}`,
       sr_uploading: (progressPct) => `上传中 ${progressPct}%`,
@@ -255,7 +255,7 @@ export const zh = {
       heading: '切片',
       tips_label: '切片模块提示',
       tip_audition_title: '在训练前试听每个切片。',
-      tip_audition_body: '一行标注错误的数据会使整个类别产生偏差——单击卡片即可播放，请大胆丢弃。',
+      tip_audition_body: '一行标注错误的数据会使整个类别产生偏差 —— 单击卡片即可播放，请大胆丢弃。',
       tip_diversity_title: '多样性胜过数量。',
       tip_diversity_body:
         '10 段多样化的录音（距离、角度、背景）比 30 个几乎相同的副本训练效果更好。',
@@ -305,7 +305,7 @@ export const zh = {
       tip_stream_body: '这些切片与推理共享相同的 DSP，因此微调后训练出的模型不会遇到分布偏移。',
       tip_environment_title: '在部署环境中录制。',
       tip_environment_body:
-        '干净的录音棚采集会使噪声抑制训练不足。真实的背景是模型需要学习内容的一半。',
+        '干净的录音棚采集会使噪声抑制训练不足。建议真实的背景噪声接近模型需要学习数据的一半。',
       tip_meter_title: '使仪表保持在绿色到琥珀色之间。',
       tip_meter_body: '玫红色表示削波，会抹去训练器无法恢复的信息。',
       pane_aria: (categoryDisplay) => `类别 ${categoryDisplay} 的输入模块`,
@@ -330,7 +330,7 @@ export const zh = {
       record_title_stream_connecting: '设备声音流正在连接。流打开后即可开始录制。',
       record_title_stream_closed: '设备声音流不可达。请检查设备是否正在运行。',
       record_title_stream_unsupported:
-        '此浏览器无法在这里解码实时声音流——它需要在安全（HTTPS）上下文中使用 WebCodecs。请通过安全网关打开此页面，或改为拖放或浏览 WAV 文件。',
+        '此浏览器无法在这里解码实时声音流 —— 它需要在安全（HTTPS）上下文中使用 WebCodecs。请通过安全网关打开此页面，或改为拖放或浏览 WAV 文件。',
       capture_stop_aria_stream: '停止流采集',
       capture_stop_aria_mic: '停止录制',
       capture_stop_label: '停止',
@@ -357,10 +357,10 @@ export const zh = {
       export_aria: '下载为 WAV',
       export_title: '下载为 WAV',
       error_file_too_large: (size, cap) =>
-        `文件大小为 ${size}——导入上限为 ${cap}。请裁剪得更短后重新导出，然后再次拖放。`,
+        `文件大小为 ${size} —— 导入上限为 ${cap}。请裁剪得更短后重新导出，然后再次拖放。`,
       error_clip_too_short: (clipSecs) =>
         `片段仅 ${clipSecs} s，训练要求每个片段至少 1 s，因此较短的片段将被完全排除。请导入或录制时长为 1 s 或更长的片段。`,
-      error_only_one_file: '一次只能处理一个文件——输入槽仅保留最近的片段。请拖放单个 WAV。',
+      error_only_one_file: '一次只能处理单个文件 —— 输入区域仅保留最近的片段。请拖放单个 WAV。',
       error_only_wav: '仅支持 WAV 文件。',
       error_could_not_import: '无法导入该文件。',
       error_could_not_discard: '无法丢弃该片段。',
@@ -384,7 +384,7 @@ export const zh = {
       badge_failed: '失败',
       badge_not_enough: '样本不足',
       badge_not_enough_with_state: (statusLabel) => `样本不足 · ${statusLabel}`,
-      title_synced: (tally) => `${tally} 个切片已上传到设备——可用于训练。`,
+      title_synced: (tally) => `${tally} 个切片已上传到设备 —— 可用于训练。`,
       title_uploading: (tally) => `${tally} 个切片，部分仍在上传到设备。`,
       title_pending: (tally) => `${tally} 个切片已就绪但尚未上传到设备。`,
       title_failed: (tally) =>
@@ -399,7 +399,7 @@ export const zh = {
         `${tally} 个切片已在本地排队，还需 ${missing} 个。`,
       actions_aria: (displayName) => `${displayName} 的操作`,
       actions_title: '类别操作',
-      actions_title_preserved: '内置保留——重命名和删除已禁用',
+      actions_title_preserved: '内置保留 —— 重命名和删除已禁用',
       badge_deleting: '删除中'
     }
   },
@@ -422,7 +422,7 @@ export const zh = {
       button_title_not_ready_default: '未就绪原因',
       button_title_form_errors: '修正高亮的超参数字段以启用训练。',
       button_title_idle_trained:
-        '已有模型与此修订匹配——重新训练可尝试不同的超参数或不同的随机种子。可从下方的"模型"区激活任意模型。',
+        '已有模型与此修订匹配 —— 重新训练可尝试不同的超参数或不同的随机种子。可从下方的"模型"区激活任意模型。',
       button_title_idle_busy: '已有另一个工作区正在训练，同一时间只能运行一个任务。',
       button_title_idle_ready: '在此工作区数据集上训练模型。',
       button_title_starting: '正在提交训练请求…',
@@ -456,10 +456,10 @@ export const zh = {
     logs: {
       heading: '日志',
       entry_count: (count) => `${count} 条`,
-      waiting_first_message: '正在等待第一条消息…'
+      waiting_first_message: '正在等待首条消息…'
     },
     chart: {
-      waiting_first_epoch: '正在等待第一个轮次…',
+      waiting_first_epoch: '正在等待首个轮次…',
       legend_loss: '损失',
       legend_train: '训练',
       legend_val: '验证',
@@ -473,7 +473,7 @@ export const zh = {
       heading: '历史',
       keeps_last: (cap) => `保留最近 ${cap} 次`,
       retention_title: (cap) =>
-        `守护进程为每个工作区保留最近 ${cap} 个训练日志文件；新的运行开启时会清除较旧的 JSONL 轨迹。已发布的模型记录（在下方的"模型"区）不受影响——仅清除 JSONL 轨迹。`,
+        `守护进程为每个工作区保留最近 ${cap} 个训练日志文件；新的运行开启时会清除较旧的 JSONL 轨迹。已发布的模型记录（在下方的"模型"区）不受影响 —— 仅清除 JSONL 轨迹。`,
       empty_state_prefix: '此工作区暂无训练运行。单击 ',
       empty_state_button: '训练模型',
       empty_state_suffix: ' 即可开始。',
@@ -497,7 +497,7 @@ export const zh = {
       time_title_finished: (absolute) => `完成于 ${absolute}`,
       detail_epoch: (current, total) => `轮次 ${current}/${total}`,
       detail_class_count: (count) => `${count} 个类别`,
-      detail_val_acc: (pctLabel) => `验证 ${pctLabel}`,
+      detail_val_acc: (pctLabel) => `准确率 ${pctLabel}`,
       detail_train_acc: (pctLabel) => `训练 ${pctLabel}`,
       detail_stopped_at: (stageLabel) => `停止于 ${stageLabel}`
     },
@@ -507,7 +507,7 @@ export const zh = {
       cancelled_aria: '已取消运行摘要',
       duration_label: '时长',
       epochs_label: '轮次',
-      best_val_at: (epoch) => `最佳验证 @ ${epoch}`,
+      best_val_at: (epoch) => `最佳验证准确率 @ ${epoch}`,
       final_train_acc_label: '最终训练准确率',
       classes_label: '类别',
       stopped_at_label: '停止于',
@@ -557,7 +557,7 @@ export const zh = {
       train_loop_done: (epochsRun, elapsedSec, bestValAccLabel, bestEpoch) => {
         const bestPart =
           bestValAccLabel !== null && bestEpoch !== null
-            ? ` · 最佳验证 ${bestValAccLabel} @ 轮次 ${bestEpoch}`
+            ? ` · 最佳验证准确率 ${bestValAccLabel} @ 轮次 ${bestEpoch}`
             : '';
         return `训练循环完成 · ${epochsRun} 轮次 · 耗时 ${elapsedSec}s${bestPart}`;
       },
@@ -570,7 +570,7 @@ export const zh = {
   deploy: {
     pane: {
       heading: '部署',
-      description: '选择已训练的模型，将其无缝热替换到实时推理中，实现零停机。',
+      description: '浏览并选择已训练的模型，将其无缝热替换到实时推理中。',
       pill_deployed: '已部署',
       pill_deployed_title: '在本工作区训练的模型正作为运行时模型。',
       pill_default: '默认',
@@ -602,7 +602,7 @@ export const zh = {
       default_title_busy: '此列表中的另一个模型正忙',
       default_title_idle: '还原为内置的默认模型',
       menu_deploy: '部署',
-      menu_export: '导出为 .alpkg',
+      menu_export: '导出为 ALPKG',
       menu_exporting: '导出中…',
       menu_delete: '删除',
       menu_hint_active: '活动',
@@ -631,7 +631,7 @@ export const zh = {
       row_title_busy: '此列表中的另一个模型正忙',
       row_title_idle: '单击将此模型热替换到推理管线中',
       export_title_exporting: '导出中…',
-      export_title_idle: '将此模型导出为 .alpkg 归档文件',
+      export_title_idle: '将此模型导出为 ALPKG 归档文件',
       export_aria_exporting: (shortId) => `正在导出模型 ${shortId}`,
       export_aria_idle: (shortId) => `导出模型 ${shortId}`,
       info_title: '查看模型卡片',
@@ -640,7 +640,7 @@ export const zh = {
     inference_preview: {
       heading: '预览',
       off_title: '预览已关闭',
-      off_description: '启动预览以查看已部署模型的频谱图和 top-k 流。',
+      off_description: '启动预览以查看已部署模型的频谱图和 top-k 推理流。',
       start_button: '启动预览'
     },
     info_dialog: {
@@ -653,7 +653,7 @@ export const zh = {
     },
     delete_dialog: {
       title: '删除此模型？',
-      body: '移除已训练的模型字节数据及其清单。数据集和其他模型将保留。此操作无法撤销。',
+      body: '移除已训练的模型字节数据及其描述文件，数据集和其他模型将保留。此操作无法撤销。',
       submit: '删除'
     }
   },
@@ -661,11 +661,11 @@ export const zh = {
     list: {
       title: '工作区',
       at_cap_subtitle: (max) => `已达到 ${max} 个工作区的上限。请先删除一个再创建新的。`,
-      default_subtitle: '每个工作区保存一个带标签的数据集以及由它训练出的所有模型。',
+      default_subtitle: '每个工作区保存有带标签的数据集以及由它训练出的所有模型。',
       daemon_unavailable_title: '设备不可用',
       loading: '正在加载工作区…',
       empty_title: '尚无工作区',
-      empty_description: '工作区是录音、带标签样本和已训练的模型的存放之处。创建一个即可开始。',
+      empty_description: '工作区是录音、带标签样本和已训练的模型的存放之处，请创建新工作区以开始。',
       selected_count_aria: (count) => `已选择 ${count} 个`,
       new_button_label: '新建工作区',
       new_button_aria: '新建工作区',
@@ -673,7 +673,7 @@ export const zh = {
       new_at_cap_title: '已达上限。请先删除一个工作区。',
       import_button_label: '导入',
       import_button_aria: '导入工作区',
-      import_button_title: '从 .alpkg 或 TFJS 包导入工作区',
+      import_button_title: '从 ALPKG 或 TFJS 包导入工作区',
       select_button_label: '选择',
       done_button_label: '完成',
       select_all_label: '全选',
@@ -700,13 +700,13 @@ export const zh = {
       back_link: '← 工作区',
       loading: '正在加载工作区…',
       not_found_title: '未找到工作区',
-      not_found_description: '可能已在其他标签页中或直接通过设备删除。返回列表查看其余工作区。',
+      not_found_description: '可能已在其他标签页中或直接通过设备删除，返回列表查看其余工作区。',
       back_to_list_button: '返回工作区',
       load_error_title: '无法加载此工作区',
       created_label: (relative) => `创建于 ${relative}`,
       rev_label: (rev) => `rev ${rev}`,
       modified_label: (relative) => `修改于 ${relative}`,
-      live_pill_title: '因近期上传而推进。重新加载以刷新修改时间戳。',
+      live_pill_title: '因近期上传而推进，重新加载以刷新修改时间戳。',
       live_pill: '实时',
       menu_rename: '重命名',
       menu_export: '导出',
@@ -719,14 +719,14 @@ export const zh = {
       name_label: '名称',
       name_placeholder: 'my-workspace',
       name_help:
-        '最多 128 个字符。不含斜杠或控制字符。名称是唯一可见的标识符，请选择一个易记的名称。',
+        '最多 128 个字符，不含斜杠或控制字符。名称是唯一可见的标识符，请选择一个易记的名称。',
       submit: '创建'
     },
     rename_dialog: {
       title: '重命名工作区',
       name_label: '名称',
       name_help:
-        '最多 128 个字符。不含斜杠或控制字符。重命名不会推进工作区修订——类别、切片和模型保持不变。',
+        '最多 128 个字符，不含斜杠或控制字符。重命名不会推进工作区修订 —— 类别、切片和模型保持不变。',
       submit: '保存'
     },
     delete_dialog: {
@@ -759,24 +759,24 @@ export const zh = {
       title_fallback: '导入',
       step_indicator: (current, total) => `第 ${current} 步，共 ${total} 步`,
       pipeline_error_title: '导入失败',
-      error_invalid_state: '对话框状态不一致——没有可导入的归档文件。',
+      error_invalid_state: '对话框状态不一致 —— 没有可导入的归档文件。',
       pick_file: {
-        drop_zone_title_attr: '将 .alpkg 归档文件或 TFJS 包拖放到此处，或单击浏览',
+        drop_zone_title_attr: '将 ALPKG 归档文件或 TFJS 包拖放到此处，或单击浏览',
         reading: '读取中…',
-        drop_zone_tfjs_staging: '拖放更多文件以完成 TFJS 包',
-        drop_zone_idle: '将 .alpkg 归档文件或 TFJS 包拖放到此处',
+        drop_zone_tfjs_staging: '拖放更多文件以补齐 TFJS 包',
+        drop_zone_idle: '将 ALPKG 归档文件或 TFJS 包拖放到此处',
         browse_button: '浏览文件',
-        error_empty_drop: '请拖放 .alpkg 归档文件或 TFJS 包。',
-        error_multi_alpkg: (count) => `一次只能选择一个 .alpkg 归档文件——已选择 ${count} 个。`,
-        error_mixed_archive: '.alpkg 归档文件必须单独选择，不能与其他文件混选。',
+        error_empty_drop: '请拖放 ALPKG 归档文件或 TFJS 包。',
+        error_multi_alpkg: (count) => `一次只能选择单个 ALPKG 归档文件 —— 已选择 ${count} 个。`,
+        error_mixed_archive: 'ALPKG 归档文件必须单独选择，不能与其他文件混选。',
         error_file_count_cap: (max, picked) =>
-          `一次最多拖放或选择 ${max} 个文件——已选择 ${picked} 个。`,
-        error_single_too_large: (name, size, cap) => `"${name}"为 ${size}——单文件上限为 ${cap}。`,
-        error_total_too_large: (total, cap) => `选区共计 ${total}——单次拖放上限为 ${cap}。`,
+          `一次最多拖放或选择 ${max} 个文件 —— 已选择 ${picked} 个。`,
+        error_single_too_large: (name, size, cap) => `"${name}"为 ${size} —— 单文件上限为 ${cap}。`,
+        error_total_too_large: (total, cap) => `选区共计 ${total} —— 单次拖放上限为 ${cap}。`,
         error_tfjs_merged_file_count: (mergedCount, cap) =>
-          `暂存集将总计 ${mergedCount} 个文件——上限为 ${cap}。请清除并重新拖放更小的包。`,
+          `暂存集将总计 ${mergedCount} 个文件 —— 上限为 ${cap}。请清除并重新拖放更小的文件。`,
         error_tfjs_merged_bytes: (mergedBytes, cap) =>
-          `暂存集将总计 ${mergedBytes}——上限为 ${cap}。请清除并重新拖放更小的包。`,
+          `暂存集将总计 ${mergedBytes} —— 上限为 ${cap}。请清除并重新拖放更小的文件。`,
         staged_files_heading: '暂存文件',
         staged_files_count: (count) => `${count} 个文件`,
         clear_button: '清除',
@@ -785,13 +785,13 @@ export const zh = {
         error_could_not_read_picked_files: '无法读取所选文件。',
         error_could_not_read_model_json: '无法读取 model.json。',
         tfjs_diag_empty_drop: '请拖放 TFJS 包文件（model.json + 分片 + labels）。',
-        tfjs_diag_no_model_json: '拖放内容中没有 "model.json"。请包含 TFJS 清单。',
+        tfjs_diag_no_model_json: '拖放内容中没有 "model.json"。请包含 TFJS 描述文件。',
         tfjs_diag_ambiguous_model_json: (count) =>
-          `包不明确：有 ${count} 个名为 "model.json" 的文件。`,
-        tfjs_diag_multiple_labels_txt: '拖放内容中有多个 "labels.txt" 文件。请只包含一个。',
-        tfjs_diag_multiple_metadata_json: '拖放内容中有多个 "metadata.json" 文件。请只包含一个。',
-        tfjs_diag_both_labels: '同时提供了 "labels.txt" 和 "metadata.json"。请只包含一个标签来源。',
-        tfjs_diag_no_labels: '未提供标签文件。请包含 "labels.txt" 或 "metadata.json"。',
+          `文件不明确：有 ${count} 个名为 "model.json" 的文件。`,
+        tfjs_diag_multiple_labels_txt: '拖放内容中有多个 "labels.txt" 文件，仅支持单个。',
+        tfjs_diag_multiple_metadata_json: '拖放内容中有多个 "metadata.json" 文件，仅支持单个。',
+        tfjs_diag_both_labels: '同时提供了 "labels.txt" 和 "metadata.json"，仅支持单个标签来源。',
+        tfjs_diag_no_labels: '未提供标签文件，请包含 "labels.txt" 或 "metadata.json"。',
         tfjs_diag_shard_collision_one: (quotedName) =>
           `两个暂存文件共用分片名 ${quotedName}。请清除暂存，只拖放需要的那一份。`,
         tfjs_diag_shard_collision_many: (quotedNames, overflow) =>
@@ -809,7 +809,7 @@ export const zh = {
         mode_radio_aria: '目标工作区模式',
         mode_use_existing: '使用现有',
         mode_create_new: '新建',
-        no_workspaces_prefix: '尚无工作区——切换到',
+        no_workspaces_prefix: '尚无工作区 —— 切换到',
         no_workspaces_link_label: '新建',
         no_workspaces_suffix: '以创建一个。',
         workspace_list_aria: '选择目标工作区',
@@ -843,7 +843,7 @@ export const zh = {
         rename_chips_heading: '或复用现有',
         heads_heading: '模型',
         heads_cap_tooltip: (cap) =>
-          `每个工作区最多 ${cap} 个模型。新模型加入时——无论来自重新训练还是导入——较旧的非活动模型会滚动移除。`,
+          `每个工作区最多 ${cap} 个模型。新模型加入时 —— 无论来自重新训练还是导入 —— 较旧的非活动模型会滚动移除。`,
         heads_counter: (selected, existingInTarget, cap, activeInTarget) => {
           const active = activeInTarget > 0 ? ` · 活动 ${activeInTarget} 个已固定` : '';
           return `已选择 ${selected} · 目标 ${existingInTarget} / ${cap}${active}`;
@@ -851,7 +851,7 @@ export const zh = {
         checking_heads: '正在检查目标模型…',
         displacement_warning: (displaced, cap) =>
           `导入将挤出 ${displaced} 个最旧的非活动模型，以适应 ${cap} 个模型的上限。`,
-        head_exists_badge_title: '目标工作区中已存在具有此 id 的模型。',
+        head_exists_badge_title: '目标工作区中已存在具有此 ID 的模型。',
         head_exists_badge: '已存在',
         head_show_details_aria: '显示模型详情',
         head_class_count: (count) => `${count} 个类别`,
@@ -885,7 +885,7 @@ export const zh = {
       mode_tooltips: {
         new: '使用归档文件中的切片从头创建该类别。',
         merge:
-          '将归档文件的切片上传到现有类别之上。相同 sha256 的切片会覆盖自身，新切片则加入集合。',
+          '将归档文件的切片上传到现有类别之上。相同 SHA256 的切片会覆盖自身，新切片则加入集合。',
         replace: '删除现有类别（及其包含的每个切片），然后从归档文件上传。',
         skip: '不导入此类别。'
       },
@@ -921,8 +921,8 @@ export const zh = {
         ds_failed_label: '失败',
         ds_failed_title_count: (failed) => `${failed} 个切片上传失败`,
         head_queued: '排队中',
-        head_skipped_badge_title: '模型 id 已存在于磁盘上，编排器已跳过它（幂等重新导入）。',
-        head_per_log_not_started: '尚未开始——此模型的导入开始后将出现日志行。',
+        head_skipped_badge_title: '模型 ID 已存在于磁盘上，编排器已跳过它（幂等重新导入）。',
+        head_per_log_not_started: '尚未开始 —— 此模型的导入开始后将出现日志行。',
         head_per_log_no_events: '未记录任何事件。',
         log_count: (count) => `${count} 条日志`
       },
@@ -943,8 +943,8 @@ export const zh = {
       },
       convert_stage: {
         prepare: '正在准备',
-        read_manifest: '正在读取清单',
-        validate_manifest: '正在校验清单',
+        read_manifest: '正在读取描述文件',
+        validate_manifest: '正在校验描述文件',
         verify_mpk: '正在验证 MPK',
         stage_mpk: '正在暂存 MPK',
         read_model_json: '正在读取 model.json',
@@ -958,7 +958,7 @@ export const zh = {
         job_submitted: (converter) => `任务已通过 ${converter} 提交`,
         job_running: '任务运行中',
         phase: (stageLabel) => `阶段：${stageLabel}`,
-        manifest_validated: (classes) => `清单已校验 · ${classes} 个类别`,
+        manifest_validated: (classes) => `描述文件已校验 · ${classes} 个类别`,
         mpk_verified: (size) => `MPK 已验证 · ${size}`,
         weights_extracted: (classes, inDim) => `权重已提取 · ${classes} 个类别 · ${inDim} in_dim`,
         labels_loaded: (labels) => `标签已加载 · ${labels} 个标签`,
@@ -969,7 +969,7 @@ export const zh = {
       },
       done: {
         conflict_detail: (storedSha8, incomingSha8) =>
-          `目标已持有具有此 id 但 sha256 不同的模型（${storedSha8} 对比传入的 ${incomingSha8}）。`,
+          `目标已持有具有此 ID 但 SHA256 不同的模型（${storedSha8} 对比传入的 ${incomingSha8}）。`,
         retry_button: '替换现有并重试'
       },
       footer: {
@@ -986,7 +986,7 @@ export const zh = {
       title: (workspaceName) => `导出工作区 · ${workspaceName}`,
       load_error_title: '无法加载此工作区',
       loading: '正在加载工作区…',
-      nothing_to_export: '此工作区尚无类别和模型——没有可导出的内容。',
+      nothing_to_export: '此工作区尚无类别和模型 —— 没有可导出的内容。',
       datasets_heading: '数据集',
       heads_heading: '模型',
       select_all: '全选',
@@ -995,7 +995,7 @@ export const zh = {
       row_slice_count: (count) => `${count} 个切片`,
       head_meta_title: (size, classCount) => `${size} · ${classCount} 个类别`,
       head_meta_classes: (count) => `${count} 个类别`,
-      pending_warning: '选区中仍在上传或待处理的切片将被排除——仅导出已在磁盘上的切片。',
+      pending_warning: '选区中仍在上传或待处理的切片将被排除 —— 仅导出已在磁盘上的切片。',
       progress_preparing_workspace: '正在读取工作区元数据…',
       progress_fetching_slices: '正在获取切片…',
       progress_listing_slices: '正在列出切片…',

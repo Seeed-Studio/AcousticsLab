@@ -2,7 +2,7 @@ import type { Messages } from '../types';
 
 // Canonical catalog; every other locale's `satisfies Messages` shape anchors to this. House style:
 // sentence case; period on full sentences, none on fragments; no comma splices; spaced em dash ' — '
-// for breaks; ' · ' separator and '…' for in-progress; straight quotes only; tokens, units, '.alpkg',
+// for breaks; ' · ' separator and '…' for in-progress; straight quotes only; tokens, units, 'ALPKG',
 // 'Top-K', and Title-Case status pills kept verbatim; never hardcode a plural against an interpolation.
 export const en = {
   app: {
@@ -518,7 +518,7 @@ export const en = {
       time_title_finished: (absolute) => `finished ${absolute}`,
       detail_epoch: (current, total) => `epoch ${current}/${total}`,
       detail_class_count: (count) => `${count} ${count === 1 ? 'class' : 'classes'}`,
-      detail_val_acc: (pctLabel) => `val ${pctLabel}`,
+      detail_val_acc: (pctLabel) => `acc ${pctLabel}`,
       detail_train_acc: (pctLabel) => `train ${pctLabel}`,
       detail_stopped_at: (stageLabel) => `stopped at ${stageLabel}`
     },
@@ -528,7 +528,7 @@ export const en = {
       cancelled_aria: 'Cancelled run summary',
       duration_label: 'Duration',
       epochs_label: 'Epochs',
-      best_val_at: (epoch) => `Best val @ ${epoch}`,
+      best_val_at: (epoch) => `Best val acc @ ${epoch}`,
       final_train_acc_label: 'Final train acc',
       classes_label: 'Classes',
       stopped_at_label: 'Stopped at',
@@ -578,7 +578,7 @@ export const en = {
       train_loop_done: (epochsRun, elapsedSec, bestValAccLabel, bestEpoch) => {
         const bestPart =
           bestValAccLabel !== null && bestEpoch !== null
-            ? ` · best val ${bestValAccLabel} @ epoch ${bestEpoch}`
+            ? ` · best val acc ${bestValAccLabel} @ epoch ${bestEpoch}`
             : '';
         return `Training loop done · ${epochsRun} ${epochsRun === 1 ? 'epoch' : 'epochs'} in ${elapsedSec}s${bestPart}`;
       },
@@ -625,7 +625,7 @@ export const en = {
       default_title_busy: 'Another model on this list is busy',
       default_title_idle: 'Revert to the built-in default model',
       menu_deploy: 'Deploy',
-      menu_export: 'Export as .alpkg',
+      menu_export: 'Export as ALPKG',
       menu_exporting: 'Exporting…',
       menu_delete: 'Delete',
       menu_hint_active: 'active',
@@ -654,7 +654,7 @@ export const en = {
       row_title_busy: 'Another model on this list is busy',
       row_title_idle: 'Click to hot-swap this model into the inference pipeline',
       export_title_exporting: 'Exporting…',
-      export_title_idle: 'Export this model as a .alpkg archive',
+      export_title_idle: 'Export this model as an ALPKG archive',
       export_aria_exporting: (shortId) => `Exporting model ${shortId}`,
       export_aria_idle: (shortId) => `Export model ${shortId}`,
       info_title: 'View the model card',
@@ -699,7 +699,7 @@ export const en = {
       new_at_cap_title: 'Limit reached. Delete one workspace first.',
       import_button_label: 'Import',
       import_button_aria: 'Import workspace',
-      import_button_title: 'Import workspace from an .alpkg or TFJS bundle',
+      import_button_title: 'Import workspace from an ALPKG or TFJS bundle',
       select_button_label: 'Select',
       done_button_label: 'Done',
       select_all_label: 'Select all',
@@ -788,15 +788,15 @@ export const en = {
       pipeline_error_title: 'Import failed',
       error_invalid_state: 'Inconsistent dialog state — no archive to import.',
       pick_file: {
-        drop_zone_title_attr: 'Drop an .alpkg archive or a TFJS bundle here, or click to browse',
+        drop_zone_title_attr: 'Drop an ALPKG archive or a TFJS bundle here, or click to browse',
         reading: 'Reading…',
         drop_zone_tfjs_staging: 'Drop more files to complete the TFJS bundle',
-        drop_zone_idle: 'Drag & drop an .alpkg archive or a TFJS bundle here',
+        drop_zone_idle: 'Drag & drop an ALPKG archive or a TFJS bundle here',
         browse_button: 'Browse files',
-        error_empty_drop: 'Drop an .alpkg archive or a TFJS bundle.',
-        error_multi_alpkg: (count) => `Pick one .alpkg archive at a time — you picked ${count}.`,
+        error_empty_drop: 'Drop an ALPKG archive or a TFJS bundle.',
+        error_multi_alpkg: (count) => `Pick one ALPKG archive at a time — you picked ${count}.`,
         error_mixed_archive:
-          'An .alpkg archive must be picked on its own, not mixed with other files.',
+          'An ALPKG archive must be picked on its own, not mixed with other files.',
         error_file_count_cap: (max, picked) =>
           `Drop or pick at most ${max} files at once — you picked ${picked}.`,
         error_single_too_large: (name, size, cap) =>
@@ -888,7 +888,7 @@ export const en = {
         checking_heads: 'Checking target models…',
         displacement_warning: (displaced, cap) =>
           `Importing will displace the ${displaced} oldest non-active model${displaced === 1 ? '' : 's'} to fit the ${cap}-model cap.`,
-        head_exists_badge_title: 'A model with this id already exists in the target workspace.',
+        head_exists_badge_title: 'A model with this ID already exists in the target workspace.',
         head_exists_badge: 'Exists',
         head_show_details_aria: 'Show model details',
         head_class_count: (count) => `${count} ${count === 1 ? 'class' : 'classes'}`,
@@ -925,7 +925,7 @@ export const en = {
       mode_tooltips: {
         new: "Create the category from scratch with the archive's slices.",
         merge:
-          'Upload archive slices on top of the existing category. Same-sha256 slices overwrite themselves, new ones add to the set.',
+          'Upload archive slices on top of the existing category. Same-SHA256 slices overwrite themselves, new ones add to the set.',
         replace:
           'Delete the existing category (and every slice it holds), then upload from the archive.',
         skip: 'Do not import this category.'
@@ -966,7 +966,7 @@ export const en = {
           `${failed} slice${failed === 1 ? '' : 's'} failed to upload`,
         head_queued: 'Queued',
         head_skipped_badge_title:
-          'The model id already exists on disk and the orchestrator skipped it (idempotent re-import).',
+          'The model ID already exists on disk and the orchestrator skipped it (idempotent re-import).',
         head_per_log_not_started:
           "Not started yet — log lines will appear once this model's import begins.",
         head_per_log_no_events: 'No events recorded.',
@@ -1016,7 +1016,7 @@ export const en = {
       },
       done: {
         conflict_detail: (storedSha8, incomingSha8) =>
-          `Target already holds a model with this id but a different sha256 (${storedSha8} vs incoming ${incomingSha8}).`,
+          `Target already holds a model with this ID but a different SHA256 (${storedSha8} vs incoming ${incomingSha8}).`,
         retry_button: 'Replace existing & retry'
       },
       footer: {
