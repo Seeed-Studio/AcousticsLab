@@ -6,9 +6,11 @@ import { locale } from '$lib/stores/locale.svelte';
 import { type LocaleCode } from './locales';
 import type { Messages } from './types';
 import { en } from './messages/en';
+import { zh } from './messages/zh';
 
 const CATALOGS: Readonly<Record<LocaleCode, Messages>> = {
-  en
+  en,
+  'zh-CN': zh
 };
 
 // Reads `locale.resolved` so callers re-evaluate on locale switch. No fallback by design: the

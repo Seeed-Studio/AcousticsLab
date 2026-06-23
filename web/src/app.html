@@ -24,7 +24,7 @@
     <script>
       (function () {
         try {
-          var supported = ['en'];
+          var supported = ['en', 'zh-CN'];
           var m = localStorage.getItem('acoustics-locale');
           if (m && supported.indexOf(m) >= 0) {
             document.documentElement.lang = m;

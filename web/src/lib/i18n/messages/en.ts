@@ -49,9 +49,9 @@ export const en = {
       heading: 'Configuration'
     },
     configuration_controls: {
-      daemon_unavailable_title: 'Daemon unavailable',
+      daemon_unavailable_title: 'Device unavailable',
       daemon_unavailable_default:
-        'Configuration will resume automatically when the daemon is reachable.',
+        'Configuration will resume automatically when the device is reachable.',
       microphone_heading: 'Microphone',
       source_label: 'Source',
       auto_first_available: 'auto · first available',
@@ -75,7 +75,7 @@ export const en = {
       pill_default: 'Default',
       pill_workspace: 'Workspace',
       pill_detached: 'Detached',
-      pill_default_title: 'The daemon-bundled default model is running.',
+      pill_default_title: 'The built-in default model is running.',
       pill_workspace_title: 'A trained workspace model is running.',
       pill_detached_title: 'The source workspace was deleted after this model was activated.',
       loading_active: 'loading active model…',
@@ -115,7 +115,7 @@ export const en = {
       unreachable: 'unreachable'
     },
     popover: {
-      daemon_unreachable_title: 'Daemon unreachable',
+      daemon_unreachable_title: 'Device unreachable',
       waiting_first_snapshot: 'waiting for first status snapshot…',
       subsystems_heading: 'Subsystems',
       seconds_ago: (seconds) => `${seconds}s ago`,
@@ -131,12 +131,12 @@ export const en = {
     dismiss: 'Dismiss'
   },
   error: {
-    another_train_running: 'Another training job is already running on this daemon.',
-    another_convert_running: 'Another conversion job is already running on this daemon.',
+    another_train_running: 'Another training job is already running on this device.',
+    another_convert_running: 'Another conversion job is already running on this device.',
     job_conflict: 'Another operation is already in progress on this resource.',
     event_gap: 'The event stream skipped ahead and needs to catch up from logs. Reconnecting…',
-    too_early: 'The daemon is still applying your previous change. Retrying…',
-    unavailable: 'The daemon is temporarily unavailable. Please retry in a moment.',
+    too_early: 'The device is still applying your previous change. Retrying…',
+    unavailable: 'The device is temporarily unavailable. Please retry in a moment.',
     internal:
       'The daemon hit an internal error. Please retry. If it persists, check the daemon logs.',
     unknown: 'Something went wrong. Please retry.',
@@ -186,7 +186,7 @@ export const en = {
   recorder: {
     mic_error_denied:
       'Microphone access was denied. Allow microphone access in the browser settings and try again.',
-    mic_error_not_found: 'No microphone was found on this device. Connect one and try again.',
+    mic_error_not_found: 'No microphone was found. Connect one and try again.',
     mic_error_in_use: 'The microphone is in use by another application. Close it and try again.',
     mic_error_interrupted: 'Microphone capture was interrupted. Try again.',
     mic_error_generic: 'Could not start the microphone. Try again.'
@@ -232,7 +232,7 @@ export const en = {
       title: 'Delete this category?',
       body_server: "Removes the dataset folder and every slice inside it. Can't be undone.",
       body_idb:
-        'Removes this category from the local list. No slices were uploaded, so nothing on the daemon changes.',
+        'Removes this category from the local list. No slices were uploaded, so nothing on the device changes.',
       submit: 'Delete',
       error_fallback: 'Could not delete the category.',
       error_mandatory_required: 'Background Noise is preserved and cannot be deleted.',
@@ -323,7 +323,7 @@ export const en = {
     input_pane: {
       heading: 'Input',
       tips_label: 'Input module tips',
-      tip_stream_title: "Prefer the daemon's opus stream.",
+      tip_stream_title: "Prefer the device's sound stream.",
       tip_stream_body:
         "Your slices share the same DSP as inference, so the trained model doesn't see a distribution shift after fine-tune.",
       tip_environment_title: 'Record in the deployment environment.',
@@ -341,20 +341,21 @@ export const en = {
       source_mic_remembered_fallback: (idFrag) => `Microphone (${idFrag})`,
       source_mic_default_id: 'default',
       source_live_stream_group: 'Live stream',
-      source_daemon_stream: 'Daemon opus stream',
-      source_daemon_stream_with_status: (status) => `Daemon opus stream · ${status}`,
+      source_daemon_stream: 'Device sound stream',
+      source_daemon_stream_with_status: (status) => `Device sound stream · ${status}`,
       drop_zone_title: (cap) => `Drop a WAV file here (up to ${cap}), or click to browse`,
       drop_zone_idle: 'Drag & drop a WAV here',
       drop_zone_browse: 'Browse files',
-      record_aria_stream: 'Start capturing from the live opus stream',
+      record_aria_stream: 'Start capturing from the live sound stream',
       record_aria_mic: 'Start recording from microphone',
       record_label: 'Record',
-      record_title_stream_open: (max) => `Capture the live opus stream (auto-stops at ${max}).`,
+      record_title_stream_open: (max) => `Capture the live sound stream (auto-stops at ${max}).`,
       record_title_stream_connecting:
-        'Daemon opus stream is connecting. Recording will be available once it opens.',
-      record_title_stream_closed: 'Daemon opus stream is unreachable. Check the daemon is running.',
+        'Device sound stream is connecting. Recording will be available once it opens.',
+      record_title_stream_closed:
+        'Device sound stream is unreachable. Check the device is running.',
       record_title_stream_unsupported:
-        "This browser can't decode the live opus stream here — it needs WebCodecs over a secure (HTTPS) context. Open this page through the secure gateway, or drop or browse for a WAV file instead.",
+        "This browser can't decode the live sound stream here — it needs WebCodecs over a secure (HTTPS) context. Open this page through the secure gateway, or drop or browse for a WAV file instead.",
       capture_stop_aria_stream: 'Stop stream capture',
       capture_stop_aria_mic: 'Stop recording',
       capture_stop_label: 'Stop',
@@ -413,9 +414,9 @@ export const en = {
       badge_failed: 'Failed',
       badge_not_enough: 'Not enough samples',
       badge_not_enough_with_state: (statusLabel) => `Not enough samples · ${statusLabel}`,
-      title_synced: (tally) => `${tally} slices uploaded to the daemon — training-ready.`,
-      title_uploading: (tally) => `${tally} slices, some are still uploading to the daemon.`,
-      title_pending: (tally) => `${tally} slices ready but not yet uploaded to the daemon.`,
+      title_synced: (tally) => `${tally} slices uploaded to the device — training-ready.`,
+      title_uploading: (tally) => `${tally} slices, some are still uploading to the device.`,
+      title_pending: (tally) => `${tally} slices ready but not yet uploaded to the device.`,
       title_failed: (tally) =>
         `${tally} slices, at least one upload failed. Retry from the slice card or discard the failed rows.`,
       title_not_enough_empty: (missing, tally) =>
@@ -513,7 +514,7 @@ export const en = {
       hide_older_title: 'Collapse the older runs section back to the recent two.',
       show_older_title: 'Reveal older training runs for this workspace, paged in batches of 5.',
       load_more_label: (count) => `Load ${count} more`,
-      load_more_title: 'Fetch the next batch of older training runs from the daemon.',
+      load_more_title: 'Fetch the next batch of older training runs from the device.',
       menu_delete: 'Delete',
       menu_deleting: 'Deleting…',
       menu_hint_train_active: 'train active',
@@ -566,8 +567,8 @@ export const en = {
     },
     state_submitting: 'submitting',
     store_log: {
-      seed_submitted: 'Submitted, waiting for the daemon to start emitting events…',
-      seed_recovered: 'Recovered an in-flight training job from the daemon.',
+      seed_submitted: 'Submitted, waiting for the device to start emitting events…',
+      seed_recovered: 'Recovered an in-flight training job from the device.',
       job_submitted: (backbone) => `Job submitted · backbone ${backbone}`,
       job_running: 'Job running',
       phase_prefix: (stageLabel) => `Phase: ${stageLabel}`,
@@ -601,11 +602,12 @@ export const en = {
   deploy: {
     pane: {
       heading: 'Deploy',
-      description: 'Select a trained model and hot-swap it into live inference seamlessly with zero downtime.',
+      description:
+        'Select a trained model and hot-swap it into live inference seamlessly with zero downtime.',
       pill_deployed: 'Deployed',
       pill_deployed_title: 'A model trained in this workspace is the runtime model.',
       pill_default: 'Default',
-      pill_default_title: 'The daemon-bundled default model is running.',
+      pill_default_title: 'The built-in default model is running.',
       pill_standby: 'Standby',
       pill_standby_title:
         'A model from a different workspace is the runtime model. This workspace is on standby. Deploying one here will replace it.',
@@ -626,14 +628,14 @@ export const en = {
       revert_to_id: (shortId) => `Revert to ${shortId}`,
       revert_title: 'Re-deploy the previously running model',
       default_row_headline: 'Default',
-      default_row_description: 'Daemon-bundled fallback, always available.',
-      default_active_title: 'The daemon-bundled default model is currently deployed.',
+      default_row_description: 'Built-in fallback, always available.',
+      default_active_title: 'The built-in default model is currently deployed.',
       default_aria_active: 'Default model is active',
       default_aria_deploy: 'Deploy default model',
       default_title_active: 'The default model is already deployed',
       default_title_deploying: 'Deploying…',
       default_title_busy: 'Another model on this list is busy',
-      default_title_idle: 'Revert to the daemon-bundled default model',
+      default_title_idle: 'Revert to the built-in default model',
       menu_deploy: 'Deploy',
       menu_export: 'Export as .alpkg',
       menu_exporting: 'Exporting…',
@@ -697,7 +699,7 @@ export const en = {
       at_cap_subtitle: (max) =>
         `Reached the ${max} workspace limit. Delete one before creating another.`,
       default_subtitle: 'Each workspace holds a labeled dataset and any models trained from it.',
-      daemon_unavailable_title: 'Daemon unavailable',
+      daemon_unavailable_title: 'Device unavailable',
       loading: 'loading workspaces…',
       empty_title: 'No workspaces yet',
       empty_description:
@@ -737,7 +739,7 @@ export const en = {
       loading: 'loading workspace…',
       not_found_title: 'Workspace not found',
       not_found_description:
-        "It may have been deleted in another tab or via the daemon directly. Head back to the list to see what's still around.",
+        "It may have been deleted in another tab or via the device directly. Head back to the list to see what's still around.",
       back_to_list_button: 'Back to workspaces',
       load_error_title: "Couldn't load this workspace",
       created_label: (relative) => `created ${relative}`,

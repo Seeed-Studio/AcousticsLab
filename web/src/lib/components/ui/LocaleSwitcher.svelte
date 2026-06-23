@@ -56,7 +56,7 @@
     <!-- Two responsive triggers for one popover: sm+ chip, <sm globe icon (toggled by sm: classes). -->
     <button
       type="button"
-      class="hidden h-[30px] items-center gap-1 rounded-full border border-line bg-surface px-2.5 text-xs font-medium text-fg-secondary shadow-card transition hover:border-line-strong hover:text-fg sm:inline-flex"
+      class="hidden h-7.5 items-center gap-1 rounded-full border border-line bg-surface px-2.5 text-xs font-medium text-fg-secondary shadow-card transition hover:border-line-strong hover:text-fg sm:inline-flex"
       aria-expanded={popoverOpen}
       aria-haspopup="menu"
       onclick={togglePopover}
@@ -79,7 +79,7 @@
 
     <button
       type="button"
-      class="inline-flex h-[36px] w-[36px] items-center justify-center rounded-full border border-line bg-surface text-fg-muted shadow-card transition hover:border-line-strong hover:text-fg sm:hidden"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-fg-muted shadow-card transition hover:border-line-strong hover:text-fg sm:hidden"
       aria-expanded={popoverOpen}
       aria-haspopup="menu"
       aria-label={m.locale.label_with_current(currentChip)}
