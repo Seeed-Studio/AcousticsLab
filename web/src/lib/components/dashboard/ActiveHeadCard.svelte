@@ -244,7 +244,7 @@
 
     {#if headActive}
       <dl
-        class="mt-3 grid grid-cols-[5rem_1fr] items-baseline gap-x-3 gap-y-1.5 border-t pt-3 text-xs"
+        class="mt-3 grid grid-cols-[max-content_1fr] items-baseline gap-x-3 gap-y-1.5 border-t pt-3 text-xs"
         class:border-warning-line={orphaned}
         class:border-line={!orphaned}
       >
