@@ -142,8 +142,7 @@ export const en = {
       starts_with_dot: 'Category name cannot start with a dot.',
       starts_with_underscore:
         'Category name cannot start with an underscore (reserved for built-in classes).',
-      starts_with_hyphen:
-        'Category name cannot start with a hyphen (guards against unquoted shell expansion).',
+      starts_with_hyphen: 'Category name cannot start with a hyphen (for security considerations).',
       bad_chars: 'Only letters, digits, dots, hyphens, and underscores are allowed.',
       category_max_bytes: (max) => `Category name must be ${max} bytes or fewer.`,
       category_empty: 'Category name cannot be empty.'
@@ -317,9 +316,10 @@ export const en = {
         "Your slices share the same DSP as inference, so the trained model doesn't see a distribution shift after fine-tune.",
       tip_environment_title: 'Record in the deployment environment.',
       tip_environment_body:
-        'A clean studio capture undertrains noise rejection. The real background is half of what the model needs to learn.',
-      tip_meter_title: 'Stay green-to-amber on the meter.',
-      tip_meter_body: "Rose means clipping, which erases information the trainer can't recover.",
+        'A clean studio capture undertrains noise rejection. The real background noise should make up close to half of what the model needs to learn.',
+      tip_meter_title: 'Maintain a green-to-amber status on the decibel meter.',
+      tip_meter_body:
+        'Rose means clipping — information is lost, which prevents the trainer from learning.',
       pane_aria: (categoryDisplay) => `Input module for category ${categoryDisplay}`,
       source_aria: 'Input source',
       loudness_aria: 'Loudness meter',
@@ -374,7 +374,7 @@ export const en = {
       error_file_too_large: (size, cap) =>
         `File is ${size} — the import cap is ${cap}. Trim it shorter and re-export, then drop again.`,
       error_clip_too_short: (clipSecs) =>
-        `Clip is only ${clipSecs} s, training needs at least 1 s per clip, so a shorter clip is excluded entirely. Import or record a clip of 1 s or longer.`,
+        `Clip is only ${clipSecs} s. Training needs at least 1 s per clip, so anything shorter is excluded entirely. Import or record a clip of 1 s or longer.`,
       error_only_one_file:
         'Only one file at a time — the Input slot holds the most recent clip only. Drop a single WAV.',
       error_only_wav: 'Only WAV files are supported.',
@@ -425,9 +425,9 @@ export const en = {
   training: {
     pane: {
       heading: 'Train',
-      subtitle_other_running: 'Another workspace is training, only one job runs at a time.',
+      subtitle_other_running: 'Another workspace is training — only one job runs at a time.',
       subtitle_default:
-        "Tune a model on this workspace's dataset, old model automatically discarded when new one lands.",
+        "Tune a model on this workspace's dataset — the old model is discarded automatically when a new one lands.",
       readiness_loading: 'Loading dataset…',
       readiness_no_categories: 'Add a foreground class with uploaded slices to start training.',
       readiness_background_short: (need) =>
@@ -444,8 +444,8 @@ export const en = {
       button_title_form_errors: 'Fix the highlighted hyperparameter fields to enable training.',
       button_title_idle_trained:
         'A model already matches this revision — re-train to try different hyperparameters or a different random seed. Activate any model from the Models section below.',
-      button_title_idle_busy: 'Another workspace is training, only one job runs at a time.',
-      button_title_idle_ready: 'Train a model on this workspace dataset.',
+      button_title_idle_busy: 'Another workspace is training — only one job runs at a time.',
+      button_title_idle_ready: "Train a model on this workspace's dataset.",
       button_title_starting: 'Submitting the training request…',
       button_title_running: 'Cancel the running training job.',
       button_title_cancelling: 'Cancelling…',
@@ -592,7 +592,7 @@ export const en = {
     pane: {
       heading: 'Deploy',
       description:
-        'Select a trained model and hot-swap it into live inference seamlessly with zero downtime.',
+        'Browse and select trained models, seamlessly hot-swapping them for real-time inference.',
       pill_deployed: 'Deployed',
       pill_deployed_title: 'A model trained in this workspace is the runtime model.',
       pill_default: 'Default',

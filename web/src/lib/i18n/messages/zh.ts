@@ -305,9 +305,9 @@ export const zh = {
       tip_stream_body: '这些切片与推理共享相同的 DSP，因此微调后训练出的模型不会遇到分布偏移。',
       tip_environment_title: '在部署环境中录制。',
       tip_environment_body:
-        '干净的录音棚采集会使噪声抑制训练不足。建议真实的背景噪声接近模型需要学习数据的一半。',
-      tip_meter_title: '使仪表保持在绿色到琥珀色之间。',
-      tip_meter_body: '玫红色表示削波，会抹去训练器无法恢复的信息。',
+        '干净的录音棚采集会使噪声抑制训练不足。建议真实的背景噪声占模型需要学习内容的一半左右。',
+      tip_meter_title: '在分贝表上保持绿色到琥珀色的状态。',
+      tip_meter_body: '玫红色表示削波，会丢失信息导致训练器无法学习。',
       pane_aria: (categoryDisplay) => `类别 ${categoryDisplay} 的输入模块`,
       source_aria: '输入源',
       loudness_aria: '响度仪表',
@@ -784,7 +784,7 @@ export const zh = {
         error_could_not_read_file: '无法读取文件。',
         error_could_not_read_picked_files: '无法读取所选文件。',
         error_could_not_read_model_json: '无法读取 model.json。',
-        tfjs_diag_empty_drop: '请拖放 TFJS 包文件（model.json + 分片 + labels）。',
+        tfjs_diag_empty_drop: '请拖放 TFJS 包文件（model.json + 分片 + 标签）。',
         tfjs_diag_no_model_json: '拖放内容中没有 "model.json"。请包含 TFJS 描述文件。',
         tfjs_diag_ambiguous_model_json: (count) =>
           `文件不明确：有 ${count} 个名为 "model.json" 的文件。`,
@@ -950,7 +950,7 @@ export const zh = {
         read_model_json: '正在读取 model.json',
         stage_shards: '正在暂存分片',
         extract_weights: '正在提取权重',
-        read_labels: '正在读取 labels',
+        read_labels: '正在读取标签',
         stage_head_mpk: '正在暂存模型 MPK',
         publish_head: '正在发布模型'
       },

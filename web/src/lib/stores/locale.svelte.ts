@@ -27,18 +27,28 @@ function readInitialMode(): LocaleMode {
   }
 }
 
-// First supported tag in preference order, else DEFAULT_LOCALE. Exact-tag match only ('zh-CN' won't
-// match a 'zh' catalog).
+// The one supported locale whose primary subtag is `base`, else undefined when 0 or 2+ share it
+// (an ambiguous subtag, e.g. a future zh-CN + zh-TW, needs an exact tag).
+function localeForBase(base: string): LocaleCode | undefined {
+  const matches = SUPPORTED_LOCALES.filter((c) => c.split('-')[0].toLowerCase() === base);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+// Preference order: exact tag, else primary subtag -> its sole locale ('de-DE'->'de', 'zh-TW'->'zh-CN').
+// Else DEFAULT_LOCALE.
 function readInitialDetected(): LocaleCode {
   if (typeof navigator === 'undefined') return DEFAULT_LOCALE;
-  const list =
+  // Array.isArray (guarding a missing navigator.languages) widens to any[]; the cast restores string.
+  const list: readonly string[] =
     Array.isArray(navigator.languages) && navigator.languages.length > 0
-      ? navigator.languages
+      ? (navigator.languages as readonly string[])
       : navigator.language
         ? [navigator.language]
         : [];
   for (const tag of list) {
     if (isLocaleCode(tag)) return tag;
+    const mapped = localeForBase(tag.split('-')[0].toLowerCase());
+    if (mapped) return mapped;
   }
   return DEFAULT_LOCALE;
 }

@@ -1,6 +1,13 @@
 <script lang="ts">
   import { locale } from '$lib/stores/locale.svelte';
-  import { m, SUPPORTED_LOCALES, LOCALE_LABELS, LOCALE_CHIPS, type LocaleCode } from '$lib/i18n';
+  import {
+    m,
+    SUPPORTED_LOCALES,
+    LOCALE_LABELS,
+    LOCALE_CHIPS,
+    ensureCatalog,
+    type LocaleCode
+  } from '$lib/i18n';
 
   // Globe-icon trigger + popover (scales past 2-3 locales without segment-width pressure); hidden
   // while only one locale ships. No "Auto" row: auto-detect is the silent default, and the active
@@ -17,10 +24,15 @@
   // Off `resolved` not `mode`, so the aria-label names the active (incl. auto-detected) language.
   const currentChip = $derived(LOCALE_CHIPS[locale.resolved]);
 
-  // Param is `mode` not `m` to avoid shadowing the imported `m` i18n proxy.
-  function selectMode(mode: LocaleCode): void {
-    locale.setMode(mode);
+  // Preload the target catalog before flipping locale so the UI switches straight to it, not the en
+  // fallback; popover closes immediately. The token drops a superseded selection so a rapid re-click
+  // wins over whichever chunk resolves last.
+  let selectToken = 0;
+  async function selectMode(mode: LocaleCode): Promise<void> {
     popoverOpen = false;
+    const token = ++selectToken;
+    await ensureCatalog(mode);
+    if (token === selectToken) locale.setMode(mode);
   }
   function togglePopover(): void {
     popoverOpen = !popoverOpen;
@@ -54,7 +66,6 @@
 
 {#if hasMultipleLocales}
   <div bind:this={wrapper} class="relative" onfocusout={onFocusOut}>
-    <!-- Single globe trigger at every breakpoint (36px <sm / 30px sm+ to align with sibling controls). -->
     <button
       type="button"
       class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-fg-muted shadow-card transition hover:border-line-strong hover:text-fg sm:h-7.5 sm:w-7.5"
@@ -96,7 +107,7 @@
             class="flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium transition {selected
               ? 'bg-surface-2 text-fg'
               : 'text-fg-secondary hover:bg-surface-2 hover:text-fg'}"
-            onclick={() => selectMode(code)}
+            onclick={() => void selectMode(code)}
           >
             <span>{LOCALE_LABELS[code]}</span>
             <span class="font-mono text-[10px] text-fg-subtle">{LOCALE_CHIPS[code]}</span>

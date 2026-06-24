@@ -24,10 +24,10 @@
     <script>
       (function () {
         try {
-          var supported = ['en', 'zh-CN'];
-          var m = localStorage.getItem('acousticslab-locale');
-          if (m && supported.indexOf(m) >= 0) {
-            document.documentElement.lang = m;
+          var supported = ['en', 'zh-CN', 'ja', 'de'];
+          var stored = localStorage.getItem('acousticslab-locale');
+          if (stored && supported.indexOf(stored) >= 0) {
+            document.documentElement.lang = stored;
             return;
           }
           var langs =
@@ -36,9 +36,27 @@
               : navigator.language
                 ? [navigator.language]
                 : [];
-          for (var i = 0; i < langs.length; i++) {
-            if (supported.indexOf(langs[i]) >= 0) {
-              document.documentElement.lang = langs[i];
+          var base = function (t) {
+            return t.split('-')[0].toLowerCase();
+          };
+          for (var i = 0; i < langs.length; ++i) {
+            var tag = langs[i];
+            if (supported.indexOf(tag) >= 0) {
+              document.documentElement.lang = tag;
+              return;
+            }
+            // Primary-subtag fallback (e.g. 'de-DE' -> 'de'); only when one supported locale shares it.
+            var b = base(tag),
+              hit = null,
+              n = 0;
+            for (var j = 0; j < supported.length; ++j) {
+              if (base(supported[j]) === b) {
+                hit = supported[j];
+                ++n;
+              }
+            }
+            if (n === 1) {
+              document.documentElement.lang = hit;
               return;
             }
           }
