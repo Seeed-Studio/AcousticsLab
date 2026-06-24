@@ -58,7 +58,7 @@ export const de = {
       hz: (rate) => `${rate} Hz`
     },
     top_k_meter: {
-      awaiting_first_frame: 'warte auf erstes Inferenzbild…'
+      awaiting_first_frame: 'Warten auf ersten Inferenz-Frame…'
     },
     active_head_card: {
       heading: 'Aktives Modell',
@@ -106,7 +106,7 @@ export const de = {
     },
     popover: {
       daemon_unreachable_title: 'Gerät nicht erreichbar',
-      waiting_first_snapshot: 'warte auf erste Statusaufnahme…',
+      waiting_first_snapshot: 'Warten auf erste Statusaufnahme…',
       subsystems_heading: 'Subsysteme',
       seconds_ago: (seconds) => `vor ${seconds}s`,
       stat_cpu_label: 'cpu',
@@ -330,7 +330,7 @@ export const de = {
       tip_environment_title: 'In der Einsatzumgebung aufnehmen.',
       tip_environment_body:
         'Eine saubere Studioaufnahme untertrainiert die Geräuschunterdrückung. Das echte Hintergrundrauschen sollte etwa die Hälfte dessen ausmachen, was das Modell lernen muss.',
-      tip_meter_title: 'Auf der Dezibelanzeige einen grün-bernsteinfarbenen Status halten.',
+      tip_meter_title: 'Die Dezibelanzeige im Bereich von Grün bis Bernstein halten.',
       tip_meter_body:
         'Rot bedeutet Übersteuerung – Informationen gehen verloren, was den Trainer am Lernen hindert.',
       pane_aria: (categoryDisplay) => `Eingabemodul für Kategorie ${categoryDisplay}`,
@@ -497,10 +497,10 @@ export const de = {
     logs: {
       heading: 'Protokolle',
       entry_count: (count) => `${count} ${count === 1 ? 'Eintrag' : 'Einträge'}`,
-      waiting_first_message: 'Warte auf die erste Meldung…'
+      waiting_first_message: 'Warten auf die erste Meldung…'
     },
     chart: {
-      waiting_first_epoch: 'Warte auf die erste Epoche…',
+      waiting_first_epoch: 'Warten auf die erste Epoche…',
       legend_loss: 'Verlust',
       legend_train: 'Training',
       legend_val: 'Validierung',

@@ -307,7 +307,7 @@ export const zh = {
       tip_environment_body:
         '干净的录音棚采集会使噪声抑制训练不足。建议真实的背景噪声占模型需要学习内容的一半左右。',
       tip_meter_title: '在分贝表上保持绿色到琥珀色的状态。',
-      tip_meter_body: '玫红色表示削波，会丢失信息导致训练器无法学习。',
+      tip_meter_body: '玫红色表示削波 —— 特征丢失，导致训练器无法学习。',
       pane_aria: (categoryDisplay) => `类别 ${categoryDisplay} 的输入模块`,
       source_aria: '输入源',
       loudness_aria: '响度仪表',
@@ -441,7 +441,7 @@ export const zh = {
       validation_split_label: '验证集比例',
       validation_split_hint: '· 0 表示禁用',
       seed_label: '随机种子',
-      seed_hint: '· 留空则由守护进程选取熵',
+      seed_hint: '· 留空则由系统随机生成',
       seed_placeholder: '（可选）'
     },
     progress: {
