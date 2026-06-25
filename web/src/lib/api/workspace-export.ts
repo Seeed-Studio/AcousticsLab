@@ -1,4 +1,4 @@
-// Workspace `.alpkg` export: package.json + always-verbatim workspace.json + datasets/<cat>/<sha256>.wav + head/<id>.{mpk,json}; requires >=1 of categories/heads (either section may be empty), workspace.json fetched once first.
+// Workspace `.alpkg` export: package.json + always-verbatim workspace.json + datasets/<cat>/<sha256>.wav + heads/<id>.{mpk,json}; requires >=1 of categories/heads (either section may be empty), workspace.json fetched once first.
 
 import type { HeadRecord, Uuid } from './types';
 import {
@@ -31,7 +31,7 @@ export interface WorkspaceExportProgress {
   subphase?: 'listing' | 'fetching';
 }
 
-/// One shape the dialog switches on for banner copy, wrapping dataset/head errors.
+/// One shape the dialog switches on for banner copy, wrapping dataset/heads errors.
 export class WorkspaceExportError extends Error {
   readonly phase: WorkspaceExportPhase;
   /// Category that triggered a dataset-side failure; null for head-side/workspace-wide.
@@ -83,7 +83,7 @@ export async function exportWorkspace(
     throw new WorkspaceExportError('preparing-datasets', 'Pick at least one item to export.');
   }
 
-  // Phase 0: embed verbatim workspace.json so an importer recovers id/name/tags/revision/head_count without `GET /workspaces`; fetched first so a 404 attributes to a gone workspace, not a stale dataset/head row.
+  // Phase 0: embed verbatim workspace.json so an importer recovers id/name/tags/revision/head_count without `GET /workspaces`; fetched first so a 404 attributes to a gone workspace, not a stale dataset/heads row.
   emit(onprogress, { phase: 'preparing-workspace' });
   let workspaceCoreEntry: AlpkgEntry;
   // Read from the same workspace.json parse as the embedded copy so the filename's `rev_<N>` can't drift from the archived payload (a caller-passed revision could).

@@ -438,7 +438,7 @@ export async function unpackAlpkg(blob: Blob): Promise<AlpkgUnpackResult> {
   return { manifest, workspaceCore, workspaceCoreBytes, entries };
 }
 
-/// Bucketed view of an alpkg payload for the dataset/head selectors. Defective rows (orphan head half,
+/// Bucketed view of an alpkg payload for the dataset/heads selectors. Defective rows (orphan head half,
 /// non-hex slice name) land in `errors` so the dialog shows a "skipped X" hint without failing the import.
 export interface ClassifiedAlpkg {
   datasets: DatasetBucket[];
@@ -508,9 +508,9 @@ export function classifyAlpkgEntries(entries: readonly AlpkgEntry[]): Classified
       const list = datasetMap.get(category) ?? [];
       list.push({ filename, bytes: entry.bytes });
       datasetMap.set(category, list);
-    } else if (path.startsWith('head/')) {
+    } else if (path.startsWith('heads/')) {
       // A lone half is an orphan: the daemon's convert pipeline needs both files to verify+publish.
-      const rest = path.slice('head/'.length);
+      const rest = path.slice('heads/'.length);
       let headId: string | null = null;
       let half: 'mpk' | 'json' | null = null;
       if (rest.endsWith('.mpk')) {
@@ -523,7 +523,7 @@ export function classifyAlpkgEntries(entries: readonly AlpkgEntry[]): Classified
       if (headId === null || half === null || !UUID_RE.test(headId)) {
         errors.push({
           path,
-          message: 'Model path must be "head/<head_id>.{mpk,json}" (UUID head id).'
+          message: 'Model path must be "heads/<head_id>.{mpk,json}" (UUID head id).'
         });
         continue;
       }
@@ -549,14 +549,14 @@ export function classifyAlpkgEntries(entries: readonly AlpkgEntry[]): Classified
   for (const [headId, pair] of headHalves) {
     if (pair.mpk === undefined) {
       errors.push({
-        path: `head/${headId}.json`,
+        path: `heads/${headId}.json`,
         message: 'Model manifest is present but the ".mpk" weights file is missing.'
       });
       continue;
     }
     if (pair.json === undefined) {
       errors.push({
-        path: `head/${headId}.mpk`,
+        path: `heads/${headId}.mpk`,
         message: 'Model weights are present but the ".json" manifest is missing.'
       });
       continue;
