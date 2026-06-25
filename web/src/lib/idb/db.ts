@@ -5,7 +5,7 @@ import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb';
 // Spectrogram PNGs bake palette per theme, so each hash is cached per-mode (light/dark separate stores).
 
 export const DB_NAME = 'acousticslab';
-export const DB_VERSION = 8;
+export const DB_VERSION = 1;
 
 export const STORE_CATEGORIES = 'categories' as const;
 export const STORE_DRAFTS = 'drafts' as const;
@@ -139,43 +139,28 @@ export function getDB(): Promise<AppDB> {
   // Cache the in-flight/resolved promise; the .catch clears it on rejection so the next call retries
   // instead of pinning a stale rejection for the tab's lifetime.
   dbPromise ??= openDB<AcousticsLabDB>(DB_NAME, DB_VERSION, {
-    // oldVersion is 0 on first install; gating each step on oldVersion < N runs each branch at most
-    // once even across a multi-step bump (pre-v6 -> v8 runs both in one transaction).
-    upgrade(db, oldVersion) {
-      if (oldVersion < 6) {
-        // Drop+re-cut all stores: v6 was lock-stepped with an operator-side workspace wipe (daemon
-        // slice filenames changed too), so carried-over IDB content would mis-key.
-        for (const name of Array.from(db.objectStoreNames)) {
-          db.deleteObjectStore(name);
-        }
-        const categories = db.createObjectStore(STORE_CATEGORIES, {
-          keyPath: ['workspace_id', 'name']
-        });
-        categories.createIndex('by-workspace', 'workspace_id', { unique: false });
+    upgrade(db) {
+      const categories = db.createObjectStore(STORE_CATEGORIES, {
+        keyPath: ['workspace_id', 'name']
+      });
+      categories.createIndex('by-workspace', 'workspace_id', { unique: false });
 
-        const drafts = db.createObjectStore(STORE_DRAFTS, {
-          keyPath: ['workspace_id', 'category_name']
-        });
-        drafts.createIndex('by-workspace', 'workspace_id', { unique: false });
+      const drafts = db.createObjectStore(STORE_DRAFTS, {
+        keyPath: ['workspace_id', 'category_name']
+      });
+      drafts.createIndex('by-workspace', 'workspace_id', { unique: false });
 
-        const slices = db.createObjectStore(STORE_SLICES, {
-          keyPath: ['workspace_id', 'category_name', 'id']
-        });
-        slices.createIndex('by-workspace', 'workspace_id', { unique: false });
-        slices.createIndex('by-workspace-category', ['workspace_id', 'category_name'], {
-          unique: false
-        });
+      const slices = db.createObjectStore(STORE_SLICES, {
+        keyPath: ['workspace_id', 'category_name', 'id']
+      });
+      slices.createIndex('by-workspace', 'workspace_id', { unique: false });
+      slices.createIndex('by-workspace-category', ['workspace_id', 'category_name'], {
+        unique: false
+      });
 
-        db.createObjectStore(STORE_WORKSPACE_SYNC, { keyPath: 'workspace_id' });
-        db.createObjectStore(STORE_SPECTROGRAMS, { keyPath: 'sha256' });
-      }
-      if (oldVersion < 8) {
-        // Add the dark-mode sibling store; v6 stores survive untouched. contains guards idempotency --
-        // a leftover store from an unreleased migration would else throw ConstraintError.
-        if (!db.objectStoreNames.contains(STORE_SPECTROGRAMS_DARK)) {
-          db.createObjectStore(STORE_SPECTROGRAMS_DARK, { keyPath: 'sha256' });
-        }
-      }
+      db.createObjectStore(STORE_WORKSPACE_SYNC, { keyPath: 'workspace_id' });
+      db.createObjectStore(STORE_SPECTROGRAMS, { keyPath: 'sha256' });
+      db.createObjectStore(STORE_SPECTROGRAMS_DARK, { keyPath: 'sha256' });
     },
     blocked() {
       console.warn('[idb] upgrade blocked by another tab');
