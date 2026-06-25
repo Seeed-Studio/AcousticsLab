@@ -296,10 +296,13 @@
         ctx.fill();
       }
       if (Number.isFinite(e.train_acc)) {
-        ctx.fillStyle = palette.train;
+        // Hollow ring, not a filled dot: train (accent) and val (success) are both greens in dark mode, so
+        // where they converge the ring keeps the train marker distinct (mirrors the dashed train line).
+        ctx.strokeStyle = palette.train;
+        ctx.lineWidth = 1.25;
         ctx.beginPath();
         ctx.arc(x, accToPx(Math.max(0, Math.min(1, e.train_acc))), 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.stroke();
       }
       if (!valDisabled && e.val_acc !== null && Number.isFinite(e.val_acc)) {
         ctx.fillStyle = palette.val;
@@ -333,10 +336,12 @@
         ctx.fill();
       }
       if (Number.isFinite(e.train_acc)) {
-        ctx.fillStyle = palette.train;
+        // Hollow ring (see n=1 fallback): keeps the train dot distinct from the val dot where they converge.
+        ctx.strokeStyle = palette.train;
+        ctx.lineWidth = 1.25;
         ctx.beginPath();
         ctx.arc(x, accToPx(Math.max(0, Math.min(1, e.train_acc))), 2.5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.stroke();
       }
       if (!valDisabled && e.val_acc !== null && Number.isFinite(e.val_acc)) {
         ctx.fillStyle = palette.val;

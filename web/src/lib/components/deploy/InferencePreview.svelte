@@ -184,7 +184,7 @@
       <button
         type="button"
         onclick={() => (preview = true)}
-        class="mt-1 inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-accent bg-accent px-3.5 py-1.5 text-sm font-medium text-fg-on-accent transition hover:border-accent-hover hover:bg-accent-hover"
+        class="mt-1 inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-primary bg-primary px-3.5 py-1.5 text-sm font-medium text-primary-fg transition hover:border-primary-hover hover:bg-primary-hover"
       >
         {m.deploy.inference_preview.start_button}
       </button>

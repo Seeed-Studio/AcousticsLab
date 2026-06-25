@@ -467,7 +467,7 @@
                   checked={selectedCategories.has(row.name)}
                   disabled={row.disabled || pipelineState === 'running'}
                   onchange={() => toggleCategory(row.name)}
-                  class="h-3.5 w-3.5 shrink-0 cursor-pointer accent-blue-500 disabled:cursor-not-allowed"
+                  class="h-3.5 w-3.5 shrink-0 cursor-pointer disabled:cursor-not-allowed"
                 />
                 <!-- title = wire-form name so the row reconciles with the archive's on-disk
                      path (`datasets/<wire-name>/`). -->
@@ -525,7 +525,7 @@
                   checked={selectedHeadIds.has(row.head_id)}
                   disabled={pipelineState === 'running'}
                   onchange={() => toggleHead(row.head_id)}
-                  class="h-3.5 w-3.5 shrink-0 cursor-pointer accent-blue-500 disabled:cursor-not-allowed"
+                  class="h-3.5 w-3.5 shrink-0 cursor-pointer disabled:cursor-not-allowed"
                 />
                 <!-- Lowercase hex (no `uppercase` class) so the chip matches the UUID's
                      wire-form casing, reading identically to the title tooltip. -->

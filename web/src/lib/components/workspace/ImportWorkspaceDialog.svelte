@@ -2088,7 +2088,7 @@
               onblur={() => {
                 tfjsLabelsFocused = false;
               }}
-              class="inline-flex h-3 w-3 shrink-0 translate-y-px items-center justify-center rounded-full text-fg-subtle transition hover:text-fg-secondary focus-visible:text-fg-secondary focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none"
+              class="inline-flex h-3 w-3 shrink-0 translate-y-px items-center justify-center rounded-full text-fg-subtle transition hover:text-fg-secondary focus-visible:text-fg-secondary focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -2125,8 +2125,8 @@
         <p class="text-[10px] font-semibold tracking-wider text-fg-muted uppercase">
           {m.workspace.import_dialog.pick_target.section_label}
         </p>
-        <!-- Mode toggle. Active-button elevation is intentionally SUBTLER than the picker rows' blue ring
-             so hierarchy matches semantics (blue ring = THE target workspace, load-bearing; toggle =
+        <!-- Mode toggle. Active-button elevation is intentionally SUBTLER than the picker rows' accent ring
+             so hierarchy matches semantics (accent ring = THE target workspace, load-bearing; toggle =
              just a view switch). Inset ring stays inside the border-box so it doesn't clip against
              `p-0.5`; `min-w-20` equalises widths so the toggle doesn't shift as modes swap. -->
         <div
@@ -2189,7 +2189,7 @@
                   data-workspace-id={w.id}
                   onclick={() => (pickedExistingId = w.id)}
                   class="flex w-full items-center gap-3 rounded-md px-2.5 py-1.5 text-left transition-colors {isPicked
-                    ? 'bg-accent-soft ring-1 ring-inset ring-accent'
+                    ? 'bg-accent-soft ring-1 ring-inset ring-primary'
                     : 'hover:bg-surface-2'}"
                 >
                   <span
@@ -2558,7 +2558,7 @@
                               }}
                               disabled={isCurrent}
                               class="rounded border px-1.5 py-0.5 text-[11px] font-medium transition-colors {isCurrent
-                                ? 'cursor-default border-accent bg-accent-soft text-accent-soft-fg'
+                                ? 'cursor-default border-primary bg-accent-soft text-accent-soft-fg'
                                 : 'border-line text-fg-secondary hover:border-line-strong hover:bg-surface-2'}"
                               title={cat.name}
                             >
@@ -2664,7 +2664,7 @@
                     {checked}
                     {disabled}
                     onchange={() => toggleHead(row.headId)}
-                    class="h-3.5 w-3.5 shrink-0 cursor-pointer accent-blue-500 disabled:cursor-not-allowed"
+                    class="h-3.5 w-3.5 shrink-0 cursor-pointer disabled:cursor-not-allowed"
                   />
                   <span
                     class="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] tracking-wider text-fg-secondary"
@@ -2689,7 +2689,7 @@
                        button-inside-label propagation. -->
                   <button
                     type="button"
-                    class="pointer-events-none inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full text-fg-subtle opacity-0 transition duration-200 ease-out group-hover/headrow:pointer-events-auto group-hover/headrow:opacity-100 focus:pointer-events-auto focus:opacity-100 hover:text-fg-secondary focus-visible:text-fg-secondary focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none pointer-coarse:pointer-events-auto pointer-coarse:opacity-100"
+                    class="pointer-events-none inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full text-fg-subtle opacity-0 transition duration-200 ease-out group-hover/headrow:pointer-events-auto group-hover/headrow:opacity-100 focus:pointer-events-auto focus:opacity-100 hover:text-fg-secondary focus-visible:text-fg-secondary focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none pointer-coarse:pointer-events-auto pointer-coarse:opacity-100"
                     onclick={(e) => {
                       e.preventDefault();
                       // Single-popover discipline is implicit: one focused-id value, so pinning row B overwrites A.
@@ -2874,7 +2874,7 @@
             onblur={() => {
               tfjsLabelsFocused = false;
             }}
-            class="inline-flex h-3 w-3 shrink-0 translate-y-px items-center justify-center rounded-full text-fg-subtle transition hover:text-fg-secondary focus-visible:text-fg-secondary focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none"
+            class="inline-flex h-3 w-3 shrink-0 translate-y-px items-center justify-center rounded-full text-fg-subtle transition hover:text-fg-secondary focus-visible:text-fg-secondary focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
           >
             <svg
               viewBox="0 0 24 24"

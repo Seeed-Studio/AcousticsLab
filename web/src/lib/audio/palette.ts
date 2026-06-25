@@ -1,33 +1,36 @@
-// Spectrogram colormap: 8 interpolated grayscale stops/mode at even ~12 CIE-L* steps (equal dB ->
-// equal density), floor==--color-canvas, peak~=--color-fg (light stop #1d1d1d vs token #18181b);
-// grayscale keeps it off the blue waveform.
-// One ramp feeds both live canvas and IDB PNG thumbnails so peak reads identically across surfaces.
+// Spectrogram colormap: 8 interpolated stops/mode, brand-green tinted (hue ≈132°) with a subtle
+// viridis-like glide (blue-green low energy -> yellow-green peak); chroma -> 0 at the floor so silence
+// dissolves into the canvas. floor == --color-canvas (light #fafafa / dark #0a0a0a). Steps are EVEN in L*
+// (equal dB -> equal perceived density). LIGHT is lifted/compressed (peak ~L*0.55, light/airy); DARK keeps
+// the original wide range (near-black floor -> bright peak). One ramp feeds the live canvas AND the IDB PNG
+// thumbnails (cache keyed (sha,theme), never auto-invalidated) — so changing these stops MUST bump
+// DB_VERSION and clear the spectrogram stores (see db.ts), else old slices keep their old thumbnails.
 
 // Resolved theme value, never the raw mode (which can be 'auto').
 export type SpectrogramTheme = 'light' | 'dark';
 
 const LIGHT_STOPS: readonly (readonly [number, number, number])[] = [
-  [250, 250, 250],
-  [217, 217, 217],
-  [181, 181, 181],
-  [149, 149, 149],
-  [117, 117, 117],
-  [86, 86, 86],
-  [54, 54, 54],
-  [29, 29, 29]
+  [250, 250, 250], // floor == --color-canvas (#fafafa), chroma 0
+  [217, 236, 216],
+  [191, 219, 185],
+  [167, 201, 156],
+  [146, 183, 126],
+  [126, 164, 97],
+  [109, 145, 65],
+  [93, 127, 26] // peak: medium green ~L*0.55 (light/airy)
 ];
 
-// Light mirrored through ~L*=53 so each magnitude reads the same density-from-peak in either mode;
-// endpoints == --color-canvas (dark #0a0a0a) and ~--color-fg (stop #f4f4f4 vs token #f4f4f5).
+// Even L* steps like light but ascending over the original WIDE range (near-black floor -> bright
+// yellow-green peak); floor == --color-canvas dark (#0a0a0a).
 const DARK_STOPS: readonly (readonly [number, number, number])[] = [
-  [10, 10, 10],
-  [38, 38, 38],
-  [64, 64, 64],
-  [96, 96, 96],
-  [128, 128, 128],
-  [167, 167, 167],
-  [206, 206, 206],
-  [244, 244, 244]
+  [10, 10, 10], // floor == --color-canvas dark (#0a0a0a), chroma 0
+  [23, 44, 25],
+  [40, 74, 38],
+  [67, 109, 55],
+  [96, 143, 71],
+  [135, 185, 92],
+  [176, 225, 111],
+  [218, 255, 129] // peak: bright yellow-green
 ];
 
 function stopsFor(theme: SpectrogramTheme): readonly (readonly [number, number, number])[] {

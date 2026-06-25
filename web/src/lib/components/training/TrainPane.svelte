@@ -223,7 +223,7 @@
 
   // Subtitle stays stable while training: a per-tick "started 3s ago" morph would tick
   // every poll and duplicate the live row's timestamp, and the running state is already
-  // shown by the button and the row's blue border. Branches only on readiness and the
+  // shown by the button and the row's accent border. Branches only on readiness and the
   // cross-workspace busy interlock.
   const subtitle = $derived.by(() => {
     // Readiness outranks busy so this agrees with `buttonStateKind` (which gates
@@ -238,7 +238,7 @@
     return m.training.pane.subtitle_default;
   });
 
-  // Amber on a readiness/busy obstacle, else zinc; no blue variant since active training
+  // Amber on a readiness/busy obstacle, else zinc; no accent variant since active training
   // is already signalled elsewhere.
   const subtitleTone = $derived.by<'zinc' | 'amber'>(() => {
     if (otherWorkspaceRunning) return 'amber';

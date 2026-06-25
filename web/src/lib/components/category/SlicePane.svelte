@@ -647,7 +647,7 @@
     <div
       bind:this={gridEl}
       tabindex="0"
-      class="grid min-h-0 flex-1 grid-cols-[repeat(auto-fill,minmax(96px,1fr))] content-start gap-3 overflow-y-auto rounded-sm scrollbar-gutter-stable focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-line"
+      class="grid min-h-0 flex-1 grid-cols-[repeat(auto-fill,minmax(96px,1fr))] content-start gap-3 overflow-y-auto rounded-sm scrollbar-gutter-stable focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       oncontextmenu={onGridContextMenu}
       onkeydown={onGridKey}
     >

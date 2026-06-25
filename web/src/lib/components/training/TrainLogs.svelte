@@ -79,7 +79,7 @@
     onscroll={onScroll}
     tabindex="0"
     aria-label={m.training.logs.heading}
-    class="overflow-auto px-3 py-2 text-[11px] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-line focus-visible:outline-none"
+    class="overflow-auto px-3 py-2 text-[11px] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus focus-visible:outline-none"
     style="height: {VIEWPORT_HEIGHT}px;"
     role="log"
     aria-live="polite"

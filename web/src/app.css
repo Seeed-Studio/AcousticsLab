@@ -20,7 +20,7 @@
 
      Naming convention:
      - `bg-*` surfaces; `text-*` ink; `border-line[-strong|-subtle]` hairlines
-     - `*-accent*` interactive (blue), the ONE hue meaning "the operator can act on this"
+     - `*-accent*` interactive (brand green), the ONE hue meaning "the operator can act on this"
      - `*-success|-warning|-danger*` status families, each with six variants (solid / solid-fg /
        soft / soft-fg / line / dot)
      - `*-disabled*` muted controls
@@ -28,8 +28,15 @@
      Cross-mode invariants:
      - `--color-canvas` is the waveform + spectrogram floor; its value is mirrored into the
        spectrogram LUT JS-side, so changing it here must be changed there too.
-     - `--color-accent` stays `#3b82f6` in both modes (blue reads on either substrate, and a
-       constant accent keeps cross-mode focus-ring screenshots matching).
+     - The brand green is TWO tokens, both hue ≈132° (only L/chroma adapt per mode). `--color-accent`
+       (ink/secondary-fill: links, dots, slider, Top-K bars, canvas-bridge strokes, soft selection wash)
+       is vivid `#6aa81e` light / muted `#85ad63` dark. `--color-primary` (the prominent fills: primary +
+       inference Button, SliceCard checkbox, selection-indicator borders/rings) leads with the brighter
+       `#77ba2a` light, self-bordered (edge = fill) with a WHITE symbol. The light values sit BELOW WCAG by
+       design — accent ~2.8:1 on light surfaces, white-on-#77ba2a 2.38:1 — a brand-over-a11y choice; don't
+       "fix" them back to chase AA.
+     - `--color-focus` (the focus indicator) is teal light / vibrant-green dark: brand green at the
+       outline's 60% alpha drops under 3:1 on light (2.25), teal survives it (3.70) — hence its own token.
      - Status DOT colours read on both backgrounds without flipping; only the SOFT (bg + border +
        text) variants flip per mode. */
 
@@ -52,17 +59,35 @@
   --color-fg-secondary: #3f3f46; /* zinc-700 */
   --color-fg-muted: #71717a; /* zinc-500 */
   --color-fg-subtle: #a1a1aa; /* zinc-400 */
-  --color-fg-on-accent: #ffffff; /* text on saturated accent / status fills */
 
-  /* Interactive (blue) */
-  --color-accent: #3b82f6; /* blue-500, constant across modes */
-  --color-accent-hover: #2563eb; /* blue-600 */
-  --color-accent-soft: #eff6ff; /* blue-50 */
-  --color-accent-soft-fg: #1e40af; /* blue-800 */
-  --color-accent-line: #bfdbfe; /* blue-200, soft-bg companion border */
-  --color-accent-tint: #e5f0fe; /* ~blue-75 (between blue-50 and blue-100): a barely-there step
-                                   above accent-soft for a badge fill that sits ON an accent-soft
-                                   surface, kept at the quiet floor of perceptibility */
+  /* Interactive ink/secondary-fill (brand green, hue ≈132°): slider track/thumb, Top-K bars, dots,
+     canvas-bridge strokes, the green text-link, the soft selection wash. NOT the prominent fills
+     (button/checkbox/selection borders) — those use the brighter --color-primary. Vivid in light, muted
+     in dark; light sits below WCAG by design (see divergence note). */
+  --color-accent: #6aa81e;
+  --color-accent-hover: #51840c; /* one tier darker for hover */
+  --color-accent-soft: #eaf6e6; /* gentle green hover/selected wash; L≈0.96 matches the neutral surface-2 hover */
+  --color-accent-soft-fg: #406020; /* deep green ink for soft-bg badges (≥6:1 on soft/white/surface-2/tint) */
+  --color-accent-line: #c8e0bc; /* soft-bg companion border (decorative, not a 3:1 line) */
+  --color-accent-tint: #daf2d1; /* a hair above accent-soft, for a badge fill that sits ON an accent-soft surface */
+
+  /* Prominent brand fills (brighter than the accent ink): primary + inference Button, SliceCard checkbox,
+     selection-indicator borders/rings. Self-bordered (edge = fill) with a WHITE symbol (--color-primary-fg);
+     white-on-#77ba2a is 2.38:1, below AA (brand choice). In .dark this equals --color-accent (#85ad63) with
+     a dark-teal symbol (4.72, AA). */
+  --color-primary: #77ba2a;
+  --color-primary-hover: #69ab14; /* one tier darker for hover */
+  --color-primary-fg: #ffffff; /* white symbol on the brand fill; dark-teal #003b4b in .dark (4.72) */
+
+  /* Focus indicator (teal light / vibrant-green dark). Own token: brand green at the outline's 60% alpha
+     drops under 3:1 on light (2.25), teal survives (3.70). */
+  --color-focus: #003b4b;
+
+  /* Secondary action (teal) — drives the reserved `tonal` Button variant (no caller yet); teal-700 in
+     .dark so the fill reads on the dark page. */
+  --color-secondary: #003b4b;
+  --color-secondary-hover: #0c5c73;
+  --color-secondary-fg: #ffffff;
 
   /* Status: success (emerald) */
   --color-success: #10b981; /* emerald-500 */
@@ -147,14 +172,23 @@
   --color-fg-secondary: #d4d4d8; /* zinc-300 */
   --color-fg-muted: #a1a1aa; /* zinc-400 */
   --color-fg-subtle: #71717a; /* zinc-500 */
-  --color-fg-on-accent: #ffffff;
 
-  --color-accent: #3b82f6; /* blue-500, unchanged */
-  --color-accent-hover: #60a5fa; /* blue-400, lighter for hover on dark */
-  --color-accent-soft: rgb(23 37 84 / 0.4); /* blue-950 @ 40% */
-  --color-accent-soft-fg: #93c5fd; /* blue-300 */
-  --color-accent-line: rgb(30 64 175 / 0.5); /* blue-800 @ 50% */
-  --color-accent-tint: rgb(27 48 111 / 0.42); /* ~blue-925 @ 42%, dark analog of ~blue-75 */
+  --color-accent: #85ad63; /* muted brand green; dark-teal label 4.72 (AA) — don't darken further */
+  --color-accent-hover: #a0c582; /* lighter for hover on dark */
+  --color-accent-soft: rgb(27 44 10 / 0.4); /* muted green-950 @ 40% */
+  --color-accent-soft-fg: #a6cc88; /* light muted green; 9.80 on surface */
+  --color-accent-line: rgb(133 173 99 / 0.6); /* accent @ 60%, decorative */
+  --color-accent-tint: rgb(27 44 10 / 0.42); /* dark analog of the light tint */
+
+  --color-primary: #85ad63; /* = --color-accent on dark (one green in dark) */
+  --color-primary-hover: #a0c582;
+  --color-primary-fg: #003b4b; /* dark-teal symbol on the dark fill (4.72) */
+
+  --color-focus: #85ad63; /* matches the dark accent; @60% ≥3.29 over all dark surfaces */
+
+  --color-secondary: #106f89; /* teal-700, lightened so the fill reads on the dark page; white text 5.74 */
+  --color-secondary-hover: #14758f; /* one step lighter for dark hover; white text 5.29 */
+  --color-secondary-fg: #ffffff;
 
   --color-success: #10b981; /* unchanged */
   --color-success-fg: #ffffff;
@@ -251,13 +285,11 @@ button {
   cursor: pointer;
 }
 
-/* Keyboard focus indicator: accent at 60% alpha. No border-radius override needed; browsers run an
-   offset outline around the element's own radius, so rounded controls get a matching shape for free.
-   `outline-offset: 1px` (not 2px): a 2px gap reads as a "double border" against the input's own
-   line-coloured stroke. `color-mix` resolves at paint time, so the colour follows --color-accent
-   across modes without a per-mode rule. */
+/* Keyboard focus indicator: --color-focus at 60% alpha (its own token because brand green @60% fails 3:1
+   on light — see the token). `outline-offset: 1px` not 2px: a 2px gap reads as a double border against
+   the control's own stroke. The offset outline auto-matches each control's border-radius. */
 :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--color-focus) 60%, transparent);
   outline-offset: 1px;
 }
 
@@ -269,8 +301,8 @@ input:focus-visible,
 textarea:focus-visible,
 .select-chevron:focus-visible {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 18%, transparent);
 }
 
 /* Invalid-state focus override: same halo geometry, danger tinting, so an `aria-invalid="true"`
@@ -317,6 +349,43 @@ input[type='range']:focus-visible {
 .select-chevron:focus,
 .select-chevron:focus-visible {
   outline: none;
+}
+
+/* Native checkboxes repainted to the brand fill + white symbol + hover-darken (the --color-primary button
+   strategy). `accent-color` can't: it leaves the checkmark colour to the UA and can't darken on hover, so
+   we go appearance:none. The check is baked into the SVG (backgrounds ignore currentColor), two copies
+   swapped via `.dark` (white / dark-teal). Size/cursor come from utility classes. */
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 0.25rem;
+  background-color: var(--color-surface);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100%;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+input[type='checkbox']:not(:disabled):hover {
+  border-color: var(--color-fg-subtle);
+}
+input[type='checkbox']:checked {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23ffffff' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3.5 8.5 6.5 11.5 12.5 4.5'/%3E%3C/svg%3E");
+}
+.dark input[type='checkbox']:checked {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23003b4b' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3.5 8.5 6.5 11.5 12.5 4.5'/%3E%3C/svg%3E");
+}
+input[type='checkbox']:not(:disabled):hover:checked {
+  border-color: var(--color-primary-hover);
+  background-color: var(--color-primary-hover);
+}
+input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Scroll-aware fade masks for overflowing lists. The owner toggles these classes from JS based on
@@ -435,10 +504,10 @@ input[type='range']:hover::-moz-range-thumb {
 }
 
 input[type='range']:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-focus) 22%, transparent);
 }
 input[type='range']:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-focus) 22%, transparent);
 }
 
 /* Disabled state uses cursor + thumb-colour cues only, no element-level opacity: an opacity-dim

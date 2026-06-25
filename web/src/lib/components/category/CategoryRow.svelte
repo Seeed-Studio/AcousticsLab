@@ -198,7 +198,7 @@
         disabled={isMandatory}
         aria-haspopup={isMandatory ? undefined : 'menu'}
         aria-expanded={isMandatory ? undefined : menuOpen}
-        class="pointer-events-none inline-flex shrink-0 items-center justify-center rounded-md p-1 text-fg-subtle opacity-0 transition duration-200 ease-out group-hover/row:pointer-events-auto group-hover/row:opacity-100 hover:bg-surface-2 hover:text-fg-secondary focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-fg-subtle pointer-coarse:pointer-events-auto pointer-coarse:opacity-100"
+        class="pointer-events-none inline-flex shrink-0 items-center justify-center rounded-md p-1 text-fg-subtle opacity-0 transition duration-200 ease-out group-hover/row:pointer-events-auto group-hover/row:opacity-100 hover:bg-surface-2 hover:text-fg-secondary focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-fg-subtle pointer-coarse:pointer-events-auto pointer-coarse:opacity-100"
         aria-label={m.category.row.actions_aria(display)}
         title={isMandatory ? m.category.row.actions_title_preserved : m.category.row.actions_title}
       >

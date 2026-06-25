@@ -4,7 +4,7 @@
 
   // Zero-layout-shift rename: always-present `border` makes valid<->invalid a 0-px swap (red border = invalid,
   // `disabled` cursor-wait = saving; no text signals). The invalid rose halo MUST stay in the global UNLAYERED
-  // `input[aria-invalid='true']:focus-visible` rule: @layer-utilities Tailwind loses to the unlayered blue-focus
+  // `input[aria-invalid='true']:focus-visible` rule: @layer-utilities Tailwind loses to the unlayered focus-ring
   // rule by cascade-layer precedence at any specificity.
   interface Props {
     value: string;

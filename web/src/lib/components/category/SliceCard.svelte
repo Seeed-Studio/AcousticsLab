@@ -150,7 +150,8 @@
     disabled={deleting}
     class="block aspect-3/2 w-full overflow-hidden rounded-md border-2 bg-surface-2 transition duration-200 ease-out focus:outline-none"
     class:border-line={!playing && !isFailed && !selected}
-    class:border-accent={!isFailed && (playing || selected)}
+    class:border-primary={!isFailed && (playing || selected)}
+    class:hover:border-primary-hover={!isFailed && (playing || selected)}
     class:border-danger-line={isFailed}
     class:bg-accent-soft={selected && !playing && !isFailed}
     class:hover:border-line-strong={!playing && !isFailed && !selected}
@@ -265,9 +266,9 @@
       disabled={deleting}
       onclick={onSelectClick}
       class="absolute top-1.5 right-1.5 inline-flex h-5 w-5 items-center justify-center rounded-md shadow-card transition duration-200 ease-out"
-      class:bg-accent={selected}
-      class:text-fg-on-accent={selected}
-      class:hover:bg-accent-hover={selected}
+      class:bg-primary={selected}
+      class:text-primary-fg={selected}
+      class:hover:bg-primary-hover={selected}
       class:bg-surface={!selected}
       class:ring-1={!selected}
       class:ring-inset={!selected}

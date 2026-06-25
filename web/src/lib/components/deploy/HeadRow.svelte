@@ -154,12 +154,12 @@
     title={rowTitle}
     onclick={onRowClick}
     onkeydown={onRowKeydown}
-    class="group/row flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none"
+    class="group/row flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
     class:border-accent-line={isDeployed}
     class:bg-accent-soft={isDeployed}
     class:border-line={!isDeployed}
     class:bg-surface={!isDeployed}
-    class:hover:border-accent={canDeploy}
+    class:hover:border-primary={canDeploy}
     class:hover:bg-accent-soft={canDeploy}
     class:cursor-pointer={canDeploy}
     class:cursor-wait={deploying || isDeploying || isExporting}
@@ -247,7 +247,7 @@
           aria-label={isExporting
             ? m.deploy.head_row.export_aria_exporting(head.head_id.slice(0, 8))
             : m.deploy.head_row.export_aria_idle(head.head_id.slice(0, 8))}
-          class="pointer-events-none inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-fg-subtle opacity-0 transition duration-200 ease-out group-hover/row:pointer-events-auto group-hover/row:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none enabled:hover:bg-accent-soft enabled:hover:text-accent disabled:cursor-not-allowed disabled:text-fg-subtle pointer-coarse:pointer-events-auto pointer-coarse:opacity-100"
+          class="pointer-events-none inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-fg-subtle opacity-0 transition duration-200 ease-out group-hover/row:pointer-events-auto group-hover/row:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none enabled:hover:bg-accent-soft enabled:hover:text-accent disabled:cursor-not-allowed disabled:text-fg-subtle pointer-coarse:pointer-events-auto pointer-coarse:opacity-100"
           class:!opacity-100={isExporting}
           class:!pointer-events-auto={isExporting}
         >

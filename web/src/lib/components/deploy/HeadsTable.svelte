@@ -436,12 +436,12 @@
             e.preventDefault();
             void deployDefault();
           }}
-          class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed px-3 py-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none"
-          class:border-accent={defaultDeployed}
+          class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed px-3 py-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
+          class:border-primary={defaultDeployed}
           class:bg-accent-soft={defaultDeployed}
           class:border-line-strong={!defaultDeployed}
           class:bg-surface-2={!defaultDeployed}
-          class:hover:border-accent={canDeployDefault}
+          class:hover:border-primary={canDeployDefault}
           class:hover:bg-accent-soft={canDeployDefault}
           class:cursor-pointer={canDeployDefault}
           class:cursor-wait={deployingDefault}

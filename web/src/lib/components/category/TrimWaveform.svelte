@@ -279,7 +279,7 @@
     aria-valuenow={startSamples}
     aria-valuetext={m.category.trim_waveform.value_seconds_range(startSec, endSec)}
     tabindex="0"
-    class="absolute inset-y-0 cursor-grab touch-none border-x-2 border-accent/70 focus:outline-none focus-visible:bg-accent/5 focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:ring-inset"
+    class="absolute inset-y-0 cursor-grab touch-none border-x-2 border-accent/70 focus:outline-none focus-visible:bg-accent/5 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset"
     class:cursor-grabbing={dragging === 'window'}
     style:left="{startPct}%"
     style:width="{Math.max(0, endPct - startPct)}%"

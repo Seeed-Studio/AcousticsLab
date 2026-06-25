@@ -242,7 +242,7 @@
   aria-haspopup="dialog"
   aria-expanded={open}
   aria-controls={open ? panelId : undefined}
-  class="pointer-events-none inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-fg-subtle opacity-0 transition duration-200 ease-out group-hover/row:pointer-events-auto group-hover/row:opacity-100 hover:bg-accent-soft hover:text-accent focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none pointer-coarse:pointer-events-auto pointer-coarse:opacity-100"
+  class="pointer-events-none inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-fg-subtle opacity-0 transition duration-200 ease-out group-hover/row:pointer-events-auto group-hover/row:opacity-100 hover:bg-accent-soft hover:text-accent focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none pointer-coarse:pointer-events-auto pointer-coarse:opacity-100"
 >
   <InfoIcon />
 </button>
@@ -287,7 +287,7 @@
           <button
             type="button"
             onclick={retry}
-            class="mt-1 rounded-sm font-medium text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none"
+            class="mt-1 rounded-sm font-medium text-accent hover:underline focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
           >
             {m.deploy.info_dialog.retry}
           </button>

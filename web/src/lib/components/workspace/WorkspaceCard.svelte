@@ -41,7 +41,7 @@
 <li
   data-workspace-id={workspace.id}
   class="relative rounded-lg border bg-surface transition hover:shadow-card {isSelected
-    ? 'border-accent hover:border-accent-hover'
+    ? 'border-primary hover:border-primary-hover'
     : 'border-line hover:border-line-strong'}"
   class:opacity-60={isDeleting}
 >
@@ -94,7 +94,7 @@
       >
         <input
           type="checkbox"
-          class="h-4 w-4 cursor-pointer rounded border-line-strong accent-blue-500"
+          class="h-4 w-4 cursor-pointer"
           checked={isSelected}
           disabled={isDeleting}
           onchange={() => workspaces.toggleSelect(workspace.id)}

@@ -167,7 +167,7 @@
        applied to the button not the wrapper so the wrapper's anchor rect stays at rest. -->
   <button
     type="button"
-    class="inline-flex h-2.5 w-2.5 -translate-y-px items-center justify-center rounded-full text-fg-subtle transition hover:text-fg-secondary focus-visible:text-fg-secondary focus-visible:ring-2 focus-visible:ring-accent-line focus-visible:outline-none"
+    class="inline-flex h-2.5 w-2.5 -translate-y-px items-center justify-center rounded-full text-fg-subtle transition hover:text-fg-secondary focus-visible:text-fg-secondary focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
     aria-label={label}
     aria-expanded={open}
     aria-haspopup="dialog"
