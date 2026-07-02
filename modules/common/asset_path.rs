@@ -1,8 +1,9 @@
 //! Workspace asset-tree path that cannot escape the workspace root, validated
 //! once at the deserialize/handler boundary.
 //!
-//! `/`-joined components, each non-empty `[A-Za-z0-9._-]`, no leading `.`;
-//! total <= 256 bytes, per-component <= 255 (FS `NAME_MAX`), depth <= 8. The
+//! `/`-joined components, each non-empty `[A-Za-z0-9._-]` plus interior spaces,
+//! no leading `.`/`-`/space and no trailing space; total <= 256 bytes,
+//! per-component <= 255 (FS `NAME_MAX`), depth <= 8. The
 //! serde `try_from = "String"` shape routes wire input through
 //! [`AssetPath::parse`], rejecting failing literals at deserialize. Because the
 //! route layer URL-decodes first, both raw (`%2E%2E%2F` -> `BadByte` on `%`)
@@ -14,7 +15,9 @@ use thiserror::Error;
 
 #[inline]
 fn is_allowed_component_byte(b: u8) -> bool {
-    b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_')
+    // Space is permitted for human-readable class names; leading/trailing space is barred
+    // separately (FS-edge/Windows-strip safety). Only U+0020, not tab/other whitespace.
+    b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_' | b' ')
 }
 
 pub const MAX_TOTAL_BYTES: usize = 256;
@@ -47,11 +50,19 @@ pub enum AssetPathError {
     /// component as a flag (`-rf`/`-i`).
     #[error("asset path component {index} starts with `-` (forbidden)")]
     LeadingHyphen { index: usize },
-    /// Byte outside `[A-Za-z0-9._-]`, closing `\\`, NUL, control, non-ASCII, and
-    /// URL-encoded `%` introducers.
+    /// Edge space is invisible, so it silently breaks name-equality/round-trip (and some
+    /// filesystems strip it) -- unlike a visible trailing `.`, which is allowed. Interior spaces
+    /// are fine.
+    #[error("asset path component {index} starts with a space (forbidden)")]
+    LeadingSpace { index: usize },
+    /// Trailing edge space is rejected for the same invisibility reason as [`AssetPathError::LeadingSpace`].
+    #[error("asset path component {index} ends with a space (forbidden)")]
+    TrailingSpace { index: usize },
+    /// Byte outside `[A-Za-z0-9._-]` and interior space: closing `\\`, NUL, control,
+    /// non-ASCII, and URL-encoded `%` introducers.
     #[error(
         "asset path component {component_index} byte {byte_index} \
-         is forbidden (0x{byte:02x}); allowed: [A-Za-z0-9._-]"
+         is forbidden (0x{byte:02x}); allowed: [A-Za-z0-9._-] and interior space"
     )]
     BadByte {
         component_index: usize,
@@ -119,6 +130,17 @@ impl AssetPath {
             // Leading `-` defense-in-depth against shell-flag injection.
             if component.starts_with('-') {
                 return Err(AssetPathError::LeadingHyphen {
+                    index: component_index,
+                });
+            }
+            // Interior spaces are allowed; leading/trailing are not (invisible at the edge).
+            if component.starts_with(' ') {
+                return Err(AssetPathError::LeadingSpace {
+                    index: component_index,
+                });
+            }
+            if component.ends_with(' ') {
+                return Err(AssetPathError::TrailingSpace {
                     index: component_index,
                 });
             }
@@ -210,10 +232,43 @@ mod tests {
             "model/manifest.json",
             "a",
             "a-b_c.d",
+            "_background_noise_",     // reserved class: leading `_` is allowed (frontend-only bars it)
+            "_unknown_",
+            "Background Noise",       // interior space (human-readable class name)
+            "Car Horn/sample.wav",
+            "a  b",                   // consecutive interior spaces stored verbatim
             "a/b/c/d/e/f/g/h", // depth = MAX_DEPTH
         ] {
             assert!(AssetPath::parse(s).is_ok(), "should accept {s:?}");
         }
+    }
+
+    #[test]
+    fn rejects_leading_trailing_space_but_accepts_interior() {
+        for s in &["my class", "a b/c d"] {
+            AssetPath::parse(s).unwrap_or_else(|e| panic!("{s:?} should validate; got {e:?}"));
+        }
+        assert!(matches!(
+            AssetPath::parse(" foo"),
+            Err(AssetPathError::LeadingSpace { index: 0 })
+        ));
+        assert!(matches!(
+            AssetPath::parse("foo "),
+            Err(AssetPathError::TrailingSpace { index: 0 })
+        ));
+        assert!(matches!(
+            AssetPath::parse("a/ b"),
+            Err(AssetPathError::LeadingSpace { index: 1 })
+        ));
+        assert!(matches!(
+            AssetPath::parse("a/b "),
+            Err(AssetPathError::TrailingSpace { index: 1 })
+        ));
+        // Tab and other whitespace stay rejected (only U+0020 is allowed).
+        assert!(matches!(
+            AssetPath::parse("a\tb"),
+            Err(AssetPathError::BadByte { byte: b'\t', .. })
+        ));
     }
 
     #[test]
@@ -404,12 +459,17 @@ mod tests {
         let round: AssetPath = serde_json::from_str(&json).unwrap();
         assert_eq!(round, p);
 
+        // Interior space now round-trips (human-readable class names).
+        let spaced: AssetPath = serde_json::from_str("\"foo bar\"").unwrap();
+        assert_eq!(spaced, "foo bar");
+
         for bad in [
             "\"\"",
             "\"..\"",
             "\"foo/../bar\"",
             "\"foo\\\\bar\"",
-            "\"foo bar\"",
+            "\" foo\"",
+            "\"foo \"",
             "\"%2E%2E%2F\"",
             "\"\\u0000\"",
             "\"caf\\u00e9\"",

@@ -1,11 +1,12 @@
 // Client mirror of the daemon's single-component AssetPath rule (backend stays source of truth):
-// no leading `.` (bars `.`/`..`/`.hidden`), no leading `-` (else allowlisted `-` reads as a flag in
-// unquoted shell-out), no leading `_` (frontend-only; reserves `_background_noise_`/`_unknown_` for
+// `[A-Za-z0-9._-]` plus interior spaces, no leading/trailing space, no leading `.` (bars
+// `.`/`..`/`.hidden`), no leading `-` (defence-in-depth: keeps the name from being read as a
+// CLI/tool flag), no leading `_` (frontend-only; reserves `_background_noise_`/`_unknown_` for
 // Speech-Commands synthetic classes); 255-byte cap is NAME_MAX, not AssetPath's path-total/depth caps.
 
 import { m } from '$lib/i18n';
 
-const ALLOWED_RE = /^[A-Za-z0-9._-]+$/;
+const ALLOWED_RE = /^[A-Za-z0-9 ._-]+$/;
 const MAX_BYTES = 255;
 const ENCODER = new TextEncoder();
 
@@ -20,6 +21,10 @@ export function validateCategoryName(name: string): string | null {
   }
   if (name.startsWith('-')) {
     return t.starts_with_hyphen;
+  }
+  // Interior spaces are allowed; leading/trailing are not (FS-edge safety, matches AssetPath).
+  if (name.startsWith(' ') || name.endsWith(' ')) {
+    return t.starts_or_ends_whitespace;
   }
   if (!ALLOWED_RE.test(name)) {
     return t.bad_chars;

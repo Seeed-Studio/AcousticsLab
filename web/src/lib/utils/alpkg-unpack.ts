@@ -532,7 +532,7 @@ export function classifyAlpkgEntries(entries: readonly AlpkgEntry[]): Classified
       else pair.json = entry.bytes;
       headHalves.set(headId, pair);
     } else {
-      errors.push({ path, message: 'Unrecognized entry; ignored.' });
+      errors.push({ path, message: 'Unrecognized entry, ignored.' });
     }
   }
 
