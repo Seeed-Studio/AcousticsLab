@@ -9,6 +9,9 @@
   <img src="https://img.shields.io/badge/backends-RKNN_NPU_%2B_CPU-success" alt="Backends" style="display: block;">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-blue.svg" alt="License: Apache 2.0" style="display: block;"></a>
 </div>
+<div>
+  <img src="docs/images/acousticslab-console.png" alt="AcousticsLab Console">
+</div>
 
 The next generation of [AcousticsLab](https://github.com/ekarad1um/AcousticsLab/tree/main), powered by a self-contained Rust backend with hybrid NPU/CPU inference engine and an intuitive Web console, delivering a fully-local, lightweight, efficient, end-to-end platform for acoustics analysis.
 
