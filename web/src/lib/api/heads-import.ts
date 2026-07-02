@@ -70,7 +70,7 @@ export interface TfjsValidated {
 
 export type Validated = AlpkgValidated | TfjsValidated;
 
-/// Verifies `head/<id>.mpk` length + SHA-256 against the embedded manifest; must complete before
+/// Verifies `heads/<id>.mpk` length + SHA-256 against the embedded manifest; must complete before
 /// `runAlpkgImport`, which re-reads the bytes validated here.
 export async function validateAlpkgFile(file: File): Promise<AlpkgValidated> {
   let result: AlpkgUnpackResult;
@@ -85,7 +85,7 @@ export async function validateAlpkgFile(file: File): Promise<AlpkgValidated> {
   // The .find() below would silently pick the first head, so reject multi-head / dataset-bearing
   // workspace exports here.
   const headMpks = result.entries.filter((e: AlpkgEntry) =>
-    /^head\/[A-Za-z0-9-]+\.mpk$/.test(e.path)
+    /^heads\/[A-Za-z0-9-]+\.mpk$/.test(e.path)
   );
   if (headMpks.length > 1) {
     throw new ImportError(
@@ -102,14 +102,14 @@ export async function validateAlpkgFile(file: File): Promise<AlpkgValidated> {
 
   // Look up by filename pattern, not position, so future packer additions don't break it.
   const headEntry =
-    result.entries.find((e: AlpkgEntry) => /^head\/[A-Za-z0-9-]+\.mpk$/.test(e.path)) ?? null;
+    result.entries.find((e: AlpkgEntry) => /^heads\/[A-Za-z0-9-]+\.mpk$/.test(e.path)) ?? null;
   if (headEntry === null) {
-    throw new ImportError('preparing', 'Archive is missing head/<id>.mpk');
+    throw new ImportError('preparing', 'Archive is missing heads/<id>.mpk');
   }
   const manifestEntry =
-    result.entries.find((e: AlpkgEntry) => /^head\/[A-Za-z0-9-]+\.json$/.test(e.path)) ?? null;
+    result.entries.find((e: AlpkgEntry) => /^heads\/[A-Za-z0-9-]+\.json$/.test(e.path)) ?? null;
   if (manifestEntry === null) {
-    throw new ImportError('preparing', 'Archive is missing head/<id>.json');
+    throw new ImportError('preparing', 'Archive is missing heads/<id>.json');
   }
 
   // Import side has no HeadRecord to cross-check against, so validate the manifest standalone.
@@ -119,8 +119,8 @@ export async function validateAlpkgFile(file: File): Promise<AlpkgValidated> {
   validateManifestStructure(manifest);
 
   // Filenames must agree with the manifest's head_id; a mismatch points at a tampered archive.
-  const expectedMpkName = `head/${manifest.head_id}.mpk`;
-  const expectedManifestName = `head/${manifest.head_id}.json`;
+  const expectedMpkName = `heads/${manifest.head_id}.mpk`;
+  const expectedManifestName = `heads/${manifest.head_id}.json`;
   if (headEntry.path !== expectedMpkName) {
     throw new ImportError(
       'preparing',

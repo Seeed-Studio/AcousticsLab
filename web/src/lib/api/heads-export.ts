@@ -218,8 +218,8 @@ async function fetchAndValidateOneHead(
 
   // Reuse the raw manifest bytes verbatim: re-serialising would drop a future daemon field and break byte-for-byte reproducibility against the daemon's deterministic serde_json output.
   return [
-    { path: `head/${manifest.head_id}.mpk`, bytes: weightsBytes },
-    { path: `head/${manifest.head_id}.json`, bytes: manifestRaw }
+    { path: `heads/${manifest.head_id}.mpk`, bytes: weightsBytes },
+    { path: `heads/${manifest.head_id}.json`, bytes: manifestRaw }
   ];
 }
 

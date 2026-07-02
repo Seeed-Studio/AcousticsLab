@@ -72,8 +72,8 @@
   aria-label={title ? undefined : ariaLabel}
   class="m-auto w-[calc(100%-var(--popover-edge-inset)*2)] rounded-xl border border-line bg-elevated shadow-modal backdrop:bg-scrim backdrop:backdrop-blur-[2px] open:flex open:max-h-[90vh] open:flex-col open:overflow-hidden {sizeClass}"
 >
-  <!-- `flex-1` fills the parent's available height (capped at `max-h-[90vh]`); `min-h-0` overrides the flex default `min-height:auto` so this child can shrink below content, giving `overflow-auto` a bounded height to scroll against - else content overflows the rounded corners past `max-h-[90vh]`. Padding sits inside the scroll box. -->
-  <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto overscroll-contain p-5">
+  <!-- `flex-auto` not `flex-1`: WebKit won't expand this indefinite-height (`fit-content`, capped by `max-h-[90vh]`) column flex parent around a `flex-basis:0` child, collapsing the dialog to header height with the body scrolling inside (flexbugs #173); `basis:auto` sizes it to content. `min-h-0` lets the child shrink to scroll when content exceeds 90vh. -->
+  <div class="flex min-h-0 flex-auto flex-col gap-3 overflow-auto overscroll-contain p-5">
     <!-- Truthy `||` not `??`: `??` keeps `""` (non-nullish), hiding a headerRight-only header when title is the empty string. -->
     <!-- eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -->
     {#if title || headerRight}

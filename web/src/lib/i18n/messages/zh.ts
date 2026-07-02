@@ -138,7 +138,7 @@ export const zh = {
       starts_with_dot: '类别名称不能以点号开头。',
       starts_with_underscore: '类别名称不能以下划线开头（保留给内置类别）。',
       starts_with_hyphen: '类别名称不能以连字符开头（出于安全性考量）。',
-      bad_chars: '只允许使用字母、数字、点号、连字符和下划线。',
+      bad_chars: '只允许使用字母、数字、空格、点号、连字符和下划线。',
       category_max_bytes: (max) => `类别名称不能超过 ${max} 字节。`,
       category_empty: '类别名称不能为空。'
     },

@@ -143,7 +143,7 @@ export const en = {
       starts_with_underscore:
         'Category name cannot start with an underscore (reserved for built-in classes).',
       starts_with_hyphen: 'Category name cannot start with a hyphen (for security considerations).',
-      bad_chars: 'Only letters, digits, dots, hyphens, and underscores are allowed.',
+      bad_chars: 'Only letters, digits, spaces, dots, hyphens, and underscores are allowed.',
       category_max_bytes: (max) => `Category name must be ${max} bytes or fewer.`,
       category_empty: 'Category name cannot be empty.'
     },
