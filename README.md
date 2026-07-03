@@ -13,7 +13,7 @@
   <img src="docs/images/acousticslab-console.png" alt="AcousticsLab Console">
 </div>
 
-The next generation of [AcousticsLab](https://github.com/ekarad1um/AcousticsLab/tree/main), powered by a self-contained Rust backend with hybrid NPU/CPU inference engine and an intuitive Web console, delivering a fully-local, lightweight, efficient, end-to-end platform for acoustics analysis.
+The next generation of [AcousticsLab](https://github.com/Seeed-Studio/AcousticsLab/tree/main), powered by a self-contained Rust backend with hybrid NPU/CPU inference engine and an intuitive Web console, delivering a fully-local, lightweight, efficient, end-to-end platform for acoustics analysis.
 
 
 ## Why AcousticsLab
