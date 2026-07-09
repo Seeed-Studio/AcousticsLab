@@ -322,6 +322,13 @@ impl BurnBackbone {
         })
     }
 
+    /// Unwrap into the raw network for batched forwards (training's feature
+    /// extraction); per-window [`Self::infer`] would pay Burn's per-call
+    /// overhead once per example.
+    pub fn into_network(self) -> BurnNet<B> {
+        self.backbone
+    }
+
     pub fn infer(
         &mut self,
         spec: &[[f32; NBins::USIZE]; NFrames::USIZE],
@@ -558,9 +565,21 @@ impl BackboneCatalogue {
     ///
     /// Blocking (file I/O + RKNN C-FFI session-create); call off the async path
     /// (daemon uses `spawn_blocking`).
+    ///
+    /// Serving AND training resolve through this same walk, so heads are fit
+    /// on the feature basis serving classifies with; residual divergence
+    /// (the environment changing between the two resolutions) is warned at
+    /// training time against the served [`BackboneRef`] identity.
     pub fn load_first_supported(&self) -> Result<BackbonePipeline, BackboneError> {
+        self.load_first_supported_indexed().map(|(p, _)| p)
+    }
+
+    /// [`Self::load_first_supported`] plus the resolved candidate's index into
+    /// `self.candidates`, for callers that need the winning [`BackboneRef`]
+    /// identity (basis-consistency checks).
+    pub fn load_first_supported_indexed(&self) -> Result<(BackbonePipeline, usize), BackboneError> {
         let mut summaries: Vec<String> = Vec::with_capacity(self.candidates.len());
-        for cand in &self.candidates {
+        for (idx, cand) in self.candidates.iter().enumerate() {
             match try_load_candidate(cand) {
                 Ok(pipeline) => {
                     tracing::info!(
@@ -569,35 +588,7 @@ impl BackboneCatalogue {
                         path = %cand.path.display(),
                         "backbone candidate loaded",
                     );
-                    // Heads are fit to the first `kind="burn"` candidate, but
-                    // serving resolves the first *supported* one (a different
-                    // artifact on RKNN devices) and heads carry no backbone
-                    // identity, so a basis mismatch classifies silently wrong.
-                    // Warn, not fail-closed: a faithful conversion is still valid.
-                    match basis_relation(&self.candidates, cand) {
-                        BasisRelation::Consistent => {}
-                        BasisRelation::DivergesFromTrainingBurn { training_path } => {
-                            tracing::warn!(
-                                target: "inference",
-                                serving_kind = ?cand.kind,
-                                serving_path = %cand.path.display(),
-                                training_path = %training_path.display(),
-                                "serving backbone diverges from the head-training (Burn) basis; \
-                                 unless it represents the same basis (e.g. a faithful conversion), \
-                                 classification is silently wrong -- verify via the converter",
-                            );
-                        }
-                        BasisRelation::NoTrainingBurn => {
-                            tracing::warn!(
-                                target: "inference",
-                                serving_kind = ?cand.kind,
-                                serving_path = %cand.path.display(),
-                                "no `kind = \"burn\"` backbone candidate configured; cannot \
-                                 verify the served backbone matches the head-training basis",
-                            );
-                        }
-                    }
-                    return Ok(pipeline);
+                    return Ok((pipeline, idx));
                 }
                 Err(reason) => {
                     tracing::warn!(
@@ -622,31 +613,6 @@ impl BackboneCatalogue {
             summaries.join("; ")
         };
         Err(BackboneError::NoUsableCandidate { summary })
-    }
-}
-
-/// How the served backbone relates to the head-training (first Burn) feature
-/// basis; drives the boot warning about a silent train/serve basis divergence.
-#[derive(Debug, PartialEq, Eq)]
-enum BasisRelation {
-    /// Served IS the first `kind="burn"` candidate heads are fit to: same basis.
-    Consistent,
-    /// Served a different artifact (RKNN, or a non-first Burn); `training_path`
-    /// is the first Burn `.mpk` heads were fit to.
-    DivergesFromTrainingBurn { training_path: PathBuf },
-    /// No `kind="burn"` candidate, so no training basis to compare.
-    NoTrainingBurn,
-}
-
-/// Classify `served` against the first Burn candidate (the path training
-/// resolves), so `Consistent` means train and serve provably load the same `.mpk`.
-fn basis_relation(candidates: &[BackboneRef], served: &BackboneRef) -> BasisRelation {
-    match candidates.iter().find(|c| c.kind == BackboneKind::Burn) {
-        None => BasisRelation::NoTrainingBurn,
-        Some(burn) if burn.path == served.path => BasisRelation::Consistent,
-        Some(burn) => BasisRelation::DivergesFromTrainingBurn {
-            training_path: burn.path.clone(),
-        },
     }
 }
 
@@ -721,52 +687,35 @@ mod tests {
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
     }
 
-    fn bref(kind: BackboneKind, path: &str) -> BackboneRef {
-        BackboneRef {
-            kind,
-            path: PathBuf::from(path),
-            hash: None,
-        }
-    }
-
-    /// Guards the boot train/serve basis divergence check: served vs first Burn.
+    /// `load_first_supported_indexed` reports the index of the candidate that
+    /// actually loaded (not merely the first supported one), so basis checks
+    /// compare true identities. Host non-rknpu build: the rknn candidate is
+    /// skipped as unsupported and the bundled Burn `.mpk` at index 1 wins.
     #[test]
-    fn basis_relation_classifies_train_vs_serve() {
-        // Device hybrid: RKNN served, training fits the Burn .mpk -> divergence.
-        let cands = vec![
-            bref(BackboneKind::Rknn, "/b/backbone.rknn"),
-            bref(BackboneKind::Burn, "/b/backbone.mpk"),
-        ];
-        assert_eq!(
-            basis_relation(&cands, &cands[0]),
-            BasisRelation::DivergesFromTrainingBurn {
-                training_path: PathBuf::from("/b/backbone.mpk"),
-            },
-        );
-        assert_eq!(basis_relation(&cands, &cands[1]), BasisRelation::Consistent);
-
-        // Host single-Burn config: serve == first (only) Burn.
-        let cands = vec![bref(BackboneKind::Burn, "/b/backbone.mpk")];
-        assert_eq!(basis_relation(&cands, &cands[0]), BasisRelation::Consistent);
-
-        // A later Burn than the training first-Burn -> diverges to the first.
-        let cands = vec![
-            bref(BackboneKind::Burn, "/b/first.mpk"),
-            bref(BackboneKind::Burn, "/b/second.mpk"),
-        ];
-        assert_eq!(
-            basis_relation(&cands, &cands[1]),
-            BasisRelation::DivergesFromTrainingBurn {
-                training_path: PathBuf::from("/b/first.mpk"),
-            },
-        );
-
-        // No Burn candidate -> nothing to compare against.
-        let cands = vec![bref(BackboneKind::Rknn, "/b/backbone.rknn")];
-        assert_eq!(
-            basis_relation(&cands, &cands[0]),
-            BasisRelation::NoTrainingBurn,
-        );
+    #[cfg(not(all(target_os = "linux", feature = "rknpu")))]
+    #[ignore = "depends on repo-root reference assets; --include-ignored"]
+    fn load_first_supported_indexed_reports_fallback_index() {
+        let mpk = crate_root().join("misc/backbones/backbone.mpk");
+        assert!(mpk.exists(), "missing test asset: {}", mpk.display());
+        let cat = BackboneCatalogue {
+            candidates: vec![
+                BackboneRef {
+                    kind: BackboneKind::Rknn,
+                    path: PathBuf::from("/nonexistent/backbone.rknn"),
+                    hash: None,
+                },
+                BackboneRef {
+                    kind: BackboneKind::Burn,
+                    path: mpk,
+                    hash: None,
+                },
+            ],
+        };
+        let (pipeline, idx) = cat
+            .load_first_supported_indexed()
+            .expect("burn candidate must load");
+        assert_eq!(idx, 1, "resolved index must name the loaded candidate");
+        assert!(matches!(pipeline, BackbonePipeline::Burn(_)));
     }
 
     /// The dims-orientation gate accepts the production shape (+ unit-padded

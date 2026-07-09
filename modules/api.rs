@@ -45,8 +45,13 @@ pub struct AppState {
     pub active_mutex: Arc<parking_lot::Mutex<()>>,
     /// Bundled default head pair resolved at boot; sourced on `POST /active {default: true}`.
     pub default_head: Option<crate::config::DefaultHeadRef>,
-    /// Trainer's Burn backbone, from the first `kind = "burn"` candidate; `None` makes `POST /train` fail 500 ("no Burn backbone configured in launch TOML").
-    pub training_backbone_path: Option<std::path::PathBuf>,
+    /// Trainer's ordered backbone candidates (launch catalogue filtered to kinds this build can
+    /// load); the job resolves the first usable one, mirroring serving. Empty makes `POST /train`
+    /// fail before admission.
+    pub training_backbones: crate::inference::BackboneCatalogue,
+    /// Serving's boot-loaded candidate (`None` = inference not running); passed to training jobs
+    /// for the train/serve feature-basis warning.
+    pub serving_backbone: Option<crate::inference::BackboneRef>,
     /// In-process job registry. Must be the same instance passed to `WorkspaceMgr::with_admission_and_jobs`
     /// so admission and the routes agree.
     pub jobs: Arc<JobRegistry>,

@@ -125,6 +125,81 @@ mod parity_tests {
         }
     }
 
+    /// On-device train/serve feature-basis parity: RKNN fp16 features vs the
+    /// canonical Burn fp32 features on the bundled reference waveforms.
+    /// Training extracts through this same `RknnBackbone`, so this pins the
+    /// basis drift the linear head must absorb; the 1% normalized-MAE gate is
+    /// ~10x expected fp16 drift -- failure means the `.rknn` is no longer a
+    /// faithful conversion of the `.mpk`.
+    #[cfg(all(target_os = "linux", feature = "rknpu"))]
+    #[test]
+    #[ignore = "on-device only; requires NPU + librknnrt + reference assets"]
+    fn rknn_burn_feature_mae_within_tolerance() {
+        use crate::common::dims::BackboneFeatureDim;
+
+        let root = crate_root();
+        let rknn_path = root.join("misc/backbones/backbone.rknn");
+        let mpk_path = root.join("misc/backbones/backbone.mpk");
+        for p in [&rknn_path, &mpk_path] {
+            assert!(p.exists(), "missing test asset: {}", p.display());
+        }
+
+        let mut rknn = RknnBackbone::load(&rknn_path).expect("load rknn backbone");
+        let mut burn = BurnBackbone::load(&mpk_path).expect("load burn backbone");
+        let mut preproc_inst = crate::preproc::Preproc::new();
+
+        for sample_idx in 0..5 {
+            let waveform_path = root.join(format!("misc/npys/waveform_{sample_idx}.npy"));
+            let (_, pcm_vec) = npy::read_f32(&waveform_path);
+            assert_eq!(pcm_vec.len(), crate::common::dims::WaveformLen::USIZE);
+            let pcm: &[f32; crate::common::dims::WaveformLen::USIZE] =
+                pcm_vec.as_slice().try_into().expect("pcm length match");
+
+            let spec = preproc_inst.spectrogram(pcm);
+            let mut feats_rknn = Box::new([0.0f32; BackboneFeatureDim::USIZE]);
+            let mut feats_burn = Box::new([0.0f32; BackboneFeatureDim::USIZE]);
+            rknn.infer(&spec, &mut feats_rknn).expect("rknn infer");
+            burn.infer(&spec, &mut feats_burn).expect("burn infer");
+
+            let mut abs_err_sum = 0.0f64;
+            let mut max_abs_err = 0.0f32;
+            let mut ref_abs_sum = 0.0f64;
+            for (&a, &b) in feats_rknn.iter().zip(feats_burn.iter()) {
+                assert!(
+                    a.is_finite(),
+                    "sample {sample_idx}: non-finite rknn feature"
+                );
+                assert!(
+                    b.is_finite(),
+                    "sample {sample_idx}: non-finite burn feature"
+                );
+                let d = (a - b).abs();
+                abs_err_sum += f64::from(d);
+                max_abs_err = max_abs_err.max(d);
+                ref_abs_sum += f64::from(b.abs());
+            }
+            let n = BackboneFeatureDim::USIZE as f64;
+            let mae = abs_err_sum / n;
+            let ref_mean_abs = ref_abs_sum / n;
+            assert!(
+                ref_mean_abs > 0.0,
+                "sample {sample_idx}: burn features are all-zero; fixture unusable",
+            );
+            let normalized_mae = mae / ref_mean_abs;
+            eprintln!(
+                "rknn_burn_feature_mae sample {sample_idx}: mae={mae:.6} \
+                 normalized={normalized_mae:.6} max_abs={max_abs_err:.6} \
+                 ref_mean_abs={ref_mean_abs:.6}",
+            );
+            assert!(
+                normalized_mae < 0.01,
+                "sample {sample_idx}: normalized feature MAE {normalized_mae:.6} \
+                 exceeds 1% of mean |burn| ({ref_mean_abs:.6}); the .rknn no \
+                 longer matches the .mpk basis -- re-convert and re-verify",
+            );
+        }
+    }
+
     /// top_k must equal argmax-by-descending of the recorded probs.
     #[test]
     #[ignore = "depends on repo-root reference assets; --include-ignored"]

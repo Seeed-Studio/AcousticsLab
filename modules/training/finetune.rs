@@ -1,8 +1,15 @@
 //! On-device fine-tuning of the classifier head: scan a
 //! Speech-Commands-style dataset, compute frozen-backbone features once,
 //! train only the head, save `head.mpk` + sibling `labels.txt`.
+//!
+//! Feature extraction resolves the backbone from the SAME ordered candidate
+//! catalogue serving uses (first supported+loadable wins): frozen-backbone
+//! forwards run on the NPU where serving does (RKNN fp16, ~ms/window), so the
+//! head is fit on the exact feature basis it is served against; hosts fall
+//! back to batched Burn fp32 forwards.
 
 use crate::common::dims::{BACKBONE_FEATURE_DIM as FEATURE_DIM, NBins, NFrames};
+use crate::inference::{BackboneCatalogue, BackbonePipeline, BackboneRef};
 use crate::model::{Backbone, Head};
 use crate::preproc::Preproc;
 use crate::preproc::wav_io::{self, ResamplerCache};
@@ -39,7 +46,12 @@ type Spectrogram = Box<[[f32; NBins::USIZE]; NFrames::USIZE]>;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FinetuneConfig {
     pub data: PathBuf,
-    pub backbone: PathBuf,
+    /// Ordered extractor candidates, non-empty; first supported+loadable
+    /// wins (the serving resolution rule).
+    pub backbones: BackboneCatalogue,
+    /// Serving's boot-loaded candidate (`None` = inference not running); a
+    /// resolution mismatch warns of a train/serve feature-basis divergence.
+    pub serving_backbone: Option<BackboneRef>,
     pub init_head: Option<PathBuf>,
     pub out: PathBuf,
     pub epochs: usize,
@@ -79,6 +91,16 @@ impl FinetuneConfig {
             return Err(FinetuneError::InvalidConfig(format!(
                 "val_split must be finite and in [0, 1); got {}",
                 self.val_split
+            )));
+        }
+        if self.backbones.is_empty() {
+            return Err(FinetuneError::InvalidConfig(
+                "backbones: at least one candidate is required".into(),
+            ));
+        }
+        if let Err((idx, err)) = self.backbones.validate() {
+            return Err(FinetuneError::InvalidConfig(format!(
+                "backbones: candidate {idx}: {err}"
             )));
         }
         Ok(())
@@ -270,6 +292,11 @@ pub enum FinetuneError {
     /// Burn `.mpk` load/save error; its `Display` carries path + message.
     #[error(transparent)]
     Model(#[from] crate::model::Error),
+    /// Backbone resolution or NPU inference failure; a stringified
+    /// [`crate::inference::BackboneError`], whose cfg-gated variants would
+    /// make a typed wrap's match surface build-dependent.
+    #[error("backbone: {0}")]
+    Backbone(String),
     #[error("training panicked: {0}")]
     Panic(String),
     /// Dataset shape rejection at scan time (no class folders,
@@ -391,6 +418,7 @@ impl crate::common::error::Categorized for FinetuneError {
             FinetuneError::File(e) => e.kind(),
             FinetuneError::Io { .. }
             | FinetuneError::Model(_)
+            | FinetuneError::Backbone(_)
             | FinetuneError::Panic(_)
             | FinetuneError::NumericFailure { .. } => Internal,
         }
@@ -518,23 +546,25 @@ fn run_inner(
     check_feature_buffer_cap(examples.len())?;
 
     progress(&Progress::new(Stage::DatasetScan, 0, 1, "load backbone"));
-    let backbone = Backbone::<InnerB>::load_mpk(&cfg.backbone, &device_inner)?;
+    let (mut extractor, extractor_label) =
+        resolve_feature_extractor(&cfg.backbones, cfg.serving_backbone.as_ref())?;
     check_cancel(cancel)?;
 
     event(Event::PhaseStarted {
         phase: Stage::FeatureExtract,
     });
+    // Label is kind + basename (progress messages carry no server paths).
     progress(&Progress::new(
         Stage::FeatureExtract,
         0,
         examples.len(),
-        "extract features...",
+        format!("extract features ({extractor_label})..."),
     ));
     let preproc = Preproc::new();
     let total_in = examples.len();
     let t_extract = Instant::now();
     let (feats, labels, drop_counts) =
-        extract_features(&backbone, &preproc, &examples, progress, cancel)?;
+        extract_features(&mut extractor, &preproc, &examples, progress, cancel)?;
     event(Event::FeatureExtractCompleted {
         kept: feats.len() as u64,
         dropped_nan: drop_counts.dropped_nan,
@@ -549,8 +579,9 @@ fn run_inner(
     assert_eq!(feats.len(), labels.len());
     check_cancel(cancel)?;
 
-    // Free backbone weights + preproc FFT plan; train reads only feats.
-    drop(backbone);
+    // Free the extractor (Burn weights, or the RKNN session + NPU context)
+    // and the preproc FFT plan; train reads only feats.
+    drop(extractor);
     drop(preproc);
 
     validate_post_extract_quality(
@@ -1079,17 +1110,19 @@ fn stratified_split_indices(
     Ok(SplitIndices { train, val })
 }
 
-/// Windows per backbone forward (NOT the preproc file batch
-/// [`PREPROC_FILE_BATCH`]).  256 sits at the throughput knee (amortizes
-/// Burn per-call overhead + the `multi-threads` BLAS path); its
-/// forward-activation transient (~74 MiB) is dataset-independent and
-/// coexists with the up-to-256 MiB feature buffer.
+/// Windows per drain of the `pending` accumulator (NOT the preproc file
+/// batch [`PREPROC_FILE_BATCH`]).  On the Burn path this is also the windows
+/// per forward: 256 sits at the throughput knee (amortizes Burn per-call
+/// overhead + the `multi-threads` BLAS path); its forward-activation
+/// transient (~74 MiB) is dataset-independent and coexists with the
+/// up-to-256 MiB feature buffer.  The batch=1 RKNN path infers per window
+/// inside the drain, so here the constant only sets drain cadence.
 ///
 /// Cancel-latency contract: `extract_features` polls `cancel()` at
-/// file-batch boundaries and in each worker's per-file fast path, so
-/// worst-case latency is ~one `PREPROC_FILE_BATCH` pass (~48 ms,
-/// 4-worker SBC); per-sub-batch forwards aren't interruptible but are
-/// sub-second on the head-only net.
+/// file-batch boundaries, in each worker's per-file fast path, and at the
+/// top of every sub-batch forward (the RKNN arm also per window); worst
+/// case is ~one `PREPROC_FILE_BATCH` pass (~48 ms, 4-worker SBC) or one
+/// Burn sub-batch forward, whichever is larger.
 const BACKBONE_BATCH: usize = 256;
 
 /// Files preprocessed in parallel per `map_init` pass -- BOUNDS resident
@@ -1135,6 +1168,183 @@ fn check_feature_buffer_cap(total: usize) -> Result<(), FinetuneError> {
     Ok(())
 }
 
+/// Resolved frozen-backbone feature extractor. Burn keeps the raw network so
+/// forwards stay batched ([`BACKBONE_BATCH`] amortizes Burn per-call
+/// overhead); RKNN reuses the MAE-verified inference wrapper, whose session
+/// is compiled for batch=1, and infers per window (~ms each on the NPU).
+enum FeatureExtractor {
+    Burn {
+        /// Boxed: KBs of `Param`/pool state next to the pointer-sized Rknn
+        /// variant.
+        net: Box<Backbone<InnerB>>,
+        device: burn::tensor::Device<InnerB>,
+    },
+    #[cfg(all(target_os = "linux", feature = "rknpu"))]
+    Rknn {
+        backbone: Box<crate::inference::RknnBackbone>,
+        /// Reused per-window output scratch.
+        scratch: Box<[f32; FEATURE_DIM]>,
+    },
+}
+
+impl std::fmt::Debug for FeatureExtractor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Burn { .. } => f
+                .debug_struct("FeatureExtractor::Burn")
+                .finish_non_exhaustive(),
+            #[cfg(all(target_os = "linux", feature = "rknpu"))]
+            Self::Rknn { backbone, .. } => f
+                .debug_struct("FeatureExtractor::Rknn")
+                .field("backbone", backbone)
+                .finish_non_exhaustive(),
+        }
+    }
+}
+
+impl FeatureExtractor {
+    /// Forward one `sub` of (window, label) pairs, appending kept rows to
+    /// `feats`/`labels`. Non-finite outputs count into `dropped_nan` (GENUINE
+    /// drops; a sustained fault trips `DropRatioExceeded`): Burn drops the
+    /// WHOLE sub-batch (a batched forward can't attribute the fault), RKNN
+    /// per window (fp16 can overflow where fp32 would not). The RKNN arm
+    /// polls `cancel` per window, not per batch.
+    fn forward_sub_batch(
+        &mut self,
+        sub: &[(Spectrogram, usize)],
+        feats: &mut Vec<[f32; FEATURE_DIM]>,
+        labels: &mut Vec<usize>,
+        dropped_nan: &AtomicUsize,
+        cancel: &(dyn Fn() -> bool + Sync),
+        chunk_start: usize,
+    ) -> Result<(), FinetuneError> {
+        check_cancel(cancel)?;
+        let n = sub.len();
+        match self {
+            FeatureExtractor::Burn { net, device } => {
+                let mut batched: Vec<f32> = Vec::with_capacity(n * NFrames::USIZE * NBins::USIZE);
+                for (spec, _) in sub {
+                    batched.extend_from_slice(spec[..].as_flattened());
+                }
+                let x = Tensor::<InnerB, 4>::from_data(
+                    TensorData::new(batched, [n, 1, NFrames::USIZE, NBins::USIZE]),
+                    &*device,
+                );
+                let f = net.forward(x);
+                let out_data = f.into_data().to_vec::<f32>().unwrap();
+                // Hard assert (release too): a wrong output size would
+                // corrupt training silently.
+                assert_eq!(
+                    out_data.len(),
+                    n * FEATURE_DIM,
+                    "backbone returned {} floats for batch {n}; expected {}",
+                    out_data.len(),
+                    n * FEATURE_DIM,
+                );
+                if out_data.iter().any(|v| !v.is_finite()) {
+                    tracing::warn!(
+                        target: "training",
+                        chunk_start,
+                        batch_size = n,
+                        "backbone produced non-finite features; dropping the sub-batch \
+                         and counting toward dropped_nan (preproc spec was finite -- \
+                         suspect backbone .mpk integrity or numerical degeneracy)",
+                    );
+                    dropped_nan.fetch_add(n, Ordering::Relaxed);
+                } else {
+                    for ((_, label), feat_chunk) in
+                        sub.iter().zip(out_data.chunks_exact(FEATURE_DIM))
+                    {
+                        let mut arr = [0f32; FEATURE_DIM];
+                        arr.copy_from_slice(feat_chunk);
+                        feats.push(arr);
+                        labels.push(*label);
+                    }
+                }
+            }
+            #[cfg(all(target_os = "linux", feature = "rknpu"))]
+            FeatureExtractor::Rknn { backbone, scratch } => {
+                for (spec, label) in sub {
+                    check_cancel(cancel)?;
+                    // An NPU error is a device/runtime fault, not a data
+                    // fault: fail the job typed instead of silently dropping.
+                    backbone
+                        .infer(spec, scratch)
+                        .map_err(|e| FinetuneError::Backbone(e.to_string()))?;
+                    if scratch.iter().any(|v| !v.is_finite()) {
+                        tracing::warn!(
+                            target: "training",
+                            chunk_start,
+                            "NPU backbone produced non-finite features; dropping the \
+                             window and counting toward dropped_nan (fp16 range \
+                             overflow or model fault)",
+                        );
+                        dropped_nan.fetch_add(1, Ordering::Relaxed);
+                        continue;
+                    }
+                    feats.push(**scratch);
+                    labels.push(*label);
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Resolve the extractor from the ordered catalogue (first supported+loadable
+/// candidate, exactly like serving), returning it with an operator-facing
+/// label (kind + basename, no server paths). A resolved candidate differing
+/// from what serving loaded means the head is fit on a basis it won't be
+/// classified against -- warn, not fail: a faithful conversion of the same
+/// model (the verified `.mpk` <-> `.rknn` pair) is still valid.
+fn resolve_feature_extractor(
+    catalogue: &BackboneCatalogue,
+    serving: Option<&BackboneRef>,
+) -> Result<(FeatureExtractor, String), FinetuneError> {
+    let (pipeline, idx) = catalogue
+        .load_first_supported_indexed()
+        .map_err(|e| FinetuneError::Backbone(e.to_string()))?;
+    let resolved = &catalogue.candidates[idx];
+    tracing::info!(
+        target: "training",
+        kind = ?resolved.kind,
+        path = %resolved.path.display(),
+        "training feature extractor resolved",
+    );
+    if let Some(serving) = serving
+        && serving != resolved
+    {
+        tracing::warn!(
+            target: "training",
+            training_kind = ?resolved.kind,
+            training_path = %resolved.path.display(),
+            serving_kind = ?serving.kind,
+            serving_path = %serving.path.display(),
+            "training feature extractor differs from the serving backbone; \
+             unless both artifacts represent the same model (a faithful \
+             conversion), the trained head will classify silently wrong",
+        );
+    }
+    let basename = resolved
+        .path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "<unnamed>".into());
+    let label = format!("{:?}: {basename}", resolved.kind);
+    let extractor = match pipeline {
+        #[cfg(all(target_os = "linux", feature = "rknpu"))]
+        BackbonePipeline::Rknn(backbone) => FeatureExtractor::Rknn {
+            backbone,
+            scratch: Box::new([0.0; FEATURE_DIM]),
+        },
+        BackbonePipeline::Burn(b) => FeatureExtractor::Burn {
+            net: Box::new(b.into_network()),
+            device: Default::default(),
+        },
+    };
+    Ok((extractor, label))
+}
+
 /// Drop accounting carried alongside `(feats, labels)` so the wrapper emits
 /// `Event::FeatureExtractCompleted` without re-scanning.
 #[derive(Clone, Copy, Debug, Default)]
@@ -1151,13 +1361,12 @@ pub(crate) struct ExtractDropCounts {
 type ExtractOutput = (Vec<[f32; FEATURE_DIM]>, Vec<usize>, ExtractDropCounts);
 
 fn extract_features(
-    backbone: &Backbone<InnerB>,
+    extractor: &mut FeatureExtractor,
     preproc: &Preproc,
     examples: &[(PathBuf, usize)],
     progress_cb: &(dyn Fn(&Progress) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<ExtractOutput, FinetuneError> {
-    let device: burn::tensor::Device<InnerB> = Default::default();
     let t0 = Instant::now();
     let dropped_nan = AtomicUsize::new(0);
     // Read/resample/spectrogram failures drop the example, not abort.
@@ -1266,48 +1475,14 @@ fn extract_features(
                 labels.reserve_exact(want);
             }
             let sub = &pending[..take];
-            let n = sub.len();
-            let mut batched: Vec<f32> = Vec::with_capacity(n * NFrames::USIZE * NBins::USIZE);
-            for (spec, _) in sub {
-                batched.extend_from_slice(spec[..].as_flattened());
-            }
-            let x = Tensor::<InnerB, 4>::from_data(
-                TensorData::new(batched, [n, 1, NFrames::USIZE, NBins::USIZE]),
-                &device,
-            );
-            let f = backbone.forward(x);
-            let out_data = f.into_data().to_vec::<f32>().unwrap();
-            // Hard assert (release too): a wrong output size would corrupt
-            // training silently.
-            assert_eq!(
-                out_data.len(),
-                n * FEATURE_DIM,
-                "backbone returned {} floats for batch {n}; expected {}",
-                out_data.len(),
-                n * FEATURE_DIM,
-            );
-            // Backbone-produced non-finites (model fault) would poison
-            // training; drop the whole sub-batch (partial drops obscure the
-            // cause) and count as GENUINE `dropped_nan` so a sustained fault
-            // trips `DropRatioExceeded`.
-            if out_data.iter().any(|v| !v.is_finite()) {
-                tracing::warn!(
-                    target: "training",
-                    chunk_start = processed,
-                    batch_size = n,
-                    "backbone produced non-finite features; dropping the sub-batch \
-                     and counting toward dropped_nan (preproc spec was finite -- \
-                     suspect backbone .mpk integrity or numerical degeneracy)",
-                );
-                dropped_nan.fetch_add(n, Ordering::Relaxed);
-            } else {
-                for ((_, label), feat_chunk) in sub.iter().zip(out_data.chunks_exact(FEATURE_DIM)) {
-                    let mut arr = [0f32; FEATURE_DIM];
-                    arr.copy_from_slice(feat_chunk);
-                    feats.push(arr);
-                    labels.push(*label);
-                }
-            }
+            extractor.forward_sub_batch(
+                sub,
+                &mut feats,
+                &mut labels,
+                &dropped_nan,
+                cancel,
+                processed,
+            )?;
             pending.drain(..take);
         }
 
@@ -1818,10 +1993,80 @@ fn panic_payload_to_string(payload: Box<dyn std::any::Any + Send>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::inference::BackboneKind;
     use parking_lot::Mutex;
 
     /// Serializes Burn's per-backend RNG slot for re-seeding tests.
     static RNG_LOCK: Mutex<()> = Mutex::new(());
+
+    /// Single-Burn-candidate catalogue for configs whose backbone is never
+    /// reached (validation/scan-time rejection fixtures).
+    fn burn_only_catalogue(path: &str) -> BackboneCatalogue {
+        BackboneCatalogue {
+            candidates: vec![BackboneRef {
+                kind: BackboneKind::Burn,
+                path: PathBuf::from(path),
+                hash: None,
+            }],
+        }
+    }
+
+    /// An empty candidate list must reject at `validate`, before any
+    /// dataset walk or backbone load.
+    #[test]
+    fn validate_rejects_empty_backbone_catalogue() {
+        let cfg = FinetuneConfig {
+            data: PathBuf::from("/nonexistent/data"),
+            backbones: BackboneCatalogue::default(),
+            serving_backbone: None,
+            init_head: None,
+            out: PathBuf::from("/nonexistent/out.mpk"),
+            epochs: 1,
+            batch: 1,
+            lr: 0.01,
+            val_split: 0.2,
+            seed: 1,
+        };
+        match cfg.validate() {
+            Err(FinetuneError::InvalidConfig(msg)) => {
+                assert!(
+                    msg.contains("backbones"),
+                    "diagnostic must name the backbones field; got {msg:?}",
+                );
+            }
+            other => panic!("expected InvalidConfig for empty catalogue, got {other:?}"),
+        }
+    }
+
+    /// The resolver walks candidates in declaration order and surfaces a
+    /// typed `Backbone` error naming EVERY skipped candidate when none loads.
+    #[test]
+    fn resolve_feature_extractor_reports_every_skipped_candidate() {
+        let cat = BackboneCatalogue {
+            candidates: vec![
+                BackboneRef {
+                    kind: BackboneKind::Rknn,
+                    path: PathBuf::from("/nonexistent/backbone.rknn"),
+                    hash: None,
+                },
+                BackboneRef {
+                    kind: BackboneKind::Burn,
+                    path: PathBuf::from("/nonexistent/backbone.mpk"),
+                    hash: None,
+                },
+            ],
+        };
+        let err = resolve_feature_extractor(&cat, None).expect_err("no candidate can load");
+        match err {
+            FinetuneError::Backbone(msg) => {
+                assert!(
+                    msg.contains("backbone.rknn") && msg.contains("backbone.mpk"),
+                    "summary must name every skipped candidate; got {msg:?}",
+                );
+            }
+            other => panic!("expected FinetuneError::Backbone, got {other:?}"),
+        }
+    }
 
     /// `Backend::seed` makes `Head::new` weight init deterministic.
     /// Ignored: `multi-threads` dispatches init onto rayon workers whose
@@ -1940,6 +2185,111 @@ mod tests {
         );
     }
 
+    /// Mono 16-bit broadband NOISE at TARGET_SR (identity resample, so
+    /// `secs` s -> `secs` windows); noise keeps every FFT bin non-zero so
+    /// the spectrogram stays finite (a sine would NaN -> drop).
+    fn write_noise(path: &Path, secs: u32, seed: u64) {
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate: wav_io::TARGET_SR,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut w = hound::WavWriter::create(path, spec).expect("wav create");
+        let mut state = seed | 1;
+        for _ in 0..(secs * wav_io::TARGET_SR) {
+            state = state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            let sample = (state >> 48) as i16;
+            w.write_sample(sample / 3).expect("write sample");
+        }
+        w.finalize().expect("finalize");
+    }
+
+    /// End-to-end `run` against the BUNDLED production backbone
+    /// (`misc/backbones/backbone.mpk`) through the catalogue resolver: the
+    /// unloadable rknn candidate falls back to Burn, features extract, the
+    /// head trains, and `head.mpk` + `labels.txt` land at `out`. Guards the
+    /// resolver->extractor->train->save seam with the real artifact.
+    #[test]
+    #[ignore = "depends on repo-root reference assets; --include-ignored"]
+    fn run_end_to_end_with_bundled_backbone_via_catalogue_fallback() {
+        let _g = RNG_LOCK.lock();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let mpk = root.join("misc/backbones/backbone.mpk");
+        assert!(mpk.exists(), "missing test asset: {}", mpk.display());
+
+        let dir = tempfile::tempdir().expect("tempdir");
+        let data = dir.path().join("datasets");
+        for (class, seed_base) in [("alpha", 100u64), ("beta", 200u64)] {
+            let class_dir = data.join(class);
+            std::fs::create_dir_all(&class_dir).expect("class dir");
+            for i in 0..3u64 {
+                write_noise(&class_dir.join(format!("s{i}.wav")), 1, seed_base + i);
+            }
+        }
+
+        let out = dir.path().join("out").join("head.mpk");
+        let cfg = FinetuneConfig {
+            data,
+            backbones: BackboneCatalogue {
+                candidates: vec![
+                    // Missing on host (and unsupported without rknpu): must be
+                    // skipped, not fatal.
+                    BackboneRef {
+                        kind: BackboneKind::Rknn,
+                        path: PathBuf::from("/nonexistent/backbone.rknn"),
+                        hash: None,
+                    },
+                    BackboneRef {
+                        kind: BackboneKind::Burn,
+                        path: mpk.clone(),
+                        hash: None,
+                    },
+                ],
+            },
+            serving_backbone: Some(BackboneRef {
+                kind: BackboneKind::Burn,
+                path: mpk,
+                hash: None,
+            }),
+            init_head: None,
+            out: out.clone(),
+            epochs: 2,
+            batch: 4,
+            lr: 0.01,
+            val_split: 0.34,
+            seed: 42,
+        };
+
+        let events: Mutex<Vec<Event>> = Mutex::new(Vec::new());
+        let output = run(&cfg, &|_| {}, &|e| events.lock().push(e), &|| false)
+            .expect("end-to-end finetune must succeed with the bundled backbone");
+
+        assert_eq!(output.classes, vec!["alpha", "beta"]);
+        assert!(output.head_mpk.exists(), "head.mpk must be written");
+        assert!(output.labels_txt.exists(), "labels.txt must be written");
+        let labels = std::fs::read_to_string(&output.labels_txt).expect("read labels");
+        assert_eq!(labels, "alpha\nbeta\n");
+
+        let events = events.lock();
+        let extract_completed = events
+            .iter()
+            .find_map(|e| match e {
+                Event::FeatureExtractCompleted {
+                    kept, dropped_io, ..
+                } => Some((*kept, *dropped_io)),
+                _ => None,
+            })
+            .expect("FeatureExtractCompleted event must be emitted");
+        assert_eq!(
+            extract_completed,
+            (6, 0),
+            "6 one-window noise files must all survive extraction",
+        );
+    }
+
     /// `extract_features` forwards EVERY finite window across multiple
     /// preproc passes when the total isn't a multiple of `BACKBONE_BATCH`
     /// -- guards the `is_last` trailing flush and the cross-pass `pending`
@@ -1949,28 +2299,6 @@ mod tests {
     fn extract_features_forwards_every_window_across_passes() {
         let _g = RNG_LOCK.lock();
         let dir = tempfile::tempdir().expect("tempdir");
-
-        // Mono 16-bit broadband NOISE at TARGET_SR (identity resample, so
-        // `secs` s -> `secs` windows); noise keeps every FFT bin non-zero so
-        // the spectrogram stays finite (a sine would NaN -> drop).
-        let write_noise = |path: &Path, secs: u32, seed: u64| {
-            let spec = hound::WavSpec {
-                channels: 1,
-                sample_rate: wav_io::TARGET_SR,
-                bits_per_sample: 16,
-                sample_format: hound::SampleFormat::Int,
-            };
-            let mut w = hound::WavWriter::create(path, spec).expect("wav create");
-            let mut state = seed | 1;
-            for _ in 0..(secs * wav_io::TARGET_SR) {
-                state = state
-                    .wrapping_mul(6364136223846793005)
-                    .wrapping_add(1442695040888963407);
-                let sample = (state >> 48) as i16;
-                w.write_sample(sample / 3).expect("write sample");
-            }
-            w.finalize().expect("finalize");
-        };
 
         // 66 files > PREPROC_FILE_BATCH (3 passes); 70 windows <
         // BACKBONE_BATCH so the dataset flushes via `is_last`.  Two 3 s
@@ -2023,14 +2351,22 @@ mod tests {
         // a sub-batch, making the kept-row count flaky.
         let device: burn::tensor::Device<InnerB> = Default::default();
         <InnerB as Backend>::seed(&device, 7);
-        let backbone = Backbone::<InnerB>::new(&device);
+        let mut extractor = FeatureExtractor::Burn {
+            net: Box::new(Backbone::<InnerB>::new(&device)),
+            device,
+        };
         let preproc = Preproc::new();
 
         let no_progress = |_: &Progress| {};
         let never_cancel = || false;
-        let (feats, labels, drops) =
-            extract_features(&backbone, &preproc, &examples, &no_progress, &never_cancel)
-                .expect("extract_features");
+        let (feats, labels, drops) = extract_features(
+            &mut extractor,
+            &preproc,
+            &examples,
+            &no_progress,
+            &never_cancel,
+        )
+        .expect("extract_features");
 
         assert_eq!(feats.len(), labels.len(), "feats/labels length mismatch");
         assert_eq!(
@@ -2475,7 +2811,8 @@ mod tests {
 
         let cfg = FinetuneConfig {
             data: dir.path().to_path_buf(),
-            backbone: PathBuf::from("/nonexistent/backbone.mpk"),
+            backbones: burn_only_catalogue("/nonexistent/backbone.mpk"),
+            serving_backbone: None,
             init_head: None,
             out: dir.path().join("out.mpk"),
             epochs: 1,
@@ -2591,7 +2928,8 @@ mod tests {
     fn validate_rejects_lr_above_max_learning_rate() {
         let mut cfg = FinetuneConfig {
             data: PathBuf::from("/nonexistent/data"),
-            backbone: PathBuf::from("/nonexistent/backbone.mpk"),
+            backbones: burn_only_catalogue("/nonexistent/backbone.mpk"),
+            serving_backbone: None,
             init_head: None,
             out: PathBuf::from("/nonexistent/out.mpk"),
             epochs: 1,

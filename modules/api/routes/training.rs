@@ -1,6 +1,8 @@
 //! Training endpoints. Body is the flattened [`TrainingCfg`]; the trainer always walks
-//! `<workspace>/datasets/`. Backbone comes from [`crate::api::AppState::training_backbone_path`]
-//! (resolved at boot from the first `kind = "burn"` launch candidate).
+//! `<workspace>/datasets/`. Backbone candidates come from
+//! [`crate::api::AppState::training_backbones`] (the launch catalogue filtered to supported
+//! kinds at boot); the job resolves the first loadable one -- NPU first on device, Burn
+//! `.mpk` fallback -- matching the serving resolution rule.
 
 use std::sync::Arc;
 
@@ -40,23 +42,24 @@ async fn start_training(
     // `ApiJson` enforced wire shape; this gates numeric ranges only.
     validate_training_cfg(&cfg).map_err(|e| ApiError::Bad(e.to_string()))?;
 
-    // Resolve backbone before the workspace check so a missing Burn candidate
+    // Resolve backbone candidates before the workspace check so an empty catalogue
     // (deployment misconfig) surfaces immediately, not behind a valid workspace lookup.
-    let backbone_path = state.training_backbone_path.ok_or_else(|| {
-        ApiError::File(crate::file_mgr::io_err(
-            "<launch.backbone.candidates[kind=\"burn\"]>",
+    let backbone_candidates = state.training_backbones.clone();
+    if backbone_candidates.is_empty() {
+        return Err(ApiError::File(crate::file_mgr::io_err(
+            "<launch.backbone.candidates>",
             std::io::Error::new(
                 std::io::ErrorKind::NotFound,
-                "no Burn backbone configured in launch TOML",
+                "no training backbone candidate in launch TOML that this build can load",
             ),
-        ))
-    })?;
+        )));
+    }
 
     // Workspace existence/revision snapshot + backbone file probe run on the
     // blocking pool to keep the runtime free under eMMC pressure.
     let workspace_id_for_check = workspace_id;
     let files_for_check = state.files.clone();
-    let backbone_for_check = backbone_path.clone();
+    let backbones_for_check = backbone_candidates.clone();
     let workspace_revision: crate::common::workspace::WorkspaceRevision =
         tokio::task::spawn_blocking(move || -> Result<_, ApiError> {
             // Classify so a missing workspace is 404 not 500: `summary` wraps
@@ -69,35 +72,39 @@ async fn start_training(
                         e,
                     )
                 })?;
-            // `metadata` not `symlink_metadata` so the probe follows symlinks like the
-            // loaders do (a symlink-to-.mpk inference uses must not 400); NotFound still
-            // distinguished from EACCES below.
-            match std::fs::metadata(&backbone_for_check) {
-                Ok(md) if md.is_file() => {}
-                Ok(_) => {
-                    return Err(ApiError::File(crate::file_mgr::io_err(
-                        backbone_for_check.display(),
+            // Admit if ANY candidate file is present (the job-side resolver
+            // skips unusable ones); else report the first candidate's failure
+            // (declaration order = operator preference). `metadata` not
+            // `symlink_metadata`: the probe follows symlinks like the loaders
+            // do; NotFound still distinguished from EACCES below.
+            let mut first_failure: Option<ApiError> = None;
+            let mut any_usable = false;
+            for cand in &backbones_for_check.candidates {
+                let failure = match std::fs::metadata(&cand.path) {
+                    Ok(md) if md.is_file() => {
+                        any_usable = true;
+                        break;
+                    }
+                    Ok(_) => crate::file_mgr::io_err(
+                        cand.path.display(),
                         std::io::Error::new(
                             std::io::ErrorKind::InvalidInput,
                             "deployment backbone path is not a regular file",
                         ),
-                    )));
-                }
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                    return Err(ApiError::File(crate::file_mgr::io_err(
-                        backbone_for_check.display(),
+                    ),
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => crate::file_mgr::io_err(
+                        cand.path.display(),
                         std::io::Error::new(
                             std::io::ErrorKind::NotFound,
                             "deployment backbone not found",
                         ),
-                    )));
-                }
-                Err(e) => {
-                    return Err(ApiError::File(crate::file_mgr::io_err(
-                        backbone_for_check.display(),
-                        e,
-                    )));
-                }
+                    ),
+                    Err(e) => crate::file_mgr::io_err(cand.path.display(), e),
+                };
+                first_failure.get_or_insert(ApiError::File(failure));
+            }
+            if !any_usable && let Some(failure) = first_failure {
+                return Err(failure);
             }
             Ok(summary.core.workspace_revision.clone())
         })
@@ -110,7 +117,8 @@ async fn start_training(
         head_id,
         workspace_revision,
         training_cfg: cfg,
-        backbone_path,
+        backbone_candidates,
+        serving_backbone: state.serving_backbone.clone(),
     };
 
     // Admission gate: takes the global `max_train_jobs = 1` slot and stamps a workspace

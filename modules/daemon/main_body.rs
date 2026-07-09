@@ -661,9 +661,11 @@ async fn async_main(args: Cli) -> Result<()> {
     // Process inference FIRST so `head` is set before any consumer (opus_stream,
     // AppState) reads it. Some=succeeded, None=skipped, Err=boot failed ->
     // continue without inference.
+    let mut serving_backbone: Option<crate::inference::BackboneRef> = None;
     match inference_outcome {
-        Ok(Some((engine_handle, hb_pump_handle, real_head))) => {
+        Ok(Some((engine_handle, hb_pump_handle, real_head, served_backbone_ref))) => {
             head = real_head;
+            serving_backbone = Some(served_backbone_ref);
             // The spawn_blocking closure sees shutdown only via the token it
             // polls between iterations, so register the token alongside the
             // handle for a clean exit within the 5 s budget.
@@ -995,15 +997,19 @@ async fn async_main(args: Cli) -> Result<()> {
         std::sync::Arc::new(monitor.clone());
     let training_registry: std::sync::Arc<dyn crate::training::TrainingRegistry> =
         std::sync::Arc::new(training);
-    // Trainer's backbone = the first `kind = "burn"` candidate (training always
-    // needs a Burn `.mpk` regardless of inference build features). `None` ->
-    // the training route 404s at request time so the daemon still boots.
-    let training_backbone_path = launch
-        .backbone
-        .candidates
-        .iter()
-        .find(|c| c.kind == crate::inference::BackboneKind::Burn)
-        .map(|c| c.path.clone());
+    // Trainer's candidates = the serving catalogue filtered to kinds this
+    // build can load (so the route's existence probe only stats loadable
+    // kinds); the job resolves first-usable, mirroring serving. Empty -> the
+    // training route errors at request time and the daemon still boots.
+    let training_backbones = crate::inference::BackboneCatalogue {
+        candidates: launch
+            .backbone
+            .candidates
+            .iter()
+            .filter(|c| c.kind.is_supported())
+            .cloned()
+            .collect(),
+    };
     let app_state = crate::api::AppState {
         config: config.clone(),
         head: head_store,
@@ -1015,7 +1021,8 @@ async fn async_main(args: Cli) -> Result<()> {
         broadcast_lag_reader,
         active_mutex,
         default_head: default_head.clone(),
-        training_backbone_path,
+        training_backbones,
+        serving_backbone,
         jobs: jobs_registry,
     };
     let api_router = crate::api::router_v1_nested(app_state);
@@ -1780,8 +1787,10 @@ fn synthetic_head_for_dev() -> Result<HotHead> {
 }
 
 /// Build + spawn the inference engine and its heartbeat-pump, returning the
-/// engine's `spawn_blocking` handle, the pump handle, and the loaded `HotHead`
-/// (threaded into API state for `POST /active`). The pump re-publishes the
+/// engine's `spawn_blocking` handle, the pump handle, the loaded `HotHead`
+/// (threaded into API state for `POST /active`), and the served backbone's
+/// catalogue identity (threaded into training jobs for the train/serve
+/// feature-basis warning). The pump re-publishes the
 /// engine's heartbeat AND owns the wedge-watchdog that `process::abort()`s on
 /// `STALE_ABORT_AFTER` of silence; its lifecycle ties to `engine_hb_tx`
 /// channel-close, NOT the master shutdown token, so exiting on
@@ -1800,8 +1809,9 @@ async fn boot_inference(
     JoinHandle<Result<()>>,
     JoinHandle<Result<(), std::convert::Infallible>>,
     HotHead,
+    crate::inference::BackboneRef,
 )> {
-    let backbone = build_backbone_pipeline(backbone_catalogue).await?;
+    let (backbone, serving_backbone) = build_backbone_pipeline(backbone_catalogue).await?;
     tracing::info!(
         target: "acoustics",
         backbone = backbone.description(),
@@ -2009,21 +2019,30 @@ async fn boot_inference(
             .run_blocking(reader, infer_tx, shutdown)
             .map_err(|e| anyhow::anyhow!("inference run: {e}"))
     });
-    Ok((join, hb_pump_handle, head))
+    Ok((join, hb_pump_handle, head, serving_backbone))
 }
 
 /// Pick the inference backbone by walking `[[backbone.candidates]]` in
-/// declaration order, returning the first that loads on this build. Heavy work
-/// (I/O, sha256, RKNN FFI init, Burn `.mpk` parse) runs in `spawn_blocking` so
-/// the async worker isn't stalled. RKNN library discovery is owned by
-/// `RknnBackbone::load` (`RKNN_LIB` / `LD_LIBRARY_PATH` search), not the daemon.
+/// declaration order, returning the first that loads on this build plus its
+/// catalogue [`crate::inference::BackboneRef`] (training compares against it
+/// for the train/serve feature-basis warning). Heavy work (I/O, sha256, RKNN
+/// FFI init, Burn `.mpk` parse) runs in `spawn_blocking` so the async worker
+/// isn't stalled. RKNN library discovery is owned by `RknnBackbone::load`
+/// (`RKNN_LIB` / `LD_LIBRARY_PATH` search), not the daemon.
 async fn build_backbone_pipeline(
     catalogue: crate::inference::BackboneCatalogue,
-) -> Result<crate::inference::BackbonePipeline> {
-    tokio::task::spawn_blocking(move || catalogue.load_first_supported())
-        .await
-        .map_err(|e| anyhow::anyhow!("spawn_blocking join (backbone): {e}"))?
-        .map_err(|e| anyhow::anyhow!("backbone selection: {e}"))
+) -> Result<(
+    crate::inference::BackbonePipeline,
+    crate::inference::BackboneRef,
+)> {
+    tokio::task::spawn_blocking(move || {
+        catalogue
+            .load_first_supported_indexed()
+            .map(|(pipeline, idx)| (pipeline, catalogue.candidates[idx].clone()))
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("spawn_blocking join (backbone): {e}"))?
+    .map_err(|e| anyhow::anyhow!("backbone selection: {e}"))
 }
 
 async fn try_bind_uds(path: &std::path::Path, mode: u32) -> Result<tokio::net::UnixListener> {

@@ -75,7 +75,8 @@ fn fresh_state(dir: &std::path::Path) -> AppState {
             path: dir.join("bundled_default/head.mpk"),
             labels_path: dir.join("bundled_default/labels.txt"),
         }),
-        training_backbone_path: None,
+        training_backbones: Default::default(),
+        serving_backbone: None,
         jobs,
     }
 }
