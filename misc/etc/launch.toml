@@ -55,8 +55,7 @@ broadcast_capacity = 64
 # Ordered backbone candidates: the first that this build supports AND
 # loads wins, for BOTH streaming inference and training feature
 # extraction -- trained heads are fit on the exact feature basis they
-# are served against.  Keep the pair representing the same model (a
-# faithful, MAE-verified `.mpk` <-> `.rknn` conversion).
+# are served against.
 [[backbone.candidates]]
 kind = "rknn"
 path = "misc/backbones/backbone.rknn"
