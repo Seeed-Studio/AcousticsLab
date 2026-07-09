@@ -151,9 +151,10 @@ pub fn fresh_app_state(dir: &Path) -> AppState {
             path: dir.join("bundled_default/head.mpk"),
             labels_path: dir.join("bundled_default/labels.txt"),
         }),
-        // None: no fixture consumer exercises `POST /train`; the train pipeline
-        // has its own router that stubs a backbone and wires it through here.
-        training_backbone_path: None,
+        // Empty: no fixture consumer exercises `POST /train`; the train pipeline
+        // has its own router that stubs a backbone catalogue and wires it here.
+        training_backbones: Default::default(),
+        serving_backbone: None,
         jobs,
     }
 }

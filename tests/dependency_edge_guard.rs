@@ -120,7 +120,13 @@ const ALLOWED_EDGES: &[(&str, &[&str])] = &[
     ("sched", &[]),
     ("status", &["common"]),
     ("stream_io", &["common", "proto"]),
-    ("training", &["common", "file_mgr", "model", "preproc"]),
+    // `training -> inference`: feature extraction reuses the serving backbone
+    // stack (catalogue walk + NPU/Burn wrappers) so heads are fit on the basis
+    // serving classifies with, instead of forking the MAE-verified path.
+    (
+        "training",
+        &["common", "file_mgr", "inference", "model", "preproc"],
+    ),
 ];
 
 /// Every Rust file under `modules/`, paired with its top-level module.

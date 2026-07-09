@@ -99,8 +99,9 @@ fn fresh_router(dir: &Path) -> (Router, Arc<dyn FsService>) {
             path: dir.join("bundled_default/head.mpk"),
             labels_path: dir.join("bundled_default/labels.txt"),
         }),
-        // Unused: these tests never hit `POST /train`.
-        training_backbone_path: None,
+        // Unused (empty): these tests never hit `POST /train`.
+        training_backbones: Default::default(),
+        serving_backbone: None,
         jobs,
     };
     (router_v1_nested(app), files)

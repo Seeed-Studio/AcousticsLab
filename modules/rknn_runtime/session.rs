@@ -385,8 +385,10 @@ impl Drop for Session {
 /// missing terminator means the whole buffer is text).
 fn c_fixed_str_to_string<const N: usize>(buf: &[c_char; N]) -> Result<String> {
     // SAFETY: `c_char` matches `u8` size/align, so the `N`-wide reinterpret is
-    // in-bounds and shares `buf`'s lifetime.
-    let bytes: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr() as *const u8, N) };
+    // in-bounds and shares `buf`'s lifetime. `.cast()` (not `as`): `c_char` is
+    // already `u8` on aarch64 but `i8` on x86, and clippy rejects the same-type
+    // `as` cast on the former.
+    let bytes: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr().cast::<u8>(), N) };
     let end = bytes.iter().position(|&b| b == 0).unwrap_or(N);
     let s = std::str::from_utf8(&bytes[..end])?;
     Ok(s.to_string())
