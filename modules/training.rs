@@ -15,7 +15,6 @@ pub(crate) mod registry;
 pub use finetune::{ClassCount, EpochMetrics, Stage};
 pub use registry::TrainingRegistry;
 
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU8, Ordering};
 
@@ -52,7 +51,12 @@ pub struct TrainingJob {
     /// Recorded in the head manifest for stale detection.
     pub workspace_revision: WorkspaceRevision,
     pub training_cfg: TrainingCfg,
-    pub backbone_path: PathBuf,
+    /// Ordered extractor candidates (supported kinds only); semantics on
+    /// `finetune::FinetuneConfig::backbones`.
+    pub backbone_candidates: crate::inference::BackboneCatalogue,
+    /// Serving's boot-loaded candidate, for the resolver's basis-divergence
+    /// warning; semantics on `finetune::FinetuneConfig::serving_backbone`.
+    pub serving_backbone: Option<crate::inference::BackboneRef>,
 }
 
 pub use crate::common::error::Severity;
@@ -117,7 +121,8 @@ pub enum FailPayload {
     },
     /// Post-spawn numeric/shape validation failure on the derived config.
     InvalidConfig { detail: String },
-    /// Burn `.mpk` load/save error.
+    /// Model-artifact failure: Burn `.mpk` load/save, or the feature-extractor
+    /// backbone (candidate resolution / NPU inference fault).
     ModelError { detail: String },
     /// Mid-training NaN/+Inf. Pre-step abort means the live head is NOT
     /// poisoned; the prior best-epoch snapshot remains usable.
@@ -400,6 +405,11 @@ fn fail_payload_from_error(
         },
         TrainingError::Finetune(F::Model(e)) => FailPayload::ModelError {
             detail: e.to_string(),
+        },
+        // Backbone failures (no usable candidate, NPU fault) are
+        // model-artifact problems on the wire.
+        TrainingError::Finetune(F::Backbone(detail)) => FailPayload::ModelError {
+            detail: detail.clone(),
         },
         TrainingError::Io { path, source } => FailPayload::Io {
             path: strip(path),
@@ -684,7 +694,8 @@ impl JobRegistry {
 
         // Detached: shutdown reaches the worker via `cancel`; the
         // blocking pool can't abort mid-batch, so cancel latency is
-        // bounded by one BACKBONE_BATCH (~hundreds of ms). `JobHandle`
+        // bounded by one BACKBONE_BATCH drain (~hundreds of ms on the
+        // Burn path; the NPU path polls per window). `JobHandle`
         // is consumed at terminal; if the closure panics first,
         // `JobHandle::Drop` records `Failed`.
         tokio::spawn(async move {
@@ -936,9 +947,12 @@ async fn run_job(
     job_handle: Option<JobHandle>,
 ) -> Result<TrainingResult, TrainingError> {
     let workspace_dir = crate::file_mgr::schema::workspace_dir_for(files.root(), &job.workspace_id);
+    // First candidate = planned extractor; the finetune resolver logs any fallback.
     let backbone_basename = job
-        .backbone_path
-        .file_name()
+        .backbone_candidates
+        .candidates
+        .first()
+        .and_then(|c| c.path.file_name())
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_else(|| "<unknown>".to_string());
 
@@ -1172,7 +1186,8 @@ async fn run_job_inner(
 
     let ft_cfg = finetune::FinetuneConfig {
         data: dataset_root.clone(),
-        backbone: job.backbone_path.clone(),
+        backbones: job.backbone_candidates.clone(),
+        serving_backbone: job.serving_backbone.clone(),
         init_head: None,
         out: output_head.clone(),
         epochs: job.training_cfg.epochs as usize,

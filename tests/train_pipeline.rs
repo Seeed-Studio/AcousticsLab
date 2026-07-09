@@ -36,7 +36,7 @@ impl LagSource for StubLagSource {
 }
 
 /// Router rooted at `dir` with an opaque-bytes backbone stub wired through
-/// `AppState::training_backbone_path` (production's channel); the trainer
+/// `AppState::training_backbones` (production's channel); the trainer
 /// fails at load time (`JobState::Failed`, no head committed), which is
 /// sufficient since admission is the unit under test.
 fn fresh_router(dir: &Path) -> Router {
@@ -70,7 +70,7 @@ fn fresh_router_with_backbone(dir: &Path, backbone_path: std::path::PathBuf) -> 
         n_classes: 2,
     }));
     // FsServiceImpl roots at `dir` (workspaces at `dir/workspaces/<id>/`), but
-    // the backbone comes from `training_backbone_path`, so the FsService root
+    // the backbone comes from `training_backbones`, so the FsService root
     // does not constrain where the stub lives.
     let jobs = Arc::new(acousticslab::file_mgr::JobRegistry::new(
         acousticslab::file_mgr::JobRegistryCfg::default(),
@@ -98,7 +98,14 @@ fn fresh_router_with_backbone(dir: &Path, backbone_path: std::path::PathBuf) -> 
             path: dir.join("bundled_default/head.mpk"),
             labels_path: dir.join("bundled_default/labels.txt"),
         }),
-        training_backbone_path: Some(backbone_path),
+        training_backbones: acousticslab::inference::BackboneCatalogue {
+            candidates: vec![acousticslab::inference::BackboneRef {
+                kind: acousticslab::inference::BackboneKind::Burn,
+                path: backbone_path,
+                hash: None,
+            }],
+        },
+        serving_backbone: None,
         jobs,
     })
 }

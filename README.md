@@ -20,7 +20,7 @@ The next generation of [AcousticsLab](https://github.com/Seeed-Studio/AcousticsL
 
 - **Fully-local & Private** - Zero telemetry and no cloud dependency, audio and datasets remain strictly on your hardware, ~99% accuracy for causal tasks.
 - **Low latency & Efficient** - Heterogeneous inference pipeline, processes 1-second data in ~4.9 ms on RV1126B, keeping CPU free for other tasks.
-- **Tiny footprint** - On-device finetuning with 0.1GB RAM (~60 samples), inference consumes only ~18 MB RSS and < 5% CPU, packaged as a single, dependency-free binary.
+- **Tiny footprint** - On-device finetuning with 0.1GB RAM (~60 samples) and NPU-accelerated feature extraction at near-zero CPU load; inference consumes only ~18 MB RSS and < 5% CPU, packaged as a single, dependency-free binary.
 - **Browser-based edge lab** - Manage datasets, fine-tune models, deploy directly from an intuitive web UI—no cloud GPU needed.
 - **Universal compatibility** - Pairs native NPU acceleration with automatic CPU fallback to run seamlessly across practically any Linux SBC.
 - **Seamless integration** - Easy export, import & distributed deploy across different architectures and NPU capabilities with same weights, zero-downtime by model hot-swapping, integrates with your stack via WebSockets, Unix sockets, and a standard HTTP/JSON + SSE control plane.
