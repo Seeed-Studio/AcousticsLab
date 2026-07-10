@@ -146,7 +146,8 @@ export const de = {
         'Der Kategoriename darf nicht mit einem Unterstrich beginnen (für integrierte Klassen reserviert).',
       starts_with_hyphen:
         'Der Kategoriename darf nicht mit einem Bindestrich beginnen (aus Sicherheitsgründen).',
-      bad_chars: 'Nur Buchstaben, Ziffern, Leerzeichen, Punkte, Bindestriche und Unterstriche sind zulässig.',
+      bad_chars:
+        'Nur Buchstaben, Ziffern, Leerzeichen, Punkte, Bindestriche und Unterstriche sind zulässig.',
       category_max_bytes: (max) => `Der Kategoriename darf höchstens ${max} Bytes lang sein.`,
       category_empty: 'Der Kategoriename darf nicht leer sein.'
     },

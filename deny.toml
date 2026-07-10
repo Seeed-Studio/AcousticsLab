@@ -4,9 +4,12 @@ no-default-features = false
 
 [output]
 feature-depth = 1
+
+[advisories]
 ignore = [
     { id = "RUSTSEC-2024-0436", reason = "paste 1.0.15 unmaintained, pulled transitively by burn-ndarray; no safe upgrade, bumps when burn upstream switches" },
     { id = "RUSTSEC-2025-0141", reason = "bincode 2.0.1 unmaintained, pulled transitively by burn-core; no safe upgrade, bumps when burn upstream switches" },
+    { id = "RUSTSEC-2026-0150", reason = "audiopus_sys 0.2.2 unmaintained (CMake 4.0 build issue; we link libopus via pkg-config, unaffected), pulled by opus 0.3.1 which has no newer release; revisit if the opus binding moves" },
 ]
 
 [licenses]

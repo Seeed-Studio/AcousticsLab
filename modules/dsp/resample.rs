@@ -50,7 +50,7 @@ pub fn sinc_resampler(from_sr: u32, to_sr: u32) -> SincResampler {
         sinc_len: 256,
         // 0.95 Nyquist (~5% anti-alias guard-band, audible band un-attenuated) per
         // the scipy reference the classifier trained against.
-        f_cutoff: 0.95,
+        f_cutoff: Some(0.95),
         interpolation: SincInterpolationType::Cubic,
         // Polyphase depth; 512 = scipy high-quality default. Halving causes audible
         // imaging on borderline ratios.
