@@ -5,6 +5,7 @@ import { awaitJobTerminal } from '$lib/api/jobs';
 import { enqueueDelete } from '$lib/api/delete-queue';
 import { deleteAllForWorkspace } from '$lib/idb/db';
 import { categories as categoriesStore } from '$lib/stores/categories.svelte';
+import { config as configStore } from '$lib/stores/config.svelte';
 import { drafts as draftsStore } from '$lib/stores/drafts.svelte';
 import { slices as slicesStore } from '$lib/stores/slices.svelte';
 import { training as trainingStore } from '$lib/stores/training.svelte';
@@ -109,6 +110,9 @@ class WorkspacesStore {
         await awaitJobTerminal(ack.job_id);
         this.all = this.all.filter((w) => w.id !== id);
         this.selected.delete(id);
+        // The active record survives this delete with a stale alive flag; client-side nav never
+        // re-fetches config, so patch it here or the dashboard keeps reading "workspace".
+        configStore.markWorkspaceDetached(id);
         // categories.forget required or each delete leaks SvelteMap entries (asymmetric with IDB below).
         categoriesStore.forget(id);
         draftsStore.forget(id);

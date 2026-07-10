@@ -22,6 +22,10 @@
   import TrainPane from '$lib/components/training/TrainPane.svelte';
   import DeployPane from '$lib/components/deploy/DeployPane.svelte';
   import { training as trainingStore } from '$lib/stores/training.svelte';
+  import { config } from '$lib/stores/config.svelte';
+
+  // Route-entry revalidation, as on the dashboard: DeployPane's deploy-state pill reads `config.active`.
+  if (!config.loading) void config.refreshActive();
 
   let detail = $state<WorkspaceDetail | null>(null);
   let loading = $state(true);
