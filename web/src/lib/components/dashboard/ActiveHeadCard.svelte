@@ -163,13 +163,16 @@
       {m.dashboard.active_head_card.heading}
     </h3>
     {#if pillLabel}
+      <!-- Detached fills with warning-LINE: the orphaned card behind is warning-soft, so a soft fill
+           dissolves into it. Line-vs-soft separation holds per mode (the card's border relies on it)
+           and soft-fg ink keeps AA on the line fill in both (~7.3:1 light, ~9:1 dark). -->
       <span
         class="rounded-full px-2 py-0.5 text-[11px] font-medium capitalize tracking-wide transition-colors duration-200"
         class:bg-surface-2={pillLabel === 'default'}
         class:text-fg-secondary={pillLabel === 'default'}
         class:bg-accent-soft={pillLabel === 'workspace'}
         class:text-accent-soft-fg={pillLabel === 'workspace'}
-        class:bg-warning-soft={pillLabel === 'detached'}
+        class:bg-warning-line={pillLabel === 'detached'}
         class:text-warning-soft-fg={pillLabel === 'detached'}
         title={pillLabel === 'detached'
           ? m.dashboard.active_head_card.pill_detached_title

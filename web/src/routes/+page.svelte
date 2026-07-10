@@ -1,9 +1,15 @@
 <script lang="ts">
+  import { config } from '$lib/stores/config.svelte';
   import { streams } from '$lib/stores/streams.svelte';
   import { m } from '$lib/i18n';
   import VisualizationPanel from '$lib/components/dashboard/VisualizationPanel.svelte';
   import InferencePanel from '$lib/components/dashboard/InferencePanel.svelte';
   import ConfigurationPanel from '$lib/components/dashboard/ConfigurationPanel.svelte';
+
+  // Revalidate the active record on entry (another tab / the CLI can detach it between visits);
+  // the guard skips the duplicate GET while the layout's bootstrap refresh is still in flight,
+  // which is always the case on a fresh page load (parent script init runs first).
+  if (!config.loading) void config.refreshActive();
 
   // Acquire page-level (not per-panel) to keep the worker alive across panels' independent
   // mount cycles; acquire() returns a dispose closure that Svelte runs as cleanup on route exit.
