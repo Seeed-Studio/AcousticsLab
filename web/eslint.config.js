@@ -43,6 +43,11 @@ export default ts.config(
         parser: ts.parser,
         svelteConfig
       }
+    },
+    rules: {
+      // New in eslint 10 recommended; its lexical data-flow can't see runes:
+      // assigning a `$bindable` prop is read by the parent through the binding.
+      'no-useless-assignment': 'off'
     }
   },
   {

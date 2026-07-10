@@ -16,11 +16,7 @@ import {
 } from '$lib/utils/alpkg';
 
 export type WorkspaceExportPhase =
-  | 'preparing-workspace'
-  | 'preparing-datasets'
-  | 'preparing-heads'
-  | 'packing'
-  | 'downloading';
+  'preparing-workspace' | 'preparing-datasets' | 'preparing-heads' | 'packing' | 'downloading';
 
 export interface WorkspaceExportProgress {
   phase: WorkspaceExportPhase;
