@@ -29,11 +29,7 @@ export type WorkspaceImportPhase =
   | 'converting-tfjs';
 
 export type HeadImportPhase =
-  | 'uploading-files'
-  | 'starting-convert'
-  | 'awaiting-terminal'
-  | 'cleaning-up'
-  | 'done';
+  'uploading-files' | 'starting-convert' | 'awaiting-terminal' | 'cleaning-up' | 'done';
 
 export interface WorkspaceImportProgress {
   phase: WorkspaceImportPhase;

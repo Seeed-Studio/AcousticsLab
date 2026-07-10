@@ -44,7 +44,7 @@ tracing = { workspace = true }
 clap = { version = "=4.6.1", features = ["derive"] }
 tracing-subscriber = { workspace = true, features = ["env-filter", "fmt"] }
 tracing-appender = "=0.2.5"
-anyhow = "=1.0.102"
+anyhow = "=1.0.103"
 # Optional global allocator (binary only). v3 via absent `v2` -- do NOT add `v2`.
 mimalloc = { version = "=0.1.52", default-features = false, features = ["extended"], optional = true }
 # Direct dep for `mi_collect`; unifies with mimalloc's transitive copy.
@@ -79,7 +79,7 @@ notify = "=8.2.0"
 toml = { workspace = true }
 # Drop sysinfo's `network`, `component`, `user` defaults; the
 # daemon only samples process info, CPU, and disk usage.
-sysinfo = { version = "=0.39.3", default-features = false, features = ["disk", "system"] }
+sysinfo = { version = "=0.39.6", default-features = false, features = ["disk", "system"] }
 
 burn = { workspace = true, features = ["std", "ndarray"] }
 burn-ndarray = { version = "=0.21.0", default-features = false, features = ["std", "simd"] }
@@ -88,7 +88,7 @@ rayon = "1"
 libloading = { version = "0.9", optional = true } # RKNN loader (`rknpu`)
 
 [target.'cfg(target_os = "linux")'.dependencies]
-alsa = { version = "=0.11.0", optional = true }
+alsa = { version = "=0.12.0", optional = true }
 
 [build-dependencies]
 prost-build = "=0.14.4"
@@ -166,17 +166,17 @@ thiserror = "=2.0.18"
 serde = { version = "=1.0.228", features = ["derive"] }
 serde_json = "=1.0.150"
 toml = "=1.1.2"
-uuid = "=1.23.3"
-time = "=0.3.47"
-arc-swap = "=1.9.1"
+uuid = "=1.23.4"
+time = "=0.3.53"
+arc-swap = "=1.9.2"
 parking_lot = { version = "=0.12.5", features = ["arc_lock"] }
 dashmap = "=6.2.1"
-bytes = "=1.11.1"
+bytes = "=1.12.1"
 prost = "=0.14.4"
 sha2 = "=0.11.0"
 burn = { version = "=0.21.0", default-features = false }
-rubato = "=3.0.0"
-audioadapter-buffers = "=3.0.0"
+rubato = "=4.0.0"
+audioadapter-buffers = "=4.0.0"
 axum = { version = "=0.8.9", default-features = false }
 tower = "=0.5.3"
 futures-util = "=0.3.32"
