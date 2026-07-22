@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package acoustics;
+package acousticslab.v1;
 
 // AudioFrame -- one Opus-encoded packet emitted by the Opus encoder
 // pipeline (44.1 k -> 48 k -> libopus, 20 ms mono frames).

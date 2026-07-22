@@ -7,7 +7,8 @@ import { decodeEnvelope, type TopK } from './proto';
 // posts transferable PCM windows + inference frames. Frames drain regardless of UI visibility:
 // the daemon disconnects clients that lag > 64 frames.
 
-const SUBPROTOCOL = 'acoustics';
+// Must match the daemon's WS_SUBPROTOCOL exactly (strict admission + echo).
+const SUBPROTOCOL = 'acousticslab.v1';
 // Doubles per failure up to MAX, resets to MIN on onopen. 1 s (not sub-second) because each retry
 // posts a `status` that re-renders the main-thread pill, so faster retries flood it under steady
 // reject; daemon restarts take >= 1 s anyway.

@@ -29,8 +29,8 @@ fn relaxed_router(audio_cap: usize, infer_cap: usize) -> StreamRouter {
 const TEST_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Under strict default policy (`require_subprotocol = true`), upgrades not
-/// requesting the `acoustics` subprotocol are rejected, locking out old clients
-/// that would stream pre-Envelope payloads they can't decode.
+/// requesting the supported `WS_SUBPROTOCOL` token are rejected, locking out
+/// old clients that would stream payloads they can't decode.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn tcp_ws_refuses_missing_subprotocol() {
     let router = StreamRouter::new();
