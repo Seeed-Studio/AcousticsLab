@@ -151,7 +151,7 @@ workspace = true
 
 [workspace]
 resolver = "2"
-members = []
+members = ["webd", "cli"]
 
 [workspace.package]
 edition = "2024"
