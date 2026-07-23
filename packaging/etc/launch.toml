@@ -1,0 +1,76 @@
+## AcousticsLab daemon launch manifest (packaged defaults, FHS layout).
+##
+## Read ONCE at boot (edits need a `systemctl restart acousticslabd`).
+## The mutable workspace root is passed on the command line by the systemd
+## unit (`--workspace /var/lib/acousticslab`); `config.toml` is
+## auto-materialized there on first boot.
+
+## Linux first-choice ALSA capture candidate.  Compiled only with
+## `--features alsa-real`; otherwise FirstAvailable falls through to the
+## mock candidate below so the daemon still boots.  Replace `hw_spec` to
+## match your hardware -- `arecord -L` enumerates capture PCMs.
+[[mic.candidates]]
+id = "linux-default"
+channels = [0]
+
+[mic.candidates.source]
+kind = "alsa"
+hw_spec = "default"
+# 960 frames at 48 kHz is 20 ms, matching the Opus stream frame.
+period_size = 960
+buffer_size = 3840
+
+[[mic.candidates]]
+id = "default-mock"
+channels = [0]
+
+[mic.candidates.source]
+kind = "mock"
+period_size = 512
+sample_rate = 44100
+
+[[mic.candidates.source.waveforms]]
+kind = "sine"
+freq_hz = 1000.0
+amplitude = 0.25
+
+# Raw inference output: a length-prefixed protobuf Envelope stream for other
+# local processes to consume.  World-readable (0o666) so any local tool can
+# attach; the /run/acousticslab directory perms still gate reachability.
+[output.inference]
+uds_path = "/run/acousticslab/result.sock"
+uds_mode = 438
+
+# HTTP API + WebSocket streams + SSE, served ONLY over a Unix domain socket.
+# The browser cannot reach a UDS directly -- `acousticslab-webd` is the TCP
+# front that serves the SPA and reverse-proxies here.  Mode 0o660: reachable by
+# the `acousticslab` group (both services run as that user), not world.
+[api]
+uds_path = "/run/acousticslab/api.sock"
+uds_mode = 432
+broadcast_capacity = 64
+
+# Ordered backbone candidates: the first this build supports AND loads wins,
+# for both streaming inference and training feature extraction.  The RKNN
+# entry is tried first on NPU-capable devices; drop `backbone.rknn` in place
+# to enable it, otherwise the CPU (burn) backbone below is used.
+[[backbone.candidates]]
+kind = "rknn"
+path = "/usr/share/acousticslab/backbones/backbone.rknn"
+
+[[backbone.candidates]]
+kind = "burn"
+path = "/usr/share/acousticslab/backbones/backbone.mpk"
+
+[head.default]
+path = "/usr/share/acousticslab/heads/default/head.mpk"
+labels_path = "/usr/share/acousticslab/heads/default/labels.txt"
+
+[training_defaults]
+epochs = 50
+batch_size = 16
+learning_rate_e6 = 100
+
+[file]
+max_upload_bytes = 268435456
+max_concurrent_uploads = 4

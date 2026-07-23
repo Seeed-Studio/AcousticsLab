@@ -1,0 +1,35 @@
+[Unit]
+Description=AcousticsLab on-device audio classification daemon
+After=sound.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/acousticslabd --workspace /var/lib/acousticslab --config /etc/acousticslab/launch.toml
+Restart=on-failure
+RestartSec=2
+
+User=acousticslab
+Group=acousticslab
+SupplementaryGroups=audio
+StateDirectory=acousticslab
+StateDirectoryMode=0750
+RuntimeDirectory=acousticslab
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+ConfigurationDirectory=acousticslab
+AmbientCapabilities=CAP_SYS_NICE
+CapabilityBoundingSet=CAP_SYS_NICE
+LimitRTPRIO=50
+RestrictRealtime=false
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

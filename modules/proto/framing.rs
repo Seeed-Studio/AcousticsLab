@@ -7,7 +7,7 @@ use prost::Message;
 use thiserror::Error;
 
 /// WS handlers refuse upgrades whose `Sec-WebSocket-Protocol` lacks this exact value.
-pub const WS_SUBPROTOCOL: &str = "acoustics";
+pub const WS_SUBPROTOCOL: &str = "acousticslab.v1";
 
 /// Reader cap on UDS frame length (~16x headroom); a larger prefix is closed
 /// without parsing, defending against a giant-prefix DoS.
@@ -210,14 +210,18 @@ mod tests {
         }
     }
 
-    /// Pin the WS token lowercase: admission is case-insensitive, but axum's
-    /// `protocols()` echo is case-SENSITIVE, so only the lowercase literal yields a
-    /// 101 the browser accepts. Keep it unversioned; else a version bump silently
-    /// splits daemon from web client.
+    /// Pin the WS token: admission is case-insensitive, but axum's `protocols()`
+    /// echo is case-SENSITIVE, so only this lowercase literal yields a 101 the
+    /// browser accepts. `.v1` is the wire-break negotiation surface (a v2 daemon
+    /// lists both); the web client's SUBPROTOCOL literal moves in lockstep.
     #[test]
-    fn ws_subprotocol_token_is_lowercase_unversioned() {
-        assert_eq!(WS_SUBPROTOCOL, "acoustics");
-        assert!(WS_SUBPROTOCOL.bytes().all(|b| b.is_ascii_lowercase()));
+    fn ws_subprotocol_token_is_lowercase_versioned() {
+        assert_eq!(WS_SUBPROTOCOL, "acousticslab.v1");
+        assert!(
+            WS_SUBPROTOCOL
+                .bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'.')
+        );
     }
 
     /// Scratch capacity stays bounded across many `_into` calls; a split leaking

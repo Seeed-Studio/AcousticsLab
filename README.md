@@ -28,6 +28,14 @@ The next generation of [AcousticsLab](https://github.com/Seeed-Studio/AcousticsL
 
 ## Quick start
 
+### Install on a device
+
+Grab the `.deb` (Debian/Ubuntu) or `.rpm` (Fedora/RHEL) for `arm64`/`amd64` from the releases page, verify the checksum, and install.
+
+That installs the daemon, the web console, and the `acousticslab` management CLI, and starts them under systemd. The console is on <http://127.0.0.1:8080> (loopback by default). See [docs/INSTALL.md](docs/INSTALL.md) for picking a microphone, exposing the console, and NPU setup.
+
+### Build from source
+
 **Prerequisites:** Rust 1.94+ (edition 2024), `protoc` 3.21+, `cmake` 3.5+.
 
 1. Run the `acousticslabd` daemon (host/dev build, uses a mock tone if no real mic is configured):
@@ -46,7 +54,6 @@ The next generation of [AcousticsLab](https://github.com/Seeed-Studio/AcousticsL
 
   Open the URL Vite prints; it proxies the API and streams to the daemon.
 
-*Note: stay tuned for pre-built binaries and package manager releases.*
 
 
 ## How it works
@@ -98,7 +105,7 @@ flowchart TB
   end
 
   uds_consumer(["<b>External Consumer</b><br/>local C / C++ · Envelope reader"])
-  gw(["<b>Reverse Proxy</b><br/>e.g. nginx · TLS · auth · CORS"])
+  gw(["<b>acousticslab-webd</b><br/>serves the SPA · reverse-proxies to the daemon<br/>front with TLS/auth to expose off-device"])
 
   subgraph g_browser["Browser SPA · web/ (SvelteKit · adapter-static)"]
     fe_stream["<b>Stream Worker</b><br/>2× WebSocket · WebCodecs Opus decode"]
@@ -145,7 +152,7 @@ flowchart TB
   head ==>|"top-k -> infer_tx"| router
   router ==>|"per subscriber"| ws
   ws ==>|"WS binary"| gw
-  gw ==>|"wss /stream/*"| fe_stream
+  gw ==>|"ws /stream/*"| fe_stream
   router -->|"infer only"| udsout
   udsout -->|"length-prefixed Envelope"| uds_consumer
   rknn_bb -->|"Session::infer"| rknn
@@ -161,7 +168,7 @@ flowchart TB
   cfg_launch -.->|"catalogue"| cfg_mic
   disk_toml <-->|"load · atomic write · watch"| cfg_cell
   cfg_launch -.->|"backbone catalogue"| bb_dyn
-  fe_api -->|"HTTPS · SSE"| gw
+  fe_api -->|"HTTP · SSE"| gw
   gw -->|"HTTP (proxied)"| api_routes
   api_routes --- api_state
   api_state -->|"workspaces · assets · heads"| fs

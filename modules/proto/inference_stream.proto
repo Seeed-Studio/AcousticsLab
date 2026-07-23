@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package acoustics;
+package acousticslab.v1;
 
 // InferenceFrame -- one classification result emitted at the configured
 // inference stride.  `top_k` carries the top N classes (per

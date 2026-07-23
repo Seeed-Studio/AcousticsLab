@@ -136,7 +136,7 @@ impl crate::common::traits::lag_source::LagSource for BroadcastLagCounters {
 pub struct TransportPolicy {
     /// `0` disables the cap; else the WS handler rejects 429 at `subscribers >= max`.
     pub max_connections_per_stream: u32,
-    /// When `true` (default) every WS upgrade MUST list `acoustics` in
+    /// When `true` (default) every WS upgrade MUST list [`WS_SUBPROTOCOL`] in
     /// `Sec-WebSocket-Protocol` or it is rejected 400. `false` when admission
     /// is gated elsewhere (UDS perms, localhost-only bind).
     pub require_subprotocol: bool,
@@ -374,7 +374,7 @@ async fn infer_ws_handler(
         .into_response()
 }
 
-/// Require `Sec-WebSocket-Protocol: acoustics` when
+/// Require the [`WS_SUBPROTOCOL`] token in `Sec-WebSocket-Protocol` when
 /// [`TransportPolicy::require_subprotocol`] is `true` (default): axum's
 /// `protocols([...])` echoes the matched token but does NOT reject clients that
 /// omit it (RFC 6455 allows accept-without-echo), so an outdated client could
@@ -1213,7 +1213,8 @@ mod tests {
         let mut other = HeaderMap::new();
         other.insert(
             header::SEC_WEBSOCKET_PROTOCOL,
-            "acoustics.v0, soap".parse().expect("hv"),
+            // Legacy pre-v1 token: strict policy keeps old clients locked out.
+            "acoustics, soap".parse().expect("hv"),
         );
         assert_eq!(
             enforce_subprotocol(&other, &strict),
