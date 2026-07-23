@@ -26,9 +26,9 @@ install -d -o acousticslab -g acousticslab -m 0750 /var/lib/acousticslab
 if [ -d /run/systemd/system ]; then
     systemctl daemon-reload || true
     if [ "$FIRST_INSTALL" = 1 ]; then
-        systemctl enable --now acousticslabd.service acousticslab-web.service || true
+        systemctl enable --now acousticslabd.service acousticslab-webd.service || true
     else
-        systemctl try-restart acousticslabd.service acousticslab-web.service || true
+        systemctl try-restart acousticslabd.service acousticslab-webd.service || true
     fi
 fi
 

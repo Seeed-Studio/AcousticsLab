@@ -77,8 +77,8 @@ contents:
     dst: /usr/lib/systemd/system/acousticslabd.service
     file_info:
       mode: 0644
-  - src: ./packaging/systemd/acousticslab-web.service
-    dst: /usr/lib/systemd/system/acousticslab-web.service
+  - src: ./packaging/systemd/acousticslab-webd.service
+    dst: /usr/lib/systemd/system/acousticslab-webd.service
     file_info:
       mode: 0644
 

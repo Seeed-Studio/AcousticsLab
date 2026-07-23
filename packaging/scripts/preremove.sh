@@ -8,7 +8,7 @@ case "${1:-}" in
 esac
 
 if [ -d /run/systemd/system ] && [ "$FINAL" = 1 ]; then
-    systemctl disable --now acousticslab-web.service acousticslabd.service || true
+    systemctl disable --now acousticslab-webd.service acousticslabd.service || true
 fi
 
 exit 0
