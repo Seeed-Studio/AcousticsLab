@@ -1,0 +1,107 @@
+name: Build packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag or SHA to build (default: whatever 'Use workflow from' selects)"
+        required: false
+        type: string
+      version:
+        description: "Package version (default: [workspace.package] version in Cargo.toml)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-packages-${{ inputs.ref || github.ref }}
+
+env:
+  NFPM_VERSION: "2.47.0"
+
+jobs:
+  build:
+    name: ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            nfpm_asset: nfpm_2.47.0_Linux_x86_64.tar.gz
+            nfpm_sha256: 0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            nfpm_asset: nfpm_2.47.0_Linux_arm64.tar.gz
+            nfpm_sha256: 1c0f5f2999b9a974bfb04fdb0cc3306096de530ac5dbb25d739cc5f5219c919c
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            protobuf-compiler cmake pkg-config libasound2-dev binutils rpm
+
+      - name: Install nfpm
+        run: |
+          curl -fsSL --retry 3 -o /tmp/nfpm.tar.gz \
+            "https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}/${{ matrix.nfpm_asset }}"
+          echo "${{ matrix.nfpm_sha256 }}  /tmp/nfpm.tar.gz" | sha256sum -c -
+          tar xzf /tmp/nfpm.tar.gz -C /tmp nfpm
+          sudo install -m755 /tmp/nfpm /usr/local/bin/nfpm
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.nvmrc
+
+      - name: Set up Rust and record toolchain
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustc --version
+          cargo --version
+          protoc --version
+          node --version
+          npm --version
+          nfpm --version
+          ldd --version | head -1
+
+      - name: Build packages
+        env:
+          ARCH: ${{ matrix.arch }}
+          PKG_VERSION: ${{ inputs.version }}
+        run: ./scripts/package.sh
+
+      - name: Inspect artifacts
+        working-directory: target/packages
+        run: |
+          for f in *.deb; do
+            echo "::group::$f"
+            dpkg-deb -I "$f"
+            dpkg-deb -c "$f" | awk '{print $1, $6}'
+            echo "::endgroup::"
+          done
+          for f in *.rpm; do
+            echo "::group::$f"
+            rpm -qip "$f"
+            echo "--- requires ---"; rpm -qRp "$f"
+            echo "--- files ---"; rpm -qlp "$f"
+            echo "::endgroup::"
+          done
+          sha256sum -- *.deb *.rpm | tee "SHA256SUMS-${{ matrix.arch }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acousticslab-${{ matrix.arch }}
+          path: |
+            target/packages/*.deb
+            target/packages/*.rpm
+            target/packages/SHA256SUMS-${{ matrix.arch }}
+          if-no-files-found: error

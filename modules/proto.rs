@@ -10,7 +10,7 @@
 #![allow(clippy::doc_lazy_continuation)]
 #![allow(clippy::doc_overindented_list_items)]
 
-include!(concat!(env!("OUT_DIR"), "/acoustics.rs"));
+include!(concat!(env!("OUT_DIR"), "/acousticslab.v1.rs"));
 
 // Sync framing decoder lives here so producers avoid `stream_io`'s tokio::io
 // dep tree.
