@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { workspaces, MAX_WORKSPACES } from '$lib/stores/workspaces.svelte';
+  import { workspaces, WORKSPACE_NOTICE_THRESHOLD } from '$lib/stores/workspaces.svelte';
   import { m } from '$lib/i18n';
   import Button from '$lib/components/ui/Button.svelte';
   import EmptyState from '$lib/components/ui/EmptyState.svelte';
@@ -42,7 +42,7 @@
   const isAllSelected = $derived(
     selectableCount > 0 && workspaces.selected.size >= selectableCount
   );
-  const atCapacity = $derived(workspaces.entries.length >= MAX_WORKSPACES);
+  const manyWorkspaces = $derived(workspaces.entries.length >= WORKSPACE_NOTICE_THRESHOLD);
   const overlayActive = $derived(
     createOpen ||
       deleteTarget !== null ||
@@ -58,7 +58,6 @@
   }
 
   function openCreate(): void {
-    if (atCapacity) return;
     createOpen = true;
   }
 
@@ -166,11 +165,9 @@
     }
     const items = [];
     items.push({
-      label: atCapacity ? t.menu_new_at_cap(MAX_WORKSPACES) : t.menu_new,
-      disabled: atCapacity,
+      label: t.menu_new,
       onclick: () => (createOpen = true)
     });
-    // Enabled at capacity: import into an existing target is valid; the create-new branch shows the cap inline.
     items.push({
       label: t.menu_import,
       onclick: () => (importOpen = true)
@@ -203,9 +200,17 @@
 <header class="mb-5 flex flex-wrap items-center justify-between gap-3">
   <div>
     <h1 class="text-base font-semibold text-fg">{m.workspace.list.title}</h1>
-    <p class="mt-0.5 text-xs text-fg-muted">
-      {#if atCapacity}
-        {m.workspace.list.at_cap_subtitle(MAX_WORKSPACES)}
+    <p class="mt-0.5 text-xs text-fg-muted" role={manyWorkspaces ? 'status' : undefined}>
+      {#if manyWorkspaces}
+        <!-- Advisory status, not a gate (nothing is blocked; count is a weak proxy for the real
+             resource, disk). Deliberately one rung below the bordered warning banner (that rung
+             means faults): the TrainPane amber-subtitle tone, applied only to the emphasized
+             fact while the guidance tail stays muted. Weight + wording (not color alone) carry
+             the signal, so no glyph is needed. -->
+        <span class="font-medium text-warning-soft-fg"
+          >{m.workspace.list.many_workspaces_count(workspaces.entries.length)}</span
+        >
+        {m.workspace.list.many_workspaces_hint}
       {:else}
         {m.workspace.list.default_subtitle}
       {/if}
@@ -255,18 +260,9 @@
           <UploadIcon />
           {m.workspace.list.import_button_label}
         </Button>
-        <Button
-          onclick={openCreate}
-          disabled={atCapacity}
-          ariaLabel={m.workspace.list.new_button_aria}
-          title={atCapacity ? m.workspace.list.new_at_cap_title : undefined}
-        >
-          {#if atCapacity}
-            {m.workspace.list.new_at_cap_label(workspaces.entries.length, MAX_WORKSPACES)}
-          {:else}
-            <PlusIcon />
-            {m.workspace.list.new_button_label}
-          {/if}
+        <Button onclick={openCreate} ariaLabel={m.workspace.list.new_button_aria}>
+          <PlusIcon />
+          {m.workspace.list.new_button_label}
         </Button>
       {/if}
     </div>
