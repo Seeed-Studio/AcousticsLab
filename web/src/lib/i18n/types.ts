@@ -685,7 +685,8 @@ export interface Messages {
   workspace: {
     list: {
       title: string;
-      at_cap_subtitle: (max: number) => string;
+      many_workspaces_count: (count: number) => string;
+      many_workspaces_hint: string;
       default_subtitle: string;
       daemon_unavailable_title: string;
       loading: string;
@@ -694,8 +695,6 @@ export interface Messages {
       selected_count_aria: (count: number) => string;
       new_button_label: string;
       new_button_aria: string;
-      new_at_cap_label: (count: number, max: number) => string;
-      new_at_cap_title: string;
       import_button_label: string;
       import_button_aria: string;
       import_button_title: string;
@@ -718,7 +717,6 @@ export interface Messages {
       menu_select_workspaces: string;
       menu_done_exit: string;
       menu_new: string;
-      menu_new_at_cap: (max: number) => string;
       menu_import: string;
     };
     /** Covers the /workspaces/[id] chrome around the page title, which is the workspace name (data, never translated). */

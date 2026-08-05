@@ -699,8 +699,9 @@ export const ja = {
   workspace: {
     list: {
       title: 'ワークスペース',
-      at_cap_subtitle: (max) =>
-        `ワークスペース上限の ${max} 件に達しました。もう 1 つ作成する前に 1 つ削除してください。`,
+      many_workspaces_count: (count) => `ワークスペース ${count} 件`,
+      many_workspaces_hint:
+        '— データセットはディスク容量を消費するため、使っていないものは削除を検討してください。',
       default_subtitle:
         '各ワークスペースには、ラベル付きデータセットとそこからトレーニングされたモデルが保持されます。',
       daemon_unavailable_title: 'デバイスを利用できません',
@@ -711,8 +712,6 @@ export const ja = {
       selected_count_aria: (count) => `${count} 件選択済み`,
       new_button_label: '新規ワークスペース',
       new_button_aria: '新規ワークスペース',
-      new_at_cap_label: (count, max) => `上限到達 · ${count}/${max}`,
-      new_at_cap_title: '上限に達しました。先にワークスペースを 1 つ削除してください。',
       import_button_label: 'インポート',
       import_button_aria: 'ワークスペースをインポート',
       import_button_title: 'ALPKG または TFJS バンドルからワークスペースをインポート',
@@ -735,7 +734,6 @@ export const ja = {
       menu_select_workspaces: 'ワークスペースを選択',
       menu_done_exit: '完了（選択を終了）',
       menu_new: '新規ワークスペース',
-      menu_new_at_cap: (max) => `新規ワークスペース（上限 ${max} 件に到達）`,
       menu_import: 'ワークスペースをインポート'
     },
     detail: {

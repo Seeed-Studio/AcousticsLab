@@ -711,8 +711,9 @@ export const de = {
   workspace: {
     list: {
       title: 'Arbeitsbereiche',
-      at_cap_subtitle: (max) =>
-        `Das Limit von ${max} Arbeitsbereichen ist erreicht. Einen löschen, bevor ein weiterer erstellt wird.`,
+      many_workspaces_count: (count) => `${count} Arbeitsbereiche`,
+      many_workspaces_hint:
+        '– Datensätze belegen Speicherplatz; nicht mehr genutzte gelegentlich löschen.',
       default_subtitle:
         'Jeder Arbeitsbereich enthält einen beschrifteten Datensatz und alle daraus trainierten Modelle.',
       daemon_unavailable_title: 'Gerät nicht verfügbar',
@@ -723,8 +724,6 @@ export const de = {
       selected_count_aria: (count) => `${count} ausgewählt`,
       new_button_label: 'Neuer Arbeitsbereich',
       new_button_aria: 'Neuer Arbeitsbereich',
-      new_at_cap_label: (count, max) => `Limit erreicht · ${count}/${max}`,
-      new_at_cap_title: 'Limit erreicht. Zuerst einen Arbeitsbereich löschen.',
       import_button_label: 'Importieren',
       import_button_aria: 'Arbeitsbereich importieren',
       import_button_title: 'Arbeitsbereich aus einem ALPKG- oder TFJS-Bundle importieren',
@@ -748,7 +747,6 @@ export const de = {
       menu_select_workspaces: 'Arbeitsbereiche auswählen',
       menu_done_exit: 'Fertig (Auswahl beenden)',
       menu_new: 'Neuer Arbeitsbereich',
-      menu_new_at_cap: (max) => `Neuer Arbeitsbereich (Limit von ${max})`,
       menu_import: 'Arbeitsbereich importieren'
     },
     detail: {

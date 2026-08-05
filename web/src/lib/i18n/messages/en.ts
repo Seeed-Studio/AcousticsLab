@@ -684,8 +684,8 @@ export const en = {
   workspace: {
     list: {
       title: 'Workspaces',
-      at_cap_subtitle: (max) =>
-        `Reached the ${max} workspace limit. Delete one before creating another.`,
+      many_workspaces_count: (count) => `${count} workspaces`,
+      many_workspaces_hint: '— datasets take disk space, so consider deleting unused ones.',
       default_subtitle: 'Each workspace holds a labeled dataset and any models trained from it.',
       daemon_unavailable_title: 'Device unavailable',
       loading: 'loading workspaces…',
@@ -695,8 +695,6 @@ export const en = {
       selected_count_aria: (count) => `${count} selected`,
       new_button_label: 'New workspace',
       new_button_aria: 'New workspace',
-      new_at_cap_label: (count, max) => `At cap · ${count}/${max}`,
-      new_at_cap_title: 'Limit reached. Delete one workspace first.',
       import_button_label: 'Import',
       import_button_aria: 'Import workspace',
       import_button_title: 'Import workspace from an ALPKG or TFJS bundle',
@@ -719,7 +717,6 @@ export const en = {
       menu_select_workspaces: 'Select workspaces',
       menu_done_exit: 'Done (exit selection)',
       menu_new: 'New workspace',
-      menu_new_at_cap: (max) => `New workspace (at ${max} cap)`,
       menu_import: 'Import workspace'
     },
     detail: {
