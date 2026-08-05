@@ -18,8 +18,10 @@ import type {
   Uuid
 } from '$lib/api/types';
 
-// UI-only hard cap (creation disabled at capacity); the daemon enforces no limit.
-export const MAX_WORKSPACES = 16;
+// Advisory threshold, NOT a cap: creation is never blocked (the daemon enforces no limit either).
+// At or past this count the list page's subtitle becomes a warning-toned tidy-up status -- the
+// resource that actually runs out is disk (surfaced via health), which count is only a weak proxy for.
+export const WORKSPACE_NOTICE_THRESHOLD = 16;
 
 function byCreatedDesc(a: WorkspaceListEntry, b: WorkspaceListEntry): number {
   // Parse instants: variable-width fractional seconds break lexical compare (".1Z" > ".12Z").

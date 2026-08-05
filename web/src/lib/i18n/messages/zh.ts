@@ -660,7 +660,8 @@ export const zh = {
   workspace: {
     list: {
       title: '工作区',
-      at_cap_subtitle: (max) => `已达到 ${max} 个工作区的上限。请先删除一个再创建新的。`,
+      many_workspaces_count: (count) => `${count} 个工作区`,
+      many_workspaces_hint: '—— 数据集会占用磁盘空间，建议删除不再使用的工作区。',
       default_subtitle: '每个工作区保存有带标签的数据集以及由它训练出的所有模型。',
       daemon_unavailable_title: '设备不可用',
       loading: '正在加载工作区…',
@@ -669,8 +670,6 @@ export const zh = {
       selected_count_aria: (count) => `已选择 ${count} 个`,
       new_button_label: '新建工作区',
       new_button_aria: '新建工作区',
-      new_at_cap_label: (count, max) => `已达上限 · ${count}/${max}`,
-      new_at_cap_title: '已达上限。请先删除一个工作区。',
       import_button_label: '导入',
       import_button_aria: '导入工作区',
       import_button_title: '从 ALPKG 或 TFJS 包导入工作区',
@@ -693,7 +692,6 @@ export const zh = {
       menu_select_workspaces: '选择工作区',
       menu_done_exit: '完成（退出选择）',
       menu_new: '新建工作区',
-      menu_new_at_cap: (max) => `新建工作区（已达 ${max} 个上限）`,
       menu_import: '导入工作区'
     },
     detail: {
