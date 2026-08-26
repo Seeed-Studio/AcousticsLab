@@ -116,22 +116,38 @@ impl Preproc {
             }
         }
 
-        // Z-normalize the plane: f32 accumulation (NEON-vectorizable, ~10k-term sum
-        // stays inside the mantissa) with population variance (/N), matching TF `moments`.
+        // Z-normalize the plane with population variance (/N), matching TF `moments`.
+        // LANES independent accumulators let the ~10k-term reductions vectorize; a
+        // sequential `sum += v` cannot, since LLVM may not reassociate IEEE adds. Do
+        // NOT fold these into `f32::algebraic_add`: it reassociates but explicitly
+        // drops the NaN/+/-Inf guarantee the silence path below relies on. Splitting
+        // by hand also lands nearer TF -- LANES partials round independently.
+        const LANES: usize = 8;
         let count = (NFrames::USIZE * NBins::USIZE) as f32;
-        let mut sum: f32 = 0.0;
-        for row in out.iter() {
-            for &v in row.iter() {
-                sum += v;
+        let (lanes, rest) = out.as_slice().as_flattened().as_chunks::<LANES>();
+
+        let mut acc = [0.0f32; LANES];
+        for c in lanes {
+            for (a, &v) in acc.iter_mut().zip(c) {
+                *a += v;
             }
         }
+        let mut sum: f32 = rest.iter().sum();
+        for a in acc {
+            sum += a;
+        }
         let mean = sum / count;
-        let mut sq: f32 = 0.0;
-        for row in out.iter() {
-            for &v in row.iter() {
+
+        let mut acc = [0.0f32; LANES];
+        for c in lanes {
+            for (a, &v) in acc.iter_mut().zip(c) {
                 let d = v - mean;
-                sq += d * d;
+                *a += d * d;
             }
+        }
+        let mut sq: f32 = rest.iter().map(|&v| (v - mean) * (v - mean)).sum();
+        for a in acc {
+            sq += a;
         }
         let std = (sq / count).sqrt();
         // No `std == 0` guard by design: silence -> -inf log-mags -> NaN mean/std ->
@@ -173,8 +189,8 @@ fn load_bundled_window() -> [f32; FRAME_LEN] {
         "bundled window byte count must equal FRAME_LEN * sizeof(f32)",
     );
     let mut w = [0.0f32; FRAME_LEN];
-    for (i, chunk) in WINDOW_BYTES.chunks_exact(4).enumerate() {
-        w[i] = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+    for (i, &chunk) in WINDOW_BYTES.as_chunks::<4>().0.iter().enumerate() {
+        w[i] = f32::from_le_bytes(chunk);
     }
     w
 }

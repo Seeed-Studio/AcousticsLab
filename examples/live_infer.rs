@@ -237,8 +237,8 @@ fn read_f32_stream(mut stdout: std::process::ChildStdout, sink: Arc<Mutex<Vec<f3
                 if full > 0 {
                     {
                         let mut g = sink.lock();
-                        for c in carry[..full].chunks_exact(4) {
-                            g.push(f32::from_le_bytes([c[0], c[1], c[2], c[3]]));
+                        for &c in carry[..full].as_chunks::<4>().0 {
+                            g.push(f32::from_le_bytes(c));
                         }
                     }
                     carry.drain(..full);

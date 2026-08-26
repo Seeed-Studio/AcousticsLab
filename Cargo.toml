@@ -41,16 +41,16 @@ tokio = { workspace = true, features = [
 tokio-util = { workspace = true, features = ["rt", "io"] }
 tracing = { workspace = true }
 
-clap = { version = "=4.6.1", features = ["derive"] }
+clap = { version = "=4.6.6", features = ["derive"] }
 tracing-subscriber = { workspace = true, features = ["env-filter", "fmt"] }
 tracing-appender = "=0.2.5"
-anyhow = "=1.0.103"
+anyhow = "=1.0.104"
 # Optional global allocator (binary only). v3 via absent `v2` -- do NOT add `v2`.
 mimalloc = { version = "=0.1.52", default-features = false, features = ["extended"], optional = true }
 # Direct dep for `mi_collect`; unifies with mimalloc's transitive copy.
 libmimalloc-sys = { version = "=0.1.49", default-features = false, features = ["extended"], optional = true }
 
-opus = "=0.3.1"
+opus = "=0.4.0"
 rubato = { workspace = true }
 audioadapter-buffers = { workspace = true }
 rustfft = "6"
@@ -69,10 +69,10 @@ axum = { workspace = true, default-features = false, features = [
     "tracing",
     "ws",
 ] }
-hyper = "=1.10.1"
+hyper = "=1.11.0"
 # HTTP/1.1-only (WS upgrade pins listeners to http1), so no `server-auto`.
 hyper-util = { version = "=0.1.20", features = ["server", "tokio", "service"] }
-libc = "=0.2.186"
+libc = "=0.2.189"
 futures-util = { workspace = true }
 
 notify = "=8.2.0"
@@ -88,20 +88,20 @@ rayon = "1"
 libloading = { version = "0.9", optional = true } # RKNN loader (`rknpu`)
 
 [target.'cfg(target_os = "linux")'.dependencies]
-alsa = { version = "=0.12.0", optional = true }
+alsa = { version = "=0.12.1", optional = true }
 
 [build-dependencies]
 prost-build = "=0.14.4"
 
 [dev-dependencies]
 criterion = { workspace = true }
-tokio-tungstenite = "=0.29.0"
+tokio-tungstenite = "=0.30.0"
 # Test-only: backdates fixture mtime for deterministic age/retention assertions.
 filetime = "=0.2.29"
 # test-only features (`process`: lifecycle tests spawn the binary as a subprocess).
 tokio = { workspace = true, features = ["test-util", "process"] }
 tower = { workspace = true, features = ["util"] }
-http-body-util = "=0.1.3"
+http-body-util = "=0.1.5"
 urlencoding = "=2.1.3"
 nix = { workspace = true, features = ["signal"] }
 # Only `tests/audio_buffer_loom.rs` under `RUSTFLAGS=--cfg audio_buffer_loom`;
@@ -158,16 +158,16 @@ edition = "2024"
 version = "0.1.0"
 
 [workspace.dependencies]
-tokio = "=1.52.3"
-tokio-util = "=0.7.18"
+tokio = "=1.53.1"
+tokio-util = "=0.7.19"
 tracing = "=0.1.44"
 tracing-subscriber = { version = "=0.3.23", default-features = false, features = ["std", "registry"] }
-thiserror = "=2.0.18"
-serde = { version = "=1.0.228", features = ["derive"] }
-serde_json = "=1.0.150"
-toml = "=1.1.2"
-uuid = "=1.23.4"
-time = "=0.3.53"
+thiserror = "=2.0.20"
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+toml = "=1.1.4"
+uuid = "=1.25.0"
+time = "=0.3.55"
 arc-swap = "=1.9.2"
 parking_lot = { version = "=0.12.5", features = ["arc_lock"] }
 dashmap = "=6.2.1"
@@ -175,11 +175,11 @@ bytes = "=1.12.1"
 prost = "=0.14.4"
 sha2 = "=0.11.0"
 burn = { version = "=0.21.0", default-features = false }
-rubato = "=4.0.0"
-audioadapter-buffers = "=4.0.0"
+rubato = "=5.0.0"
+audioadapter-buffers = "=5.2.0"
 axum = { version = "=0.8.9", default-features = false }
 tower = "=0.5.3"
-futures-util = "=0.3.32"
+futures-util = "=0.3.34"
 tempfile = "=3.27.0"
 criterion = { version = "=0.8.2", default-features = false }
 nix = { version = "=0.31.3", default-features = false, features = ["fs"] }

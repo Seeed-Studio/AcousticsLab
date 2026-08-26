@@ -944,8 +944,8 @@ fn read_f32_at_checked(
             declared: end,
         })?;
     let mut out = vec![0.0f32; count];
-    for (i, chunk) in slice.chunks_exact(4).enumerate() {
-        let v = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+    for (i, &chunk) in slice.as_chunks::<4>().0.iter().enumerate() {
+        let v = f32::from_le_bytes(chunk);
         if !v.is_finite() {
             return Err(ConvertError::NonFiniteWeight {
                 tensor: tensor.to_string(),

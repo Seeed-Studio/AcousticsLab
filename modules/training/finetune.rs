@@ -1253,11 +1253,9 @@ impl FeatureExtractor {
                     dropped_nan.fetch_add(n, Ordering::Relaxed);
                 } else {
                     for ((_, label), feat_chunk) in
-                        sub.iter().zip(out_data.chunks_exact(FEATURE_DIM))
+                        sub.iter().zip(out_data.as_chunks::<FEATURE_DIM>().0)
                     {
-                        let mut arr = [0f32; FEATURE_DIM];
-                        arr.copy_from_slice(feat_chunk);
-                        feats.push(arr);
+                        feats.push(*feat_chunk);
                         labels.push(*label);
                     }
                 }

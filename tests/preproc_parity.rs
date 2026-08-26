@@ -52,8 +52,8 @@ fn read_npy_f32(path: &Path) -> (Vec<usize>, Vec<f32>) {
     let data_start = header_start + header_len;
     let raw = &buf[data_start..data_start + n * 4];
     let mut out = Vec::with_capacity(n);
-    for chunk in raw.chunks_exact(4) {
-        out.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+    for &chunk in raw.as_chunks::<4>().0 {
+        out.push(f32::from_le_bytes(chunk));
     }
     (shape, out)
 }

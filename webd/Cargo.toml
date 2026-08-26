@@ -11,9 +11,9 @@ path = "src/main.rs"
 
 [dependencies]
 axum = { workspace = true, features = ["http1", "tokio"] }
-hyper = { version = "=1.10.1", features = ["client", "http1"] }
+hyper = { version = "=1.11.0", features = ["client", "http1"] }
 hyper-util = { version = "=0.1.20", features = ["tokio"] }
-tower-http = { version = "=0.6.11", features = ["fs", "trace"] }
+tower-http = { version = "=0.7.0", features = ["fs", "trace"] }
 tokio = { workspace = true, features = [
     "io-util",
     "macros",
@@ -24,7 +24,7 @@ tokio = { workspace = true, features = [
 ] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter", "fmt"] }
-anyhow = "=1.0.103"
+anyhow = "=1.0.104"
 
 [lints]
 workspace = true
