@@ -38,11 +38,11 @@ fn main() -> std::process::ExitCode {
     );
     let mut spec: Box<[[f32; NBins::USIZE]; NFrames::USIZE]> =
         Box::new([[0.0f32; NBins::USIZE]; NFrames::USIZE]);
-    let mut it = bytes.chunks_exact(4);
+    let mut it = bytes.as_chunks::<4>().0.iter();
     for row in spec.iter_mut() {
         for v in row.iter_mut() {
             let c = it.next().unwrap();
-            *v = f32::from_le_bytes([c[0], c[1], c[2], c[3]]);
+            *v = f32::from_le_bytes(*c);
         }
     }
 

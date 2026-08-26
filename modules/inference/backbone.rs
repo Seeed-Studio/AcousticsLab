@@ -811,8 +811,10 @@ mod tests {
         let tfjs_f32 = |suffix: &str| -> Vec<f32> {
             let e = entry(suffix);
             blob[e.offset_bytes..e.offset_bytes + e.len_bytes]
-                .chunks_exact(4)
-                .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|&c| f32::from_le_bytes(c))
                 .collect()
         };
 
