@@ -375,7 +375,7 @@ export const zh = {
       error_wav_buffer_too_small: 'WAV 缓冲区太小（标准标头至少需要 44 字节）。',
       error_web_audio_unavailable: '此浏览器中无法使用 Web Audio API。',
       auto_stopped_at_cap: '已在时长上限处自动停止。',
-      silent_dropped_suffix: (count) => `已跳过 ${count} 个静音切片`
+      duplicates_collapsed_suffix: (count) => `已将 ${count} 个内容相同的切片合并为一个`
     },
     row: {
       badge_synced: '已同步',

@@ -37,8 +37,8 @@ fn main() -> std::process::ExitCode {
         return std::process::ExitCode::FAILURE;
     }
     let mut pcm = Box::new([0.0f32; WaveformLen::USIZE]);
-    for (i, c) in bytes.chunks_exact(4).enumerate() {
-        pcm[i] = f32::from_le_bytes([c[0], c[1], c[2], c[3]]);
+    for (i, &c) in bytes.as_chunks::<4>().0.iter().enumerate() {
+        pcm[i] = f32::from_le_bytes(c);
     }
     let mut preproc = Preproc::new();
     let spec = preproc.spectrogram(&pcm);

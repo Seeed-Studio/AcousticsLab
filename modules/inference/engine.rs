@@ -40,15 +40,17 @@ const BACKBONE_FAILURE_BUDGET: Duration = Duration::from_secs(5);
 
 /// Gap beyond which the failure streak re-anchors, so the budget spans only
 /// CONTIGUOUS backbone work: a wedge fails every exercised frame (never
-/// re-anchors, still trips), but two isolated failures bracketing a quiet room
-/// (backbone unexercised between) must not share one anchor. NOT applied to the
-/// NaN streak, which must survive idle (see [`EngineError::SustainedNanDrops`]).
+/// re-anchors, still trips), but two isolated failures bracketing an idle
+/// stretch (backbone unexercised between) must not share one anchor. NOT
+/// applied to the NaN streak, which must survive idle (see
+/// [`EngineError::SustainedNanDrops`]).
 const BACKBONE_FAILURE_GAP_RESET: Duration = Duration::from_secs(2);
 
 /// Wall-clock budget dropping NaN/Inf-bearing frames before surfacing the wedge:
 /// a backbone returning `Ok(())` with non-finite features slips past the
 /// `Err`-only [`BACKBONE_FAILURE_BUDGET`] and would starve forever, and the
-/// watchdog can't distinguish `frames_emitted == 0` from "no audio yet".
+/// watchdog can't distinguish `frames_emitted == 0` from "no audio yet". Shared
+/// by the spectrogram gate -- same starve-forever shape.
 const NAN_FAILURE_BUDGET: Duration = Duration::from_secs(5);
 
 /// Sleep after each failed backbone call so a fast-failing backbone (µs-return
@@ -77,11 +79,12 @@ pub enum EngineError {
     Backbone(#[from] BackboneError),
     #[error("encode InferenceFrame: {0}")]
     Encode(#[from] prost::EncodeError),
-    /// Non-finite BACKBONE-OUTPUT features dropped past `NAN_FAILURE_BUDGET`, so
-    /// the supervisor restarts rather than spin. Spectrogram-NaN is excluded: an
-    /// all-NaN spectrogram is the intentional digital-silence signal (preproc's
-    /// bare `ln` on zero-magnitude bins gives `-inf` log-mags, NaN-ing mean/std
-    /// and the whole plane), survivable forever so a muted mic doesn't trip this.
+    /// Non-finite frames dropped past `NAN_FAILURE_BUDGET`, so the supervisor
+    /// restarts rather than spin. Fed by BOTH gates: non-finite spectrogram
+    /// (non-finite PCM or preproc fault; silence yields a finite plane -- see
+    /// `preproc::MAG_SQ_FLOOR` -- and emits normally, so a muted mic can't trip
+    /// this) and non-finite backbone-output features (driver hiccup, fp16
+    /// overflow).
     #[error("non-finite frames dropped for {budget_ms} ms (streak {streak_count} frames)")]
     SustainedNanDrops { budget_ms: u64, streak_count: u64 },
 }
@@ -174,9 +177,9 @@ pub struct Heartbeat {
     /// Most recent emitted seq, or 0 if no frame yet.
     pub last_seq: u64,
     pub frames_emitted: u64,
-    /// Frames dropped on non-finite values, from both sites: a NaN/Inf
-    /// spectrogram (intentional digital silence, survivable forever) and NaN/Inf
-    /// backbone-output features (a fault gated by `NAN_FAILURE_BUDGET`).
+    /// Frames dropped at either non-finite gate (spectrogram, backbone
+    /// features), both budgeted by `NAN_FAILURE_BUDGET`; silence never
+    /// increments this (finite plane, emits normally).
     pub frames_dropped_nan: u64,
     /// Inference windows skipped on `Lagged`, `ceil(by_samples / hop_samples)`
     /// per event: missed cadence ticks, not `Lagged` events (one event commonly
@@ -374,7 +377,7 @@ impl InferenceEngine {
 
             match reader.peek_into(&mut pcm[..]) {
                 ReadStatus::Wait => {
-                    // Must NOT reset the feature-NaN streak: the SustainedNanDrops
+                    // Must NOT reset the NaN streak: the SustainedNanDrops
                     // budget must survive idle gaps so a wedge interleaved with
                     // inter-hop waits still trips.
                     self.send_waiting_heartbeat_throttled(&counters, &mut last_waiting_beat);
@@ -392,7 +395,7 @@ impl InferenceEngine {
                     reader.seek_latest(WaveformLen::USIZE);
                     counters.frames_dropped_lag =
                         counters.frames_dropped_lag.saturating_add(dropped_windows);
-                    // Must NOT reset the feature-NaN streak (see Wait path).
+                    // Must NOT reset the NaN streak (see Wait path).
                     self.send_heartbeat_state(EngineState::Lagged, &counters);
                     continue;
                 }
@@ -442,7 +445,7 @@ impl InferenceEngine {
                 reader.seek_latest(WaveformLen::USIZE);
                 counters.frames_dropped_lag =
                     counters.frames_dropped_lag.saturating_add(dropped_windows);
-                // Must NOT reset the feature-NaN streak (see Wait path).
+                // Must NOT reset the NaN streak (see Wait path).
                 self.send_heartbeat_state(EngineState::Lagged, &counters);
                 continue 'engine_main;
             }
@@ -463,16 +466,19 @@ impl InferenceEngine {
                 .iter()
                 .any(|v| !v.is_finite())
             {
+                // Preproc is finite for finite PCM (silence included) and the
+                // arbitrator scrubs capture, so this is a ring-writer bypass or
+                // preproc fault -- budgeted like feature-NaN.
                 tracing::warn!(
                     target: "inference",
                     seq = counters.last_seq + 1,
-                    "frame dropped: NaN/Inf in spec",
+                    "frame dropped: NaN/Inf in spec (non-finite PCM or preproc fault)",
                 );
-                counters.frames_dropped_nan = counters.frames_dropped_nan.saturating_add(1);
-                // Spectrogram-NaN is intentional silence-suppression: does NOT feed
-                // `bump_nan_streak` (silence survives forever); only the post-backbone
-                // feature-NaN gate counts toward the wedge.
-                self.send_heartbeat_state(EngineState::Running, &counters);
+                self.count_nonfinite_drop(
+                    &mut counters,
+                    &mut nan_streak_count,
+                    &mut nan_streak_start,
+                )?;
                 continue;
             }
 
@@ -555,14 +561,11 @@ impl InferenceEngine {
                     backbone = self.backbone.description(),
                     "frame dropped: NaN/Inf in backbone output features",
                 );
-                counters.frames_dropped_nan = counters.frames_dropped_nan.saturating_add(1);
-                bump_nan_streak(
+                self.count_nonfinite_drop(
+                    &mut counters,
                     &mut nan_streak_count,
                     &mut nan_streak_start,
-                    Instant::now(),
-                    NAN_FAILURE_BUDGET,
                 )?;
-                self.send_heartbeat_state(EngineState::Running, &counters);
                 continue;
             }
             // Past both NaN gates -- reset so the budget spans only CONSECUTIVE drops.
@@ -636,6 +639,26 @@ impl InferenceEngine {
         }
     }
 
+    /// Shared tail of both non-finite drop gates: count, bump the
+    /// `SustainedNanDrops` streak (propagating its budget error), heartbeat.
+    /// Call sites keep their own site-specific `warn!`.
+    fn count_nonfinite_drop(
+        &self,
+        counters: &mut EngineCounters,
+        nan_streak_count: &mut u64,
+        nan_streak_start: &mut Option<Instant>,
+    ) -> Result<(), EngineError> {
+        counters.frames_dropped_nan = counters.frames_dropped_nan.saturating_add(1);
+        bump_nan_streak(
+            nan_streak_count,
+            nan_streak_start,
+            Instant::now(),
+            NAN_FAILURE_BUDGET,
+        )?;
+        self.send_heartbeat_state(EngineState::Running, counters);
+        Ok(())
+    }
+
     fn send_heartbeat_state(&self, state: EngineState, counters: &EngineCounters) {
         // Copy out so the closure doesn't borrow self.monitor.
         let snap = *counters;
@@ -664,8 +687,6 @@ fn waiting_beat_due(last_sent: Option<Instant>, now: Instant, interval: Duration
 /// anchors at the FIRST call so the budget measures total streak duration, not
 /// inter-call gap; the caller resets (`count = 0; start = None;`) on a clean frame
 /// or backbone-Err transition, else the anchor conflates with backbone-Err windows.
-/// Called ONLY from the post-backbone feature-NaN gate (spectrogram-NaN is
-/// intentional silence, not fed here).
 fn bump_nan_streak(
     count: &mut u64,
     start: &mut Option<Instant>,

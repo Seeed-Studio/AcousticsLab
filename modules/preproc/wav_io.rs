@@ -63,6 +63,14 @@ pub enum PreprocError {
         sample_idx: usize,
         value: f32,
     },
+    /// Input too short (post-resample) for one full training window: padding
+    /// would fabricate labeled silence that now TRAINS, so snippet-chopping
+    /// rejects (lands in training's `dropped_io`). [`to_waveform`] still pads
+    /// for its diagnostic callers.
+    #[error(
+        "input too short: {got_samples} samples after resample, need >= {need} (one 1 s window)"
+    )]
+    TooShort { got_samples: usize, need: usize },
     /// Header duration exceeds [`MAX_INPUT_DURATION_SECS`]; caught before alloc.
     #[error(
         "wav {path} duration {duration_secs:.1}s exceeds cap {max_secs}s \
@@ -362,8 +370,8 @@ fn pad_to_window(resampled: &[f32]) -> Box<[f32; WaveformLen::USIZE]> {
 
 /// Snippet-chop variant of [`to_waveform`] yielding every non-overlapping
 /// [`WaveformLen::USIZE`]-sample window (multiple training examples per recording).
-/// Short input yields one zero-padded window byte-identical to [`to_waveform`]; long
-/// input up to `max_windows` full windows (clamped `>= 1`), trailing partial dropped.
+/// Sub-window input is [`PreprocError::TooShort`], never zero-padded; long input
+/// yields up to `max_windows` full windows (clamped `>= 1`), trailing partial dropped.
 pub fn to_waveform_windows(
     sr: u32,
     mono: Vec<f32>,
@@ -375,7 +383,10 @@ pub fn to_waveform_windows(
     let resampled = resample_to_target(sr, mono, cache, limit)?;
     let n_full = resampled.len() / WaveformLen::USIZE;
     if n_full == 0 {
-        return Ok(vec![pad_to_window(&resampled)]);
+        return Err(PreprocError::TooShort {
+            got_samples: resampled.len(),
+            need: WaveformLen::USIZE,
+        });
     }
     let n = n_full.min(max_windows);
     let mut out = Vec::with_capacity(n);
@@ -694,21 +705,29 @@ mod tests {
         }
     }
 
-    /// Long input chops into non-overlapping windows; short yields one padded
-    /// window matching `to_waveform`; `max_windows` caps and drops trailing partial.
+    /// Long input chops into non-overlapping windows; sub-window input is
+    /// `TooShort` while `to_waveform` still pads; `max_windows` caps and drops
+    /// the trailing partial.
     #[test]
-    fn to_waveform_windows_chops_long_and_pads_short() {
+    fn to_waveform_windows_chops_long_and_rejects_short() {
         let mut cache = ResamplerCache::empty();
 
         let short: Vec<f32> = (0..1000).map(|i| (i % 7) as f32 * 0.01).collect();
-        let w = to_waveform_windows(TARGET_SR, short.clone(), &mut cache, 8)
-            .expect("short to_waveform_windows");
-        assert_eq!(w.len(), 1, "short input must yield exactly one window");
+        let err = to_waveform_windows(TARGET_SR, short.clone(), &mut cache, 8)
+            .expect_err("sub-window input must reject, not pad");
+        match err {
+            PreprocError::TooShort { got_samples, need } => {
+                assert_eq!(got_samples, 1000);
+                assert_eq!(need, WaveformLen::USIZE);
+            }
+            other => panic!("expected TooShort, got {other:?}"),
+        }
+        // The single-window path keeps padding (diagnostics score what exists).
         let single = to_waveform(TARGET_SR, short.clone(), &mut cache).expect("to_waveform short");
-        assert_eq!(
-            &w[0][..],
-            &single[..],
-            "short window must match to_waveform"
+        assert_eq!(&single[..1000], &short[..], "audio prefix preserved");
+        assert!(
+            single[1000..].iter().all(|&s| s == 0.0),
+            "to_waveform pads the tail with zeros",
         );
 
         let n = WaveformLen::USIZE * 3;

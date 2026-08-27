@@ -1,7 +1,0 @@
-[env]
-# Lets audiopus_sys's vendored libopus (CMake) configure under CMake >= 4, which
-# dropped compatibility with its `cmake_minimum_required(VERSION <3.5)`. Needed
-# whenever the vendored opus is CMake-built: the aarch64 deploy build (see
-# scripts/cross-build-aarch64-linux-gnu.sh) and any native build that falls back
-# to the vendored source because no system libopus is installed.
-CMAKE_POLICY_VERSION_MINIMUM = "3.5"

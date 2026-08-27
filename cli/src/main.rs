@@ -275,6 +275,8 @@ fn discover_capture_hw() -> Result<Vec<HwDevice>> {
 
 /// Extract the value following the first occurrence of `key`, up to the next
 /// `,` (or end). E.g. `kv_after("hw:CARD=Mic,DEV=0", "DEV=") -> Some("0")`.
+/// Only `discover_capture_hw` (Linux-gated) calls it; `test` keeps its unit test building.
+#[cfg(any(target_os = "linux", test))]
 fn kv_after(haystack: &str, key: &str) -> Option<String> {
     let i = haystack.find(key)?;
     let rest = &haystack[i + key.len()..];

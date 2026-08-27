@@ -401,7 +401,7 @@ export interface Messages {
       export_aria: string;
       export_title: string;
       error_file_too_large: (size: string, cap: string) => string;
-      /** Clips shorter than one 1-second training window would be zero-padded, NaN their whole spectrogram, and be silently dropped at training; rejecting at import surfaces that up front. */
+      /** Sub-1 s clips are rejected by the daemon at train time (TooShort); rejecting at import surfaces that up front. */
       error_clip_too_short: (clipSecs: string) => string;
       /** The Input slot is single-tenant (most recent clip only), so a drop of >1 file is rejected. */
       error_only_one_file: string;
@@ -421,7 +421,8 @@ export interface Messages {
       /** For the rare browser build exposing neither `AudioContext` nor `webkitAudioContext`. */
       error_web_audio_unavailable: string;
       auto_stopped_at_cap: string;
-      silent_dropped_suffix: (count: number) => string;
+      /** Byte-identical windows collapse to one content-addressed record (routine for silence recordings); this note keeps the stored count honest. */
+      duplicates_collapsed_suffix: (count: number) => string;
     };
   };
 
@@ -569,7 +570,7 @@ export interface Messages {
       job_cancelled: (stageLabel: string) => string;
       job_cancelled_shutdown: (stageLabel: string) => string;
       scanned_dataset: (nClasses: number, nExamples: number) => string;
-      /** `dropped` is NaN + I/O drops; the catalog hides the dropped suffix when zero so locales own the word order. */
+      /** `dropped` is genuine faults only (silence extracts normally). The catalog hides the dropped suffix when zero so locales own the word order. */
       features_extracted: (kept: number, dropped: number, elapsedSec: string) => string;
       train_split: (trainN: number, valN: number) => string;
       /** `lossLabel` / `trainAccLabel` are pre-formatted (non-finite renders `-`); `valAccLabel === null` hides the val suffix (holdout disabled). */

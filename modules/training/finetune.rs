@@ -321,7 +321,9 @@ pub enum FinetuneError {
         per_class_kept: Vec<(String, usize)>,
     },
     /// One or more classes lost every example to preproc failures
-    /// (decode/resample/non-finite spectrogram).
+    /// (decode/resample/too-short/non-finite spectrogram). Preproc never drops
+    /// silence (finite plane); a backbone emitting non-finite features on the
+    /// constant silence plane WOULD land silent examples here.
     #[error(
         "class {class:?} lost every example to preproc failures \
          (per-class kept: {per_class_kept:?}; per-class dropped: {per_class_dropped:?})"
@@ -331,10 +333,8 @@ pub enum FinetuneError {
         per_class_kept: Vec<(String, usize)>,
         per_class_dropped: Vec<(String, usize)>,
     },
-    /// Aggregate GENUINE-failure drop ratio crossed [`MAX_DROP_RATIO`].
-    /// `dropped` = decode/format/resample + backbone-NaN, EXCLUDING benign
-    /// silent-clip filtering (~10-15% of speech); `per_class_dropped`
-    /// shows TOTAL drops incl. silence.
+    /// Aggregate drop ratio crossed [`MAX_DROP_RATIO`]; every drop is a genuine
+    /// failure (silent clips extract and train normally, no benign carve-out).
     #[error(
         "dataset processing-failure ratio {dropped}/{total} = {ratio:.3} exceeds \
          max {max_ratio:.3} (per-class kept: {per_class_kept:?}; \
@@ -584,14 +584,7 @@ fn run_inner(
     drop(extractor);
     drop(preproc);
 
-    validate_post_extract_quality(
-        &classes,
-        &pre_scan_counts,
-        n_classes,
-        &labels,
-        total_in,
-        drop_counts.dropped_silence as usize,
-    )?;
+    validate_post_extract_quality(&classes, &pre_scan_counts, n_classes, &labels, total_in)?;
 
     // Stratified split lands every class in both partitions even when
     // small/imbalanced; deterministic via `cfg.seed`.
@@ -946,7 +939,6 @@ fn validate_post_extract_quality(
     n_classes: usize,
     labels: &[usize],
     total_in: usize,
-    dropped_silence: usize,
 ) -> Result<(), FinetuneError> {
     let post_extract_counts = per_class_counts_from_labels(n_classes, labels);
     let per_class_kept: Vec<(String, usize)> = classes
@@ -1004,17 +996,17 @@ fn validate_post_extract_quality(
         }
     }
 
-    // Aggregate gate over GENUINE failures only (decode/format/resample +
-    // backbone-NaN); benign all-NaN silent clips (~12% of Speech-Commands)
-    // are excluded so a quiet dataset doesn't abort, but backbone-NaN stays
-    // in `genuine_dropped` so a sustained backbone failure still trips it.
+    // Aggregate gate; every drop is genuine (silence extracts, no carve-out).
+    // Pre-existing unit mix: `total_in` counts FILES, `labels` kept WINDOWS, so
+    // snippet-chopped multi-window files inflate `labels.len()` and the
+    // saturating_sub under-reports drops; exact for the UI's 1 s-slice
+    // datasets (1 file == 1 window).
     let total_dropped = total_in.saturating_sub(labels.len());
-    let genuine_dropped = total_dropped.saturating_sub(dropped_silence);
     if total_in > 0 {
-        let ratio = genuine_dropped as f32 / total_in as f32;
+        let ratio = total_dropped as f32 / total_in as f32;
         if ratio > MAX_DROP_RATIO {
             return Err(FinetuneError::DropRatioExceeded {
-                dropped: genuine_dropped,
+                dropped: total_dropped,
                 total: total_in,
                 ratio,
                 max_ratio: MAX_DROP_RATIO,
@@ -1253,11 +1245,9 @@ impl FeatureExtractor {
                     dropped_nan.fetch_add(n, Ordering::Relaxed);
                 } else {
                     for ((_, label), feat_chunk) in
-                        sub.iter().zip(out_data.chunks_exact(FEATURE_DIM))
+                        sub.iter().zip(out_data.as_chunks::<FEATURE_DIM>().0)
                     {
-                        let mut arr = [0f32; FEATURE_DIM];
-                        arr.copy_from_slice(feat_chunk);
-                        feats.push(arr);
+                        feats.push(*feat_chunk);
                         labels.push(*label);
                     }
                 }
@@ -1346,15 +1336,12 @@ fn resolve_feature_extractor(
 }
 
 /// Drop accounting carried alongside `(feats, labels)` so the wrapper emits
-/// `Event::FeatureExtractCompleted` without re-scanning.
+/// `Event::FeatureExtractCompleted` without re-scanning. Every drop is a
+/// genuine fault; silence extracts finite spectrograms and trains normally.
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct ExtractDropCounts {
     pub dropped_nan: u64,
     pub dropped_io: u64,
-    /// Subset of `dropped_nan` from benign all-NaN (silent-frame)
-    /// spectrograms; tracked separately so the aggregate drop-ratio gate
-    /// excludes the ~10-15% quiet clips a speech dataset has.  Not on wire.
-    pub dropped_silence: u64,
 }
 
 /// Return shape of [`extract_features`], aliased for the complexity lint.
@@ -1371,9 +1358,6 @@ fn extract_features(
     let dropped_nan = AtomicUsize::new(0);
     // Read/resample/spectrogram failures drop the example, not abort.
     let dropped_io = AtomicUsize::new(0);
-    // Subset of `dropped_nan` (benign silent-frame clips); excluded from
-    // the aggregate drop-ratio gate.
-    let dropped_silence = AtomicUsize::new(0);
     let total = examples.len();
 
     // Fail fast before the `with_capacity(total)` alloc (`total * 8 KB`)
@@ -1409,8 +1393,8 @@ fn extract_features(
                         return Vec::new();
                     }
                     // Read + resample, snippet-chopping a >1 s recording into
-                    // windows.  A read/resample failure drops the whole file
-                    // (counted in `dropped_io`) without unwinding; a
+                    // windows.  A read/resample/`TooShort` failure drops the
+                    // whole file into `dropped_io` without unwinding; a
                     // `Resample(_)` error may leave partial FIR history, so
                     // clear the resampler to re-init fresh next file.
                     let windows = match wav_io::read_wav_mono(path).and_then(|(sr, mono)| {
@@ -1425,15 +1409,13 @@ fn extract_features(
                             return Vec::new();
                         }
                     };
-                    // Each window is an independent example; an all-NaN
-                    // (silent-frame) window is benign -> both `dropped_nan`
-                    // and `dropped_silence`.
+                    // Preproc is finite for finite PCM (silence included), so a
+                    // non-finite plane is a genuine fault -> drop-ratio gates.
                     let mut kept = Vec::with_capacity(windows.len());
                     for pcm in &windows {
                         let spec = worker_preproc.spectrogram(pcm);
                         if spec[..].as_flattened().iter().any(|v| !v.is_finite()) {
                             dropped_nan.fetch_add(1, Ordering::Relaxed);
-                            dropped_silence.fetch_add(1, Ordering::Relaxed);
                             continue;
                         }
                         kept.push((spec, *label));
@@ -1512,7 +1494,6 @@ fn extract_features(
 
     let dropped_nan_total = dropped_nan.load(Ordering::Relaxed);
     let dropped_io_total = dropped_io.load(Ordering::Relaxed);
-    let dropped_silence_total = dropped_silence.load(Ordering::Relaxed);
     if buffer_capped {
         tracing::warn!(
             target: "training",
@@ -1549,7 +1530,6 @@ fn extract_features(
         ExtractDropCounts {
             dropped_nan: dropped_nan_total as u64,
             dropped_io: dropped_io_total as u64,
-            dropped_silence: dropped_silence_total as u64,
         },
     ))
 }
@@ -2185,9 +2165,23 @@ mod tests {
         );
     }
 
+    /// Mono 16-bit all-zero WAV at TARGET_SR, `n_samples` long.
+    fn write_silence_samples(path: &Path, n_samples: usize) {
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate: wav_io::TARGET_SR,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut w = hound::WavWriter::create(path, spec).expect("wav create");
+        for _ in 0..n_samples {
+            w.write_sample(0i16).expect("write sample");
+        }
+        w.finalize().expect("finalize");
+    }
+
     /// Mono 16-bit broadband NOISE at TARGET_SR (identity resample, so
-    /// `secs` s -> `secs` windows); noise keeps every FFT bin non-zero so
-    /// the spectrogram stays finite (a sine would NaN -> drop).
+    /// `secs` s -> `secs` windows); exercises every FFT bin with real content.
     fn write_noise(path: &Path, secs: u32, seed: u64) {
         let spec = hound::WavSpec {
             channels: 1,
@@ -2293,8 +2287,7 @@ mod tests {
     /// `extract_features` forwards EVERY finite window across multiple
     /// preproc passes when the total isn't a multiple of `BACKBONE_BATCH`
     /// -- guards the `is_last` trailing flush and the cross-pass `pending`
-    /// accumulator.  Random backbone (only kept-row COUNT matters);
-    /// broadband noise so no window drops as silence.
+    /// accumulator.  Random backbone (only kept-row COUNT matters).
     #[test]
     fn extract_features_forwards_every_window_across_passes() {
         let _g = RNG_LOCK.lock();
@@ -2383,6 +2376,62 @@ mod tests {
             33,
             "class-0 window count must equal the 33 single-window class-a files",
         );
+    }
+
+    /// Extract-level contract: an all-zero recording's windows are KEPT
+    /// (`dropped_nan == 0`); a sub-window clip drops as `dropped_io`
+    /// (`TooShort`) instead of training zero-padded.
+    #[test]
+    fn extract_features_keeps_silent_windows_and_rejects_sub_window_clips() {
+        let _g = RNG_LOCK.lock();
+        let dir = tempfile::tempdir().expect("tempdir");
+
+        let silent = dir.path().join("silent.wav");
+        write_silence_samples(&silent, 2 * wav_io::TARGET_SR as usize);
+        let noise = dir.path().join("noise.wav");
+        write_noise(&noise, 1, 42);
+        let short = dir.path().join("short.wav");
+        write_silence_samples(&short, 1000);
+        let examples: Vec<(PathBuf, usize)> = vec![(silent, 0), (noise, 0), (short, 0)];
+
+        // Seeded random backbone: features stay finite, so only the
+        // preproc-level accounting is probed.
+        let device: burn::tensor::Device<InnerB> = Default::default();
+        <InnerB as Backend>::seed(&device, 7);
+        let mut extractor = FeatureExtractor::Burn {
+            net: Box::new(Backbone::<InnerB>::new(&device)),
+            device,
+        };
+        let preproc = Preproc::new();
+
+        let no_progress = |_: &Progress| {};
+        let never_cancel = || false;
+        let (feats, labels, drops) = extract_features(
+            &mut extractor,
+            &preproc,
+            &examples,
+            &no_progress,
+            &never_cancel,
+        )
+        .expect("extract_features");
+
+        // 2 s silence -> 2 windows, 1 s noise -> 1 window, short clip -> none.
+        assert_eq!(feats.len(), 3, "silent windows must be kept, not dropped");
+        assert_eq!(labels, vec![0, 0, 0]);
+        assert_eq!(
+            drops.dropped_nan, 0,
+            "silence must not count as a non-finite drop",
+        );
+        assert_eq!(
+            drops.dropped_io, 1,
+            "the sub-window clip must drop as TooShort (io-style), not train padded",
+        );
+        for (i, f) in feats.iter().enumerate() {
+            assert!(
+                f.iter().all(|v| v.is_finite()),
+                "feature row {i} must be finite",
+            );
+        }
     }
 
     /// Linearly separable 2-class features (class 0: dim 0 = 1.0, class 1:
@@ -3059,7 +3108,7 @@ mod tests {
         let classes = vec!["yes".to_string(), "no".to_string()];
         let pre_scan = vec![3usize, 3];
         let labels = vec![0usize, 0, 0];
-        let err = validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 6, 0)
+        let err = validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 6)
             .expect_err("class with zero survivors must reject");
         match err {
             FinetuneError::EmptyClassAfterExtract {
@@ -3092,7 +3141,7 @@ mod tests {
         let classes = vec!["a".to_string(), "b".to_string()];
         let pre_scan = vec![50usize, 50];
         let labels: Vec<usize> = (0..40).map(|_| 0).chain((0..40).map(|_| 1)).collect();
-        let err = validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 100, 0)
+        let err = validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 100)
             .expect_err("20% drop ratio must reject");
         match err {
             FinetuneError::DropRatioExceeded {
@@ -3117,44 +3166,6 @@ mod tests {
         }
     }
 
-    /// Benign silence drops don't trip the aggregate gate (20% silence,
-    /// 0 genuine must PASS); the genuine path stays gated and reports the
-    /// genuine count, not the total.
-    #[test]
-    fn validate_post_extract_tolerates_silence_drops() {
-        let classes = vec!["a".to_string(), "b".to_string()];
-        let pre_scan = vec![50usize, 50];
-        // 100 in, 80 kept -> 20% total drop.
-        let labels: Vec<usize> = (0..40).map(|_| 0).chain((0..40).map(|_| 1)).collect();
-
-        // All 20 drops silence -> genuine = 0 -> PASS.
-        validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 100, 20)
-            .expect("20% silence drop must NOT abort (benign filtering)");
-
-        // 8 silence + 12 genuine -> 12% > 10% -> reject, reporting genuine.
-        let err = validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 100, 8)
-            .expect_err("12% genuine-failure drop must reject");
-        match err {
-            FinetuneError::DropRatioExceeded {
-                dropped,
-                total,
-                ratio,
-                ..
-            } => {
-                assert_eq!(
-                    dropped, 12,
-                    "reported drop must be the genuine-failure count"
-                );
-                assert_eq!(total, 100);
-                assert!(
-                    (ratio - 0.12).abs() < 1e-4,
-                    "ratio should be ~0.12: {ratio}"
-                );
-            }
-            other => panic!("expected DropRatioExceeded, got {other:?}"),
-        }
-    }
-
     /// `validate_post_extract_quality` accepts a clean dataset (0% drop;
     /// gate is `>` not `>=`, no empty-class false positive).
     #[test]
@@ -3162,7 +3173,7 @@ mod tests {
         let classes = vec!["yes".to_string(), "no".to_string()];
         let pre_scan = vec![5usize, 5];
         let labels: Vec<usize> = (0..5).map(|_| 0).chain((0..5).map(|_| 1)).collect();
-        validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 10, 0)
+        validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 10)
             .expect("clean dataset must pass post-extract validation");
     }
 
@@ -3174,7 +3185,7 @@ mod tests {
         let classes = vec!["a".to_string(), "b".to_string()];
         let pre_scan = vec![50usize, 50];
         let labels: Vec<usize> = (0..45).map(|_| 0).chain((0..45).map(|_| 1)).collect();
-        validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 100, 0)
+        validate_post_extract_quality(&classes, &pre_scan, 2, &labels, 100)
             .expect("at-cap drop ratio must pass (predicate is strict >)");
     }
 
@@ -3193,7 +3204,7 @@ mod tests {
         for c in 1..10usize {
             labels.extend(std::iter::repeat_n(c, 20));
         }
-        let err = validate_post_extract_quality(&classes, &pre_scan, 10, &labels, 200, 0)
+        let err = validate_post_extract_quality(&classes, &pre_scan, 10, &labels, 200)
             .expect_err("per-class drop must reject");
         match err {
             FinetuneError::PerClassDropExceeded {

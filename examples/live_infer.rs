@@ -124,13 +124,16 @@ fn run() -> Result<(), String> {
         }
 
         preproc.spectrogram_into(&window, &mut spec);
+        // Non-finite plane = fault (silence stays finite); drop as the engine does.
         if spec
             .as_slice()
             .as_flattened()
             .iter()
             .any(|v| !v.is_finite())
         {
-            println!("  (silence / constant input -- frame dropped, as the engine does)");
+            println!(
+                "  (non-finite spectrogram -- frame dropped, as the engine's fault gate does)"
+            );
             continue;
         }
         if let Err(e) = backbone.infer(&spec, &mut features) {
@@ -237,8 +240,8 @@ fn read_f32_stream(mut stdout: std::process::ChildStdout, sink: Arc<Mutex<Vec<f3
                 if full > 0 {
                     {
                         let mut g = sink.lock();
-                        for c in carry[..full].chunks_exact(4) {
-                            g.push(f32::from_le_bytes([c[0], c[1], c[2], c[3]]));
+                        for &c in carry[..full].as_chunks::<4>().0 {
+                            g.push(f32::from_le_bytes(c));
                         }
                     }
                     carry.drain(..full);
