@@ -157,7 +157,7 @@ fn run(args: &[String]) -> Result<(), String> {
             .iter()
             .any(|v| !v.is_finite())
         {
-            // Silence / constant input -> the engine drops these too.
+            // Fault gate, as in the engine; silence is finite and scored.
             dropped += 1;
             continue;
         }
@@ -183,14 +183,14 @@ fn run(args: &[String]) -> Result<(), String> {
 
     if total == 0 {
         return Err(format!(
-            "every example was dropped ({dropped} decode/silence drops); nothing to score"
+            "every example was dropped ({dropped} decode/non-finite drops); nothing to score"
         ));
     }
 
     let acc = correct as f64 / total as f64;
     let chance = 1.0 / n_classes as f64;
     println!("=== RESULTS (Burn backbone, deployed head kernel) ===");
-    println!("scored {total} examples ({dropped} dropped to decode/silence)");
+    println!("scored {total} examples ({dropped} dropped to decode/non-finite input)");
     println!(
         "overall top-1 accuracy: {:.1}%   (chance = {:.1}% for {n_classes} classes)",
         acc * 100.0,

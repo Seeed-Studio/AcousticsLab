@@ -393,8 +393,8 @@ export const en = {
         'WAV buffer too small (need at least 44 bytes for the canonical header).',
       error_web_audio_unavailable: 'Web Audio API is unavailable in this browser.',
       auto_stopped_at_cap: 'Auto-stopped at the duration cap.',
-      silent_dropped_suffix: (count) =>
-        `${count} silent ${count === 1 ? 'slice' : 'slices'} skipped`
+      duplicates_collapsed_suffix: (count) =>
+        `${count} identical ${count === 1 ? 'slice' : 'slices'} merged into one`
     },
     row: {
       badge_synced: 'Synced',

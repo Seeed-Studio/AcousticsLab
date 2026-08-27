@@ -2,8 +2,9 @@
 //! z-normalized log-magnitude spectrogram. Contract: frame=2048, hop=1024, 43
 //! frames, virtual front-pad of 1024 zeros (frame 0 = pad + `samples[0..1024]`),
 //! span exactly 44032, no trailing pad; *periodic* Blackman window (denominator
-//! M=2048), NOT symmetric `numpy.blackman`; log is bare `ln` (no epsilon) so
-//! exact-zero magnitude bins yield `-inf` -> z-norm `NaN`, matching TF's finite filter.
+//! M=2048), NOT symmetric `numpy.blackman`; log runs over a
+//! [`MAG_SQ_FLOOR`]-clamped magnitude-squared: finite PCM (all-zero included)
+//! yields an all-finite plane, nonzero bins stay bit-identical to TF.
 
 // Public so `training` can reach it as `preproc::wav_io::*` (shares the sinc-resampler params).
 pub mod wav_io;
@@ -20,6 +21,18 @@ pub const FRONT_PAD: usize = 1024;
 /// Z-norm epsilon added to std NOT under the sqrt: `(x-mean)/(sqrt(var)+1e-4)`.
 /// Exact official value; omitting it is the dominant per-pixel divergence source.
 pub const Z_NORM_EPSILON: f32 = 1e-4;
+
+/// Floor for the magnitude-squared entering the log. A clamp, NOT `+ eps`
+/// (additive would perturb every bin and break byte-exact TF parity): only bins
+/// below `MIN_POSITIVE` move (`|z| < ~1.1e-19`, unreachable from real audio),
+/// i.e. exact-zero bins of all-zero FFT frames, landing on `0.5 * ln` of this
+/// ~= -43.7. An all-silent window thus becomes a constant plane that
+/// [`Z_NORM_EPSILON`] z-norms to a bounded constant (|v| < 1), never NaN.
+/// `MIN_POSITIVE`, not the smallest subnormal, so flush-to-zero FP can't turn
+/// the clamped value back into `ln(0)`. Applied via `<`, NOT `f32::max`: `max`
+/// ignores NaN and would launder a NaN bin (non-finite PCM, preproc fault) into
+/// exact silence, blinding every downstream non-finite fault gate.
+pub const MAG_SQ_FLOOR: f32 = f32::MIN_POSITIVE;
 
 /// Compile-time guard that the last frame stays inside the waveform (the no-pad path assumes it).
 #[allow(dead_code)]
@@ -56,8 +69,9 @@ impl Preproc {
         }
     }
 
-    /// 43x232 row-major spectrogram (zero-magnitude bin NaNs the plane, matches TF);
-    /// allocates per call, the zero-alloc hot loop uses [`Self::spectrogram_into`].
+    /// 43x232 row-major spectrogram, all-finite for any finite PCM (zero-magnitude
+    /// bins clamp to [`MAG_SQ_FLOOR`]); allocates per call, the zero-alloc hot
+    /// loop uses [`Self::spectrogram_into`].
     pub fn spectrogram(
         &mut self,
         pcm: &[f32; WaveformLen::USIZE],
@@ -109,19 +123,20 @@ impl Preproc {
             r2c.process_with_scratch(frame, spectrum, scratch)
                 .expect("realfft buffer sizes are fixed at Preproc::new");
 
-            // log|z| = 0.5*ln(|z|^2): one fewer sqrt/bin, *0.5 exact in fp32;
-            // zero-magnitude bins give -inf, matching TF.
+            // log|z| = 0.5*ln(|z|^2): one fewer sqrt/bin, *0.5 exact in fp32.
+            // `<` not `max` so NaN falls through (see MAG_SQ_FLOOR).
             for (r, s) in row.iter_mut().zip(&spectrum[..NBins::USIZE]) {
-                *r = 0.5 * s.norm_sqr().ln();
+                let m = s.norm_sqr();
+                *r = 0.5 * (if m < MAG_SQ_FLOOR { MAG_SQ_FLOOR } else { m }).ln();
             }
         }
 
         // Z-normalize the plane with population variance (/N), matching TF `moments`.
         // LANES independent accumulators let the ~10k-term reductions vectorize; a
         // sequential `sum += v` cannot, since LLVM may not reassociate IEEE adds. Do
-        // NOT fold these into `f32::algebraic_add`: it reassociates but explicitly
-        // drops the NaN/+/-Inf guarantee the silence path below relies on. Splitting
-        // by hand also lands nearer TF -- LANES partials round independently.
+        // NOT fold these into `f32::algebraic_add`: it reassociates but drops the
+        // NaN/Inf propagation the engine's fault gate relies on. Splitting by hand
+        // also lands nearer TF -- LANES partials round independently.
         const LANES: usize = 8;
         let count = (NFrames::USIZE * NBins::USIZE) as f32;
         let (lanes, rest) = out.as_slice().as_flattened().as_chunks::<LANES>();
@@ -145,16 +160,22 @@ impl Preproc {
                 *a += d * d;
             }
         }
-        let mut sq: f32 = rest.iter().map(|&v| (v - mean) * (v - mean)).sum();
+        let mut sq: f32 = rest
+            .iter()
+            .map(|&v| {
+                let diff = v - mean;
+                diff * diff
+            })
+            .sum();
         for a in acc {
             sq += a;
         }
-        let std = (sq / count).sqrt();
-        // No `std == 0` guard by design: silence -> -inf log-mags -> NaN mean/std ->
-        // NaN plane, matching TF and load-bearing for the engine's silence-drop.
+        let std = (sq / count).sqrt() + Z_NORM_EPSILON;
+        // No `std == 0` guard needed: a constant plane (all-zero PCM) yields the
+        // bounded constant d/(|d| + eps), |v| < 1 -- Z_NORM_EPSILON alone suffices.
         for row in out.iter_mut() {
             for v in row.iter_mut() {
-                *v = (*v - mean) / (std + Z_NORM_EPSILON);
+                *v = (*v - mean) / std;
             }
         }
     }
@@ -225,26 +246,38 @@ mod tests {
         assert_eq!(s[0].len(), NBins::USIZE);
     }
 
-    /// All-zero PCM must give an all-NaN plane: guards the engine's silence
-    /// filter against a future log-domain epsilon that would route silence into
-    /// the classifier.
+    /// All-zero PCM -> all-finite CONSTANT plane, |v| < 1: silence is
+    /// first-class input. Guards against bare-`ln` (NaN plane) and against an
+    /// additive epsilon (would un-constant the plane).
     #[test]
-    fn silence_input_is_all_nan() {
+    fn silence_input_is_finite_bounded_constant() {
         let pcm = Box::new([0.0f32; WaveformLen::USIZE]);
         let mut p = Preproc::new();
         let s = p.spectrogram(&pcm);
+        let first = s[0][0];
         for (t, row) in s.iter().enumerate() {
             for (k, &v) in row.iter().enumerate() {
-                assert!(v.is_nan(), "silence: expected NaN at t={t} k={k}, got {v}");
+                assert!(
+                    v.is_finite(),
+                    "silence: expected finite at t={t} k={k}, got {v}",
+                );
+                assert!(
+                    v.abs() < 1.0,
+                    "silence: |v| must stay under 1 (z-norm epsilon bound) at t={t} k={k}, got {v}",
+                );
+                assert_eq!(
+                    v.to_bits(),
+                    first.to_bits(),
+                    "silence: plane must be constant; t={t} k={k} has {v}, expected {first}",
+                );
             }
         }
     }
 
-    /// A *single* all-zero FFT frame NaNs the whole plane (one -inf bin drags mean
-    /// to -inf), which the frontend silence pre-flight relies on. Locks both edges:
+    /// A single all-zero FFT frame must NOT poison the plane; locks both edges:
     /// silent frame 0 (front-pad) and silent frame 42 (trailing).
     #[test]
-    fn any_silent_frame_produces_all_nan_spectrogram() {
+    fn silent_frame_keeps_plane_finite() {
         let mut p = Preproc::new();
 
         // Case A: only frame 0 silent (pcm[0..1024]=0).
@@ -256,8 +289,8 @@ mod tests {
         for (t, row) in s_a.iter().enumerate() {
             for (k, &v) in row.iter().enumerate() {
                 assert!(
-                    v.is_nan(),
-                    "leading-silence frame: expected NaN at t={t} k={k}, got {v}",
+                    v.is_finite(),
+                    "leading-silence frame: expected finite at t={t} k={k}, got {v}",
                 );
             }
         }
@@ -272,10 +305,51 @@ mod tests {
         for (t, row) in s_b.iter().enumerate() {
             for (k, &v) in row.iter().enumerate() {
                 assert!(
-                    v.is_nan(),
-                    "trailing-silence frame: expected NaN at t={t} k={k}, got {v}",
+                    v.is_finite(),
+                    "trailing-silence frame: expected finite at t={t} k={k}, got {v}",
                 );
             }
+        }
+    }
+
+    /// NaN PCM must still poison the plane -- an `f32::max`-shaped clamp would
+    /// launder it into silence (max ignores NaN), blinding the fault gates.
+    #[test]
+    fn nan_pcm_propagates_to_nonfinite_plane() {
+        let mut p = Preproc::new();
+        let mut pcm = Box::new([0.1f32; WaveformLen::USIZE]);
+        pcm[WaveformLen::USIZE / 2] = f32::NAN;
+        let s = p.spectrogram(&pcm);
+        assert!(
+            s.as_slice().as_flattened().iter().any(|v| !v.is_finite()),
+            "a NaN PCM sample produced an all-finite plane; the clamp is \
+             laundering non-finite bins and the fault gates downstream are blind",
+        );
+    }
+
+    /// Non-silent audio still yields a finite, NON-constant plane; bit-exactness
+    /// vs the TF references is locked separately by `tests/preproc_parity.rs`.
+    #[test]
+    fn clamp_leaves_nonsilent_plane_nonconstant() {
+        let mut p = Preproc::new();
+        // Deterministic broadband-ish content, no RNG dependency.
+        let mut pcm = Box::new([0.0f32; WaveformLen::USIZE]);
+        for (i, s) in pcm.iter_mut().enumerate() {
+            let x = i as f32;
+            *s = 0.3 * (0.031 * x).sin() + 0.2 * (0.173 * x).sin() + 0.05 * (0.719 * x).sin();
+        }
+        let s = p.spectrogram(&pcm);
+        for (t, row) in s.iter().enumerate() {
+            for (k, &v) in row.iter().enumerate() {
+                assert!(v.is_finite(), "expected finite at t={t} k={k}, got {v}");
+            }
+            let (min, max) = row
+                .iter()
+                .fold((f32::MAX, f32::MIN), |(lo, hi), &v| (lo.min(v), hi.max(v)));
+            assert!(
+                max > min,
+                "row {t} collapsed to a constant; clamp must not flatten real audio",
+            );
         }
     }
 }

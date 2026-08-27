@@ -409,8 +409,8 @@ export const de = {
         'WAV-Puffer zu klein (mindestens 44 Bytes für den kanonischen Header erforderlich).',
       error_web_audio_unavailable: 'Die Web Audio API ist in diesem Browser nicht verfügbar.',
       auto_stopped_at_cap: 'Automatisch bei der Längenobergrenze gestoppt.',
-      silent_dropped_suffix: (count) =>
-        `${count} ${count === 1 ? 'stiller Slice' : 'stille Slices'} übersprungen`
+      duplicates_collapsed_suffix: (count) =>
+        `${count} ${count === 1 ? 'identischer Slice' : 'identische Slices'} zu einem zusammengeführt`
     },
     row: {
       badge_synced: 'Synchronisiert',

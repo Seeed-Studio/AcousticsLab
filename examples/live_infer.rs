@@ -124,13 +124,16 @@ fn run() -> Result<(), String> {
         }
 
         preproc.spectrogram_into(&window, &mut spec);
+        // Non-finite plane = fault (silence stays finite); drop as the engine does.
         if spec
             .as_slice()
             .as_flattened()
             .iter()
             .any(|v| !v.is_finite())
         {
-            println!("  (silence / constant input -- frame dropped, as the engine does)");
+            println!(
+                "  (non-finite spectrogram -- frame dropped, as the engine's fault gate does)"
+            );
             continue;
         }
         if let Err(e) = backbone.infer(&spec, &mut features) {

@@ -5,7 +5,7 @@
   import { encodeWavPcm16, SLICE_SAMPLES, WAV_SAMPLE_RATE } from '$lib/audio/wav';
   import { decodeAudioFile, encodeWavFromChunks, encodeWavFromFloat32 } from '$lib/audio/resample';
   import { readWavMagic, decodeCanonicalWav } from '$lib/audio/wav-decode';
-  import { chunkPcmToValidSlices, sliceCountFor } from '$lib/audio/slicer';
+  import { chunkPcmToSlices, sliceCountFor } from '$lib/audio/slicer';
   import { sha256Hex } from '$lib/audio/sha256';
   import { slices } from '$lib/stores/slices.svelte';
   import { SvelteSet } from 'svelte/reactivity';
@@ -320,10 +320,10 @@
     Math.max(0, trimRangeSamples - projectedSliceCount * SLICE_SAMPLES)
   );
   const unusedMs = $derived(Math.round((unusedSamples / WAV_SAMPLE_RATE) * 1000));
-  // Post-slice summary in the status hint (NOT the `error` banner); cleared on later trim drag / draft.
+  // Post-slice summary in the status hint (NOT the `error` banner); cleared on later trim
+  // drag / draft. Reports sha256-dedupe collapse (routine for silence recordings).
   let sliceNote = $state<string | null>(null);
-  // No cumulative cap (daemon has none): amber-but-enabled. Binds the conservative geometric
-  // (pre-silence-filter) count since reactive filtering would lag the drag.
+  // No cumulative cap (daemon has none): amber-but-enabled.
   const largeBatch = $derived(projectedSliceCount > SLICE_BATCH_WARN_THRESHOLD);
   const canSlice = $derived(!!draftPcm && !slicing && trimRangeSamples >= SLICE_SAMPLES);
 
@@ -501,9 +501,8 @@
     error = null;
     sliceNote = null;
     try {
-      // Silence filter runs ONLY here (a full-PCM scan would lag a per-drag run): windows the daemon
-      // would NaN-drop are skipped pre-upload so the drop-ratio gate doesn't trip on uploaded silence.
-      const { kept: windows, silentDropped } = chunkPcmToValidSlices(draftPcm, trimStart, trimEnd);
+      // Every full slice uploads, silence included; nothing is pre-filtered.
+      const windows = chunkPcmToSlices(draftPcm, trimStart, trimEnd);
       // sha256 of the encoded WAV bytes is the slice's canonical id (daemon filename + cache key).
       const stamped = await Promise.all(
         windows.map(async (samples) => {
@@ -534,9 +533,11 @@
         await slices.append(record);
         void slices.enqueueUpload(record);
       }
-      // Note only the silent-skip discrepancy; duplicate collapse is rarely actionable, so unreported.
-      if (silentDropped > 0) {
-        sliceNote = m.category.input_pane.silent_dropped_suffix(silentDropped);
+      // Without this note a silent recording looks like it "lost" slices.
+      if (unique.length < stamped.length) {
+        sliceNote = m.category.input_pane.duplicates_collapsed_suffix(
+          stamped.length - unique.length
+        );
       }
     } catch (e) {
       error = e instanceof Error ? e.message : m.category.input_pane.error_could_not_slice;
@@ -795,8 +796,8 @@
       }
       const { pcm, sampleRate } = await decodeAudioFile(file);
       const { blob, outputSamples } = await encodeWavFromFloat32(pcm, sampleRate, WAV_SAMPLE_RATE);
-      // A clip under one 1 s slice is zero-padded then NaN-dropped by the daemon at train time; reject
-      // at import so it doesn't silently vanish.
+      // The daemon rejects sub-1 s clips at train time (TooShort); reject at import
+      // so they surface here instead of as training drops.
       if (outputSamples < SLICE_SAMPLES) {
         error = m.category.input_pane.error_clip_too_short(
           (outputSamples / WAV_SAMPLE_RATE).toFixed(1)

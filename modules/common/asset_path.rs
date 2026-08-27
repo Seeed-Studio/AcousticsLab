@@ -232,11 +232,11 @@ mod tests {
             "model/manifest.json",
             "a",
             "a-b_c.d",
-            "_background_noise_",     // reserved class: leading `_` is allowed (frontend-only bars it)
+            "_background_noise_", // reserved class: leading `_` is allowed (frontend-only bars it)
             "_unknown_",
-            "Background Noise",       // interior space (human-readable class name)
+            "Background Noise", // interior space (human-readable class name)
             "Car Horn/sample.wav",
-            "a  b",                   // consecutive interior spaces stored verbatim
+            "a  b",            // consecutive interior spaces stored verbatim
             "a/b/c/d/e/f/g/h", // depth = MAX_DEPTH
         ] {
             assert!(AssetPath::parse(s).is_ok(), "should accept {s:?}");

@@ -401,7 +401,7 @@ export const ja = {
         'WAV バッファが小さすぎます（標準ヘッダーに少なくとも 44 バイト必要です）。',
       error_web_audio_unavailable: 'このブラウザでは Web Audio API を利用できません。',
       auto_stopped_at_cap: '時間上限で自動停止しました。',
-      silent_dropped_suffix: (count) => `無音の ${count} スライスをスキップしました`
+      duplicates_collapsed_suffix: (count) => `同一内容の ${count} スライスを 1 つに統合しました`
     },
     row: {
       badge_synced: '同期済み',
