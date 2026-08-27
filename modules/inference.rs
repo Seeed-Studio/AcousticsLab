@@ -627,4 +627,105 @@ mod stream_e2e {
             stamp, n_recovered, residual,
         );
     }
+
+    /// Backbone stub for the silence contract test: asserts the engine never
+    /// feeds it a non-finite spectrogram and returns a constant feature vector.
+    #[derive(Debug)]
+    struct ConstBackbone;
+
+    impl crate::inference::backbone::Backbone for ConstBackbone {
+        fn description(&self) -> &str {
+            "const-mock"
+        }
+        fn infer(
+            &mut self,
+            spec: &[[f32; crate::common::dims::NBins::USIZE]; crate::common::dims::NFrames::USIZE],
+            features: &mut [f32; crate::common::dims::BackboneFeatureDim::USIZE],
+        ) -> Result<(), crate::inference::backbone::BackboneError> {
+            assert!(
+                spec.as_slice().as_flattened().iter().all(|v| v.is_finite()),
+                "engine fed a non-finite spectrogram to the backbone",
+            );
+            features.fill(0.5);
+            Ok(())
+        }
+    }
+
+    /// An all-zero window must emit a normal `InferenceFrame` (finite probs)
+    /// and NOT count as a NaN drop; mock backbone, so no assets, not ignored.
+    #[test]
+    fn silent_window_emits_frame_not_dropped() {
+        let buf = AudioBuffer::new(262_144);
+        let mut writer = buf.take_writer();
+        let reader = buf.reader_at(0);
+
+        let head = HotHead::try_from_inner(crate::inference::head::synth_inner(
+            3,
+            crate::common::ids::HeadId::new(),
+        ))
+        .expect("synth head");
+
+        let cfg = Arc::new(ArcSwap::from_pointee(InferenceCfg {
+            hop_samples: 11_025,
+            top_k: 3,
+        }));
+        let (mon_tx, mon_rx) = watch::channel(Heartbeat::default());
+        let engine = InferenceEngine::new(Box::new(ConstBackbone), head, cfg, mon_tx, None);
+
+        let (out_tx, mut out_rx) = broadcast::channel::<Bytes>(64);
+        let token = CancellationToken::new();
+        let token_engine = token.clone();
+        let engine_handle =
+            std::thread::spawn(move || engine.run_blocking(reader, out_tx, token_engine));
+
+        // Two windows of silence; chunked pushes respect max_push_len (ring/4).
+        let zeros = vec![0.0f32; 2 * WaveformLen::USIZE];
+        for chunk in zeros.chunks(1024) {
+            writer.push(chunk);
+        }
+
+        let mut frames: Vec<InferenceFrame> = Vec::new();
+        let deadline = Instant::now() + Duration::from_secs(10);
+        while Instant::now() < deadline && frames.is_empty() {
+            match out_rx.try_recv() {
+                Ok(bytes) => frames.push(decode_inference_envelope(bytes.as_ref())),
+                Err(broadcast::error::TryRecvError::Empty) => {
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                Err(broadcast::error::TryRecvError::Closed) => break,
+                Err(broadcast::error::TryRecvError::Lagged(_)) => continue,
+            }
+        }
+
+        token.cancel();
+        engine_handle
+            .join()
+            .expect("engine thread panicked")
+            .expect("engine returned an error");
+
+        assert!(
+            !frames.is_empty(),
+            "silence produced no inference frame; the drop-on-silence behavior is back",
+        );
+        let f = &frames[0];
+        assert_eq!(f.top_k.len(), 3, "top_k must carry the configured k");
+        for tk in &f.top_k {
+            assert!(
+                tk.prob.is_finite() && (0.0..=1.0).contains(&tk.prob),
+                "prob out of range on silence: {}",
+                tk.prob,
+            );
+            assert!(!tk.label.is_empty(), "label empty on silence frame");
+        }
+
+        let hb = *mon_rx.borrow();
+        assert_eq!(
+            hb.frames_dropped_nan, 0,
+            "silence must not count as a NaN drop",
+        );
+        assert!(
+            hb.frames_emitted >= 1,
+            "silence must advance frames_emitted (health stall detector keys on it)",
+        );
+    }
 }

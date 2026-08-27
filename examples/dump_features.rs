@@ -99,6 +99,7 @@ fn run() -> Result<(), String> {
                 Err(_) => continue,
             };
             preproc.spectrogram_into(&pcm, &mut spec);
+            // Silence dumps (finite plane); only faulty non-finite planes skip.
             if spec
                 .as_slice()
                 .as_flattened()

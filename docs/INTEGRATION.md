@@ -93,6 +93,7 @@ seq=7 _unknown_ 0.995
 ## Rules
 
 - Read promptly: a consumer that stalls for 5 s, or falls behind the broadcast, is disconnected - a lagged reader cannot resync a length-prefixed stream, so the daemon closes it rather than corrupting it. Reconnect and carry on; gaps in `seq` say what you missed.
+- Frames keep flowing during silence: an all-zero (muted/quiet) input classifies like any other audio and emits at the normal cadence, so "a frame arrived" does not mean "a sound happened" - read `top_k`, don't infer activity from frame arrival. A stream that stops emitting means no audio is reaching the daemon (device loss) or the engine is down - check `/api/v1/status` - never a quiet room.
 - 16 consumers max on this socket; further connections are refused.
 - Restarts reset `seq` and `t_us_capture_monotonic` - both are per-process, only comparable within one daemon run. `t_us_publish_unix` survives restarts.
 - Never write to the socket; it is a one-way push.

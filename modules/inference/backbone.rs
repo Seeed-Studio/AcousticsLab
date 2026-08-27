@@ -769,6 +769,41 @@ mod tests {
         assert!(features.iter().all(|v| v.is_finite()));
     }
 
+    /// The REAL preproc silence plane must map to finite, NON-ZERO features:
+    /// the head's weight gradient is `(p - y) (x) feat`, so `feat == 0` would
+    /// leave silence-labeled samples training the bias only.
+    #[test]
+    #[ignore = "depends on repo-root reference assets"]
+    fn burn_backbone_silence_plane_yields_nonzero_features() {
+        let path = crate_root().join("misc/backbones/backbone.mpk");
+        assert!(path.exists(), "missing test asset: {}", path.display());
+        let mut bb = BurnBackbone::load(&path).expect("load");
+
+        let mut preproc = crate::preproc::Preproc::new();
+        let pcm = Box::new([0.0f32; crate::common::dims::WaveformLen::USIZE]);
+        let spec = preproc.spectrogram(&pcm);
+        assert!(
+            spec.as_slice().as_flattened().iter().all(|v| v.is_finite()),
+            "silence spectrogram must be finite",
+        );
+
+        let mut features = Box::new([0.0f32; BackboneFeatureDim::USIZE]);
+        bb.infer(&spec, &mut features).expect("infer");
+        assert!(features.iter().all(|v| v.is_finite()));
+        let l2: f32 = features.iter().map(|v| v * v).sum::<f32>().sqrt();
+        let nonzero = features.iter().filter(|v| **v != 0.0).count();
+        eprintln!(
+            "silence embedding: l2={l2:.4}, nonzero={nonzero}/{}, plane value={}",
+            features.len(),
+            spec[0][0],
+        );
+        assert!(
+            l2 > 0.0,
+            "silence embedding is exactly zero; head weight gradients from \
+             silence samples would vanish (bias-only learning)",
+        );
+    }
+
     /// Bundled `backbone.mpk` carries the same conv + dense_1 weights as the
     /// upstream Speech-Commands TFJS model (skips if not fetched). TFJS conv
     /// kernels are HWIO (Keras), Burn `Conv2d` is OIHW (PyTorch), so re-index

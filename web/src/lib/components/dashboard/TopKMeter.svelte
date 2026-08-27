@@ -11,7 +11,7 @@
 <!-- @container: root is the inline-size container the rows' @[20rem]: resolves against. -->
 <div class="@container space-y-2">
   {#if rows.length === 0}
-    <!-- empty also covers released/idle-silence (store clears stale Top-K after 2s), so the pulse is
+    <!-- empty also covers released/stalled streams (store clears stale Top-K after 2s), so the pulse is
          neutral not "first frame". Mirrors the live grid 1:1 (same template/gap-3/items-center, h-5 =
          live label's 1.25rem line-box) so the swap never reflows; all three stubs kept so the fixed 7rem
          bar isn't floating against an empty label in the wide layout. space-y-2 re-declared since under

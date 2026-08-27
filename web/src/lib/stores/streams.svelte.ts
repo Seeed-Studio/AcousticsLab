@@ -53,7 +53,7 @@ class StreamsStore implements PcmSource {
   // Live acquire() holders; worker runs while > 0. Plain field, not $state (nothing renders off it).
   private refcount = 0;
   private inferenceTimes: number[] = [];
-  // Decays inferenceFps / clears latestTopK when the socket stays open but silence drops frames engine-side (only a heartbeat left), so the panel doesn't freeze on a stale prediction.
+  // Decays inferenceFps / clears latestTopK when the socket stays open but frames stop (device loss, engine fault -- never silence, which classifies normally), so the panel doesn't freeze on a stale prediction.
   private inferenceWatchdog: ReturnType<typeof setInterval> | null = null;
   private readonly pcmTaps = new Set<(pcm: Float32Array) => void>();
 
@@ -103,7 +103,7 @@ class StreamsStore implements PcmSource {
       this.unsupportedReason = reason;
     });
     client.start();
-    // Decay FPS / Top-K during silence (no frames => no trackInferenceFps call); 1 Hz << the 2 s window.
+    // Decay FPS / Top-K when frames stop (no frames => no trackInferenceFps call); 1 Hz << the 2 s window.
     this.inferenceWatchdog ??= setInterval(() => this.recomputeInferenceFps(), 1_000);
   }
 
@@ -201,7 +201,7 @@ class StreamsStore implements PcmSource {
     this.recomputeInferenceFps();
   }
 
-  // Driven by both arriving frames and the watchdog, so a silent stream decays to 0 Hz and clears stale Top-K.
+  // Driven by both arriving frames and the watchdog, so a stalled stream decays to 0 Hz and clears stale Top-K.
   private recomputeInferenceFps(): void {
     const cutoff = performance.now() - 2_000;
     while (this.inferenceTimes.length > 0 && this.inferenceTimes[0] < cutoff) {

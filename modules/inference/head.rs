@@ -564,21 +564,24 @@ fn load_inner(
     Ok(inner)
 }
 
+/// Canonical synthetic test head (0.01 weights, zero bias, `class_{i}` labels);
+/// shared with the engine-level stream tests so the suites can't drift.
+#[cfg(test)]
+pub(crate) fn synth_inner(n_classes: usize, head_id: HeadId) -> HeadInner {
+    HeadInner {
+        weight: vec![0.01; BACKBONE_FEATURE_DIM * n_classes],
+        bias: vec![0.0; n_classes],
+        labels: (0..n_classes).map(|i| format!("class_{i}")).collect(),
+        head_id,
+        n_classes,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     // Fixtures use raw `std::fs::write`; the file_mgr atomic-write discipline is N/A here.
     #![allow(clippy::disallowed_methods)]
     use super::*;
-
-    fn synth_inner(n_classes: usize, head_id: HeadId) -> HeadInner {
-        HeadInner {
-            weight: vec![0.01; BACKBONE_FEATURE_DIM * n_classes],
-            bias: vec![0.0; n_classes],
-            labels: (0..n_classes).map(|i| format!("class_{i}")).collect(),
-            head_id,
-            n_classes,
-        }
-    }
 
     #[test]
     fn from_inner_round_trip() {
